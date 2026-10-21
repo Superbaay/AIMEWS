@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMATI · Monitoreo y Alerta Temprana de Infraestructura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body>
+
+  <header class="barra_navegacion">
+    <div class="contenedor barra_navegacion_interior">
+      <a href="#inicio" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <nav class="menu_navegacion">
+        <a href="#sistema" class="enlace_menu">Sistema</a>
+        <a href="#funcionamiento" class="enlace_menu">Funcionamiento</a>
+        <a href="#dependencias" class="enlace_menu">Dependencias</a>
+        <button type="button" class="boton_acceso" id="boton_acceso">Acceso</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="inicio" class="seccion_inicio">
+      <div class="radar" aria-hidden="true">
+        <span class="radar_anillo radar_anillo_1"></span>
+        <span class="radar_anillo radar_anillo_2"></span>
+        <span class="radar_anillo radar_anillo_3"></span>
+        <span class="radar_anillo radar_anillo_4"></span>
+        <span class="radar_eje radar_eje_horizontal"></span>
+        <span class="radar_eje radar_eje_vertical"></span>
+        <span class="radar_barrido"></span>
+        <svg class="radar_ruta" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline points="30,36 61,27 72,58 44,71 54,46 22,60"></polyline>
+        </svg>
+        <span class="punto_ruta" style="--pos_x:30%;--pos_y:36%;--retraso:0s"></span>
+        <span class="punto_ruta" style="--pos_x:61%;--pos_y:27%;--retraso:.45s"></span>
+        <span class="punto_ruta" style="--pos_x:72%;--pos_y:58%;--retraso:.9s"></span>
+        <span class="punto_ruta" style="--pos_x:44%;--pos_y:71%;--retraso:1.35s"></span>
+        <span class="punto_ruta punto_ruta_alerta" style="--pos_x:54%;--pos_y:46%;--retraso:1.8s"></span>
+        <span class="punto_ruta" style="--pos_x:22%;--pos_y:60%;--retraso:2.25s"></span>
+      </div>
+      <div class="inicio_degradado" aria-hidden="true"></div>
+
+      <div class="contenedor inicio_contenido">
+        <div class="inicio_texto">
+          <div class="etiqueta_ubicacion revelar" style="--retraso:0ms">
+            <span class="punto_estado"></span>
+            <span>Cancún, Quintana Roo · Infraestructura vial</span>
+          </div>
+          <h1 class="titulo_principal revelar" style="--retraso:100ms">Monitoreo autónomo y alerta temprana de la infraestructura crítica.</h1>
+          <p class="texto_principal revelar" style="--retraso:200ms">Un dron autónomo recorre los puntos críticos de la ciudad, mide el estado de la carpeta asfáltica y detecta inundaciones. La información se actualiza a diario y llega a las autoridades sin depender de inspecciones rutinarias.</p>
+          <div class="cuadricula_datos revelar" style="--retraso:300ms">
+            <div class="dato"><span class="dato_valor">55<span class="dato_unidad">min</span></span><span class="dato_nombre">Autonomía</span></div>
+            <div class="dato"><span class="dato_valor">13<span class="dato_unidad">km</span></span><span class="dato_nombre">Radio de misión</span></div>
+            <div class="dato"><span class="dato_valor">35<span class="dato_unidad">km/h</span></span><span class="dato_nombre">Crucero</span></div>
+            <div class="dato"><span class="dato_valor">3.6<span class="dato_unidad">kg</span></span><span class="dato_nombre">Peso total</span></div>
+          </div>
+        </div>
+
+        <div class="tarjeta_login revelar" style="--retraso:250ms">
+          <form id="formulario_login" class="formulario_login" novalidate>
+            <div class="encabezado_login">
+              <span class="etiqueta_mono">Plataforma de autoridades</span>
+              <h2 class="titulo_login">Iniciar sesión</h2>
+            </div>
+            <div class="grupo_campos">
+              <label for="campo_usuario" class="campo">
+                <span class="campo_etiqueta">Usuario</span>
+                <input id="campo_usuario" name="username" type="text" class="campo_entrada" autocomplete="username" placeholder="nombre_usuario">
+              </label>
+              <label for="campo_contrasena" class="campo">
+                <span class="campo_etiqueta">Contraseña</span>
+                <span class="campo_contrasena_envoltura">
+                  <input id="campo_contrasena" name="password" type="password" class="campo_entrada campo_entrada_contrasena" autocomplete="current-password" placeholder="••••••••">
+                  <button type="button" id="boton_mostrar_contrasena" class="boton_mostrar_contrasena">Mostrar</button>
+                </span>
+              </label>
+            </div>
+            <div id="mensaje_error" class="mensaje_error" role="alert" hidden>
+              <span class="mensaje_error_punto"></span>
+              <span id="mensaje_error_texto"></span>
+            </div>
+            <button type="submit" id="boton_iniciar_sesion" class="boton_primario">
+              <span class="indicador_carga"></span>
+              <span id="texto_boton_login">Iniciar sesión</span>
+            </button>
+            <div class="nota_login">Sesión cifrada · Token válido por 24 h</div>
+          </form>
+
+          <div id="vista_acceso_exitoso" class="vista_acceso_exitoso" hidden>
+            <div class="icono_exito"><span class="icono_exito_marca"></span></div>
+            <div class="encabezado_login">
+              <span class="etiqueta_mono">Acceso concedido</span>
+              <h2 class="titulo_login">Bienvenido, <span id="nombre_usuario_exito"></span></h2>
+              <p class="texto_secundario">Tu sesión está activa durante las próximas 24 horas.</p>
+            </div>
+            <a href="panel_control.html" class="boton_primario">Ir al panel de control</a>
+            <button type="button" id="boton_cerrar_sesion" class="boton_texto">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sistema" class="seccion">
+      <div class="contenedor seccion_interior">
+        <div class="encabezado_seccion revelar">
+          <div class="encabezado_seccion_titulos">
+            <span class="etiqueta_mono">Arquitectura</span>
+            <h2 class="titulo_seccion">Tres componentes conectados en tiempo real.</h2>
+          </div>
+          <p class="texto_secundario encabezado_seccion_texto">El dron, la infraestructura de comunicación y el sitio web intercambian telemetría y comandos de forma bidireccional.</p>
+        </div>
+        <div class="cuadricula_componentes">
+          <article class="tarjeta_componente revelar" style="--retraso:0ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">01</span><span class="etiqueta_pequena">Hardware</span></div>
+            <div class="tarjeta_componente_texto">
+              <h3 class="titulo_tarjeta">Dron</h3>
+              <p class="texto_secundario">Controla estabilidad, dirección y velocidad mediante PID. Recorre los waypoints de la misión y regresa a su origen.</p>
+            </div>
+            <ul class="lista_elementos">
+              <li>Microcontrolador ESP32-S3</li>
+              <li>Acelerómetro y giroscopio</li>
+              <li>Barómetro de altitud absoluta</li>
+              <li>LiDAR TF Mini Plus</li>
+              <li>Magnetómetro y GPS</li>
+            </ul>
+          </article>
+          <article class="tarjeta_componente revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Comunicación</span></div>
+            <div class="tarjeta_componente_texto">
+              <h3 class="titulo_tarjeta">Infraestructura</h3>
+              <p class="texto_secundario">La API almacena y procesa la información, autentica usuarios por rol y transmite comandos entre el sitio y el dron.</p>
+            </div>
+            <ul class="lista_elementos">
+              <li>API en FastAPI</li>
+              <li>Red móvil propia</li>
+              <li>HTTPS y WebSockets</li>
+              <li>Tokens JWT y contraseñas cifradas</li>
+              <li>Base de datos MongoDB</li>
+            </ul>
+          </article>
+          <article class="tarjeta_componente revelar" style="--retraso:240ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Visualización</span></div>
+            <div class="tarjeta_componente_texto">
+              <h3 class="titulo_tarjeta">Control y monitoreo</h3>
+              <p class="texto_secundario">Desde el sitio web se inician las misiones, se consulta el estado de los puntos críticos y se controla el dron.</p>
+            </div>
+            <ul class="lista_elementos">
+              <li>Interfaz de control</li>
+              <li>Telemetría en tiempo real</li>
+              <li>Video desde el dron</li>
+              <li>Control manual remoto</li>
+              <li>Verificación de usuarios</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="funcionamiento" class="seccion seccion_alterna">
+      <div class="contenedor seccion_interior">
+        <div class="encabezado_seccion revelar">
+          <div class="encabezado_seccion_titulos">
+            <span class="etiqueta_mono">Funcionamiento</span>
+            <h2 class="titulo_seccion">De la misión de referencia a la alerta.</h2>
+          </div>
+        </div>
+        <ol class="linea_pasos">
+          <li class="paso revelar" style="--retraso:0ms">
+            <span class="numero_mono">01</span>
+            <h3 class="titulo_paso">Misión de referencia</h3>
+            <p class="texto_secundario">El dron recorre los puntos críticos y registra la distancia ideal al suelo en cada waypoint.</p>
+          </li>
+          <li class="paso revelar" style="--retraso:120ms">
+            <span class="numero_mono">02</span>
+            <h3 class="titulo_paso">Evento climático</h3>
+            <p class="texto_secundario">Después de lluvias torrenciales, tormentas o huracanes se programa una segunda misión.</p>
+          </li>
+          <li class="paso revelar" style="--retraso:240ms">
+            <span class="numero_mono">03</span>
+            <h3 class="titulo_paso">Medición y fotografía</h3>
+            <p class="texto_secundario">Dos servomotores mantienen el LiDAR perpendicular al suelo; la lectura se contrasta con el barómetro y se envía una fotografía del punto.</p>
+          </li>
+          <li class="paso revelar" style="--retraso:360ms">
+            <span class="numero_mono">04</span>
+            <h3 class="titulo_paso">Alerta</h3>
+            <p class="texto_secundario">La API compara ambas misiones y notifica a las autoridades correspondientes.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="dependencias" class="seccion">
+      <div class="contenedor seccion_interior">
+        <div class="encabezado_seccion revelar">
+          <div class="encabezado_seccion_titulos">
+            <span class="etiqueta_mono">Dependencias de gobierno</span>
+            <h2 class="titulo_seccion">Información compartida con quien toma las decisiones.</h2>
+          </div>
+          <p class="texto_secundario encabezado_seccion_texto">Cada dependencia accede al estado actualizado de la vialidad en los puntos críticos según sus necesidades.</p>
+        </div>
+        <div class="cuadricula_dependencias">
+          <div class="tarjeta_dependencia revelar" style="--retraso:0ms"><h3 class="titulo_dependencia">Instituto de Movilidad</h3><p class="texto_secundario">Optimiza la afectación vial y establece rutas estratégicas temporales ante clima adverso.</p></div>
+          <div class="tarjeta_dependencia revelar" style="--retraso:60ms"><h3 class="titulo_dependencia">Protección Civil</h3><p class="texto_secundario">Previene y advierte situaciones de riesgo con base en los datos recolectados.</p></div>
+          <div class="tarjeta_dependencia revelar" style="--retraso:120ms"><h3 class="titulo_dependencia">Desarrollo Urbano</h3><p class="texto_secundario">Considera los puntos críticos afectados en la toma de decisiones estratégicas.</p></div>
+          <div class="tarjeta_dependencia revelar" style="--retraso:180ms"><h3 class="titulo_dependencia">Servicios Públicos Municipales</h3><p class="texto_secundario">Conoce los puntos conflictivos para la correcta operación de los servicios básicos.</p></div>
+          <div class="tarjeta_dependencia revelar" style="--retraso:0ms"><h3 class="titulo_dependencia">Ecología</h3><p class="texto_secundario">Evita riesgos al ecosistema derivados del deterioro de la infraestructura.</p></div>
+          <div class="tarjeta_dependencia revelar" style="--retraso:60ms"><h3 class="titulo_dependencia">Tránsito y Vialidad</h3><p class="texto_secundario">Define desvíos y rutas temporales integrando la información a sus plataformas.</p></div>
+          <div class="tarjeta_dependencia revelar" style="--retraso:120ms"><h3 class="titulo_dependencia">Policía Municipal</h3><p class="texto_secundario">Anticipa situaciones de riesgo con acceso a los datos en tiempo real.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie_pagina">
+    <div class="contenedor pie_pagina_interior">
+      <div class="pie_pagina_marca">
+        <span class="logo_marca logo_marca_pequena"></span>
+        <span class="logo_texto logo_texto_pequeno">SAMATI</span>
+        <span class="pie_pagina_descripcion">Sistema Autónomo de Monitoreo y Alerta Temprana de Infraestructura</span>
+      </div>
+      <span class="numero_mono pie_pagina_ubicacion">Cancún, Quintana Roo</span>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
