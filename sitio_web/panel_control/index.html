@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de control · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styless.css">
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral">
+      <span class="etiqueta_pequena menu_lateral_titulo">Navegación</span>
+      <nav class="menu_lateral" aria-label="Secciones del panel">
+        <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M6 9.5V20h12V9.5"></path>
+            <path d="M10 20v-5.5h4V20"></path>
+          </svg>
+          <span>Inicio</span>
+        </a>
+      </nav>
+      <div class="barra_lateral_pie">
+        <span class="etiqueta_pequena">Sesión válida hasta</span>
+        <span class="numero_mono" id="sesion_expira">—</span>
+      </div>
+    </aside>
+
+    <main class="panel_contenido">
+      <section id="vista_inicio" class="vista_panel">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <div class="estado_enlace estado_enlace_desconectado" id="estado_enlace" role="status" aria-live="polite">
+              <span class="estado_enlace_punto"></span>
+              <span id="estado_enlace_texto">Sin conexión con la API</span>
+            </div>
+            <h1 class="titulo_panel" id="titulo_dron">Dron SAMATI V0.1</h1>
+          </div>
+          <div class="encabezado_panel_meta">
+            <span class="etiqueta_pequena">Última telemetría</span>
+            <span class="numero_mono" id="ultima_telemetria">—</span>
+          </div>
+        </div>
+
+        <div class="cuadricula_panel">
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">01</span><span class="etiqueta_pequena">Diagnóstico</span></div>
+            <div class="tarjeta_componente_texto">
+              <h2 class="titulo_tarjeta">Autoprueba</h2>
+              <p class="texto_secundario">Verifica sensores, actuadores y comunicación antes de iniciar una misión.</p>
+            </div>
+            <div class="informacion_prueba">
+              <div class="informacion_prueba_cabecera">
+                <span class="etiqueta_mono">Información de la prueba</span>
+                <span class="numero_mono" id="resumen_prueba">Sin ejecutar</span>
+              </div>
+              <ul class="lista_prueba" id="lista_prueba">
+                <li class="lista_prueba_fila" data-componente="microcontrolador"><span>ESP32-S3</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="imu"><span>Acelerómetro y giroscopio</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="magnetometro"><span>Magnetómetro</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="barometro"><span>Barómetro</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="gps"><span>GPS</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="lidar"><span>LiDAR TF Mini Plus</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="servomotores"><span>Servomotores</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="camara"><span>Cámara</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="motores"><span>Motores y ESC</span><span class="estado_prueba">Pendiente</span></li>
+              </ul>
+            </div>
+            <button type="button" class="boton_primario" id="boton_autoprueba" disabled>
+              <span class="indicador_carga"></span>
+              <span id="texto_boton_autoprueba">Iniciar autoprueba</span>
+            </button>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Energía</span></div>
+            <div class="tarjeta_componente_texto">
+              <h2 class="titulo_tarjeta">Batería</h2>
+              <p class="texto_secundario">LiPo 6S de 22 000 mAh y 488 Wh. El dron mide cada celda antes de cada misión para confirmar que puede completarla y regresar.</p>
+            </div>
+            <div class="cuadricula_datos cuadricula_datos_compacta">
+              <div class="dato"><span class="dato_valor"><span id="bateria_voltaje">—</span><span class="dato_unidad">V</span></span><span class="dato_nombre">Voltaje total</span></div>
+              <div class="dato"><span class="dato_valor"><span id="bateria_porcentaje">—</span><span class="dato_unidad">%</span></span><span class="dato_nombre">Carga</span></div>
+            </div>
+            <div class="celdas_bateria" id="celdas_bateria">
+              <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C1</span></div>
+              <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C2</span></div>
+              <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C3</span></div>
+              <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C4</span></div>
+              <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C5</span></div>
+              <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C6</span></div>
+            </div>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:180ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Telemetría</span></div>
+            <div class="tarjeta_componente_texto">
+              <h2 class="titulo_tarjeta">Posición y vuelo</h2>
+              <p class="texto_secundario">Datos del GPS, el barómetro y el magnetómetro transmitidos en tiempo real.</p>
+            </div>
+            <div class="cuadricula_datos cuadricula_datos_compacta">
+              <div class="dato"><span class="dato_valor" id="telemetria_latitud">—</span><span class="dato_nombre">Latitud</span></div>
+              <div class="dato"><span class="dato_valor" id="telemetria_longitud">—</span><span class="dato_nombre">Longitud</span></div>
+              <div class="dato"><span class="dato_valor"><span id="telemetria_satelites">—</span></span><span class="dato_nombre">Satélites</span></div>
+              <div class="dato"><span class="dato_valor"><span id="telemetria_altitud">—</span><span class="dato_unidad">m</span></span><span class="dato_nombre">Altitud</span></div>
+              <div class="dato"><span class="dato_valor"><span id="telemetria_velocidad">—</span><span class="dato_unidad">km/h</span></span><span class="dato_nombre">Velocidad</span></div>
+              <div class="dato"><span class="dato_valor"><span id="telemetria_rumbo">—</span><span class="dato_unidad">°</span></span><span class="dato_nombre">Rumbo</span></div>
+            </div>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:240ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">04</span><span class="etiqueta_pequena">WebSocket</span></div>
+            <div class="tarjeta_componente_texto">
+              <h2 class="titulo_tarjeta">Registro de enlace</h2>
+              <p class="texto_secundario">Eventos de la conexión entre el panel, la API y el dron.</p>
+            </div>
+            <ul class="registro_eventos" id="registro_eventos" aria-live="polite"></ul>
+            <button type="button" class="boton_texto" id="boton_reconectar">Reconectar ahora</button>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../main.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
