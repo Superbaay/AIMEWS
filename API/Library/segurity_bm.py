@@ -46,14 +46,35 @@ async def verify_token(token : str) :
 async def verify_token_Depends(token:str = Depends(segurity)):
     return await verify_token(token)
 
-async def verify_role_Depends(token:base_model_bm.user = Depends(verify_token_Depends)):
-    if token.get("role") == "admin":
+async def verify_role_Depends_O5(token:base_model_bm.user = Depends(verify_token_Depends)):
+    if token.get("role") == "O5-1":
+        return token
+    else:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
+    
+async def verify_role_Depends_4(token:base_model_bm.user = Depends(verify_token_Depends)):
+    if token.get("role") == "4":
         return token
     else:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
 
+async def verify_role_Depends_3(token:base_model_bm.user = Depends(verify_token_Depends)):
+    if token.get("role") == "3":
+        return token
+    else:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
 
+async def verify_role_Depends_2(token:base_model_bm.user = Depends(verify_token_Depends)):
+    if token.get("role") == "2":
+        return token
+    else:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
 
+async def verify_role_Depends_1(token:base_model_bm.user = Depends(verify_token_Depends)):
+    if token.get("role") == "1":
+        return token
+    else:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
 
 
 

@@ -6,10 +6,11 @@ from Library import def_bm
 from Library import segurity_bm
 from datetime import datetime,timezone
 from pymongo import MongoClient
+from Routers_BM.user_rt import user
 
 db = MongoClient()
 app = FastAPI()
-
+app.include_router(user)
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,7 +31,7 @@ async def post_token(fomrdata:OAuth2PasswordRequestForm = Depends()):
     return segurity_bm.create_token(user)
 
 @app.post("/user")
-async def new_user(user:base_model_bm.user):
+async def new_user(user:base_model_bm.user = Depends(segurity_bm.verify_role_Depends_O5)):
     if def_bm.search_username(user.name)  != None:
         raise HTTPException(status.HTTP_409_CONFLICT,detail="User exist")
     user.date = datetime.now(timezone.utc)

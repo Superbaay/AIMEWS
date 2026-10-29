@@ -34,7 +34,7 @@ function salir_del_panel() {
 
 const sesion = leer_sesion();
 if (!sesion) {
-  salir_del_panel();
+  // salir_del_panel();
 } else {
   iniciar_panel();
 }
