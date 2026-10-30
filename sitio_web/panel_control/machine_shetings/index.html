@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Máquinas · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styless.css">
+  <link rel="stylesheet" href="../styless.css">
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="../index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral">
+      <nav class="menu_lateral" aria-label="Secciones del panel">
+        <a href="../index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M6 9.5V20h12V9.5"></path>
+            <path d="M10 20v-5.5h4V20"></path>
+          </svg>
+          <span>Home</span>
+        </a>
+        <a href="../ingineer_log/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 9h20"></path>
+            <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path>
+            <path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>
+          </svg>
+          <span>Logbook</span>
+        </a>
+        <a href="../user_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>
+          </svg>
+          <span>Users</span>
+        </a>
+        <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <circle cx="12" cy="12" r="6.5"></circle>
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>
+          </svg>
+          <span>Machines</span>
+        </a>
+      </nav>
+      <div class="barra_lateral_pie">
+        <span class="etiqueta_pequena">Sesión válida hasta</span>
+        <span class="numero_mono" id="sesion_expira">—</span>
+      </div>
+    </aside>
+
+    <main class="panel_contenido">
+      <section class="vista_panel">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <span class="etiqueta_mono">Flota</span>
+            <h1 class="titulo_panel">Máquinas</h1>
+          </div>
+          <div class="encabezado_panel_meta">
+            <span class="etiqueta_pequena">Registradas</span>
+            <span class="numero_mono" id="total_maquinas">—</span>
+          </div>
+        </div>
+
+        <!-- La API exige nivel 4 o superior para cualquier ruta de máquinas -->
+        <article class="tarjeta_componente tarjeta_panel" id="aviso_permisos" hidden>
+          <span class="etiqueta_mono">Acceso restringido</span>
+          <h2 class="titulo_tarjeta">Tu rol no permite administrar máquinas.</h2>
+        </article>
+
+        <div class="cuadricula_gestion" id="gestion_maquinas">
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
+            <!-- Modo alta: solo O5-1 -->
+            <form id="formulario_nueva_maquina" class="vista_maquina" novalidate hidden>
+              <div class="tarjeta_componente_cabecera"><span class="etiqueta_mono">Alta de máquina</span></div>
+              <h2 class="titulo_tarjeta">Nueva máquina</h2>
+              <div class="grupo_campos">
+                <div class="fila_campos">
+                  <label for="campo_nombre_nueva" class="campo">
+                    <span class="campo_etiqueta">Nombre</span>
+                    <input id="campo_nombre_nueva" name="name" type="text" class="campo_entrada" autocomplete="off" spellcheck="false" placeholder="dron_v01">
+                  </label>
+                  <label for="campo_modelo_nueva" class="campo">
+                    <span class="campo_etiqueta">Modelo</span>
+                    <input id="campo_modelo_nueva" name="model" type="text" class="campo_entrada" autocomplete="off" list="modelos_conocidos" placeholder="ESP32-S3">
+                  </label>
+                </div>
+                <label for="campo_contrasena_nueva" class="campo">
+                  <span class="campo_etiqueta">Contraseña del dispositivo</span>
+                  <span class="campo_contrasena_envoltura">
+                    <input id="campo_contrasena_nueva" name="password" type="password" class="campo_entrada campo_entrada_contrasena" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                    <button type="button" class="boton_mostrar_contrasena" data-mostrar="campo_contrasena_nueva">Mostrar</button>
+                  </span>
+                </label>
+                <label for="campo_descripcion_nueva" class="campo">
+                  <span class="campo_etiqueta">Descripción <span class="campo_opcional">(opcional)</span></span>
+                  <textarea id="campo_descripcion_nueva" name="description" class="campo_entrada campo_area" rows="3"></textarea>
+                </label>
+              </div>
+              <div id="mensaje_error_maquina" class="mensaje_error" role="alert" hidden>
+                <span class="mensaje_error_punto"></span>
+                <span id="mensaje_error_maquina_texto"></span>
+              </div>
+              <button type="submit" id="boton_crear_maquina" class="boton_primario">
+                <span class="indicador_carga"></span>
+                <span>Registrar máquina</span>
+              </button>
+            </form>
+
+            <!-- Nivel 4 sin máquina seleccionada: no puede dar de alta -->
+            <div id="vista_sin_seleccion" class="vista_maquina" hidden>
+              <span class="etiqueta_mono">Ficha de máquina</span>
+              <p class="estado_lista">Selecciona una máquina de la lista para ver y editar sus datos.</p>
+            </div>
+
+            <!-- Modo edición: máquina seleccionada en la lista -->
+            <div id="vista_editar_maquina" class="vista_maquina" hidden>
+              <div class="tarjeta_componente_cabecera">
+                <span class="etiqueta_mono">Ficha de máquina</span>
+                <button type="button" class="boton_acceso" id="boton_volver">Volver</button>
+              </div>
+              <div class="maquina_ficha">
+                <span class="numero_maquina numero_maquina_grande" id="ficha_numero" aria-hidden="true"></span>
+                <div class="maquina_ficha_textos">
+                  <h2 class="titulo_tarjeta" id="ficha_nombre"></h2>
+                  <span class="etiqueta_pequena" id="ficha_meta"></span>
+                </div>
+              </div>
+
+              <dl class="datos_maquina">
+                <div class="dato_maquina">
+                  <dt>Alta</dt>
+                  <dd class="numero_mono" id="dato_alta">—</dd>
+                </div>
+                <div class="dato_maquina">
+                  <dt>Actualizada</dt>
+                  <dd class="numero_mono" id="dato_actualizada">—</dd>
+                </div>
+                <div class="dato_maquina">
+                  <dt>Último uso</dt>
+                  <dd class="numero_mono" id="dato_ultimo_uso">—</dd>
+                </div>
+                <div class="dato_maquina">
+                  <dt>Último usuario</dt>
+                  <dd class="numero_mono" id="dato_ultimo_usuario">—</dd>
+                </div>
+              </dl>
+
+              <form id="formulario_maquina" class="bloque_maquina" novalidate>
+                <span class="etiqueta_pequena">Datos</span>
+                <div class="fila_campos">
+                  <label for="campo_nombre_editar" class="campo">
+                    <span class="campo_etiqueta">Nombre</span>
+                    <input id="campo_nombre_editar" type="text" class="campo_entrada" autocomplete="off" spellcheck="false">
+                  </label>
+                  <label for="campo_modelo_editar" class="campo">
+                    <span class="campo_etiqueta">Modelo</span>
+                    <input id="campo_modelo_editar" type="text" class="campo_entrada" autocomplete="off" list="modelos_conocidos">
+                  </label>
+                </div>
+                <label for="campo_descripcion_editar" class="campo">
+                  <span class="campo_etiqueta">Descripción</span>
+                  <textarea id="campo_descripcion_editar" class="campo_entrada campo_area" rows="3"></textarea>
+                </label>
+                <button type="submit" id="boton_guardar_maquina" class="boton_primario">
+                  <span class="indicador_carga"></span>
+                  <span>Guardar cambios</span>
+                </button>
+                <p class="nota_resultado" id="nota_maquina" role="status"></p>
+              </form>
+
+              <div class="bloque_maquina" id="bloque_eliminar_maquina">
+                <button type="button" class="boton_texto boton_eliminar" id="boton_eliminar_maquina">Eliminar máquina</button>
+                <p class="nota_resultado" id="nota_eliminar" role="status"></p>
+              </div>
+            </div>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera">
+              <span class="etiqueta_mono">Máquinas registradas</span>
+              <span class="etiqueta_pequena">Por número</span>
+            </div>
+            <input type="search" id="campo_busqueda" class="campo_entrada campo_busqueda" placeholder="Buscar por nombre o modelo" aria-label="Buscar máquinas" autocomplete="off">
+            <p class="estado_lista" id="estado_lista">Cargando máquinas…</p>
+            <ul class="lista_maquinas" id="lista_maquinas"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <datalist id="modelos_conocidos">
+    <option value="ESP32-S3"></option>
+    <option value="ESP32-S2"></option>
+    <option value="ESP32"></option>
+  </datalist>
+
+  <template id="plantilla_maquina">
+    <li class="tarjeta_maquina">
+      <span class="numero_maquina tarjeta_maquina_numero" aria-hidden="true"></span>
+      <div class="tarjeta_maquina_datos">
+        <span class="tarjeta_maquina_nombre"></span>
+        <span class="tarjeta_maquina_detalle"></span>
+      </div>
+      <span class="insignia_modelo"></span>
+      <button type="button" class="boton_acceso tarjeta_maquina_boton">Editar</button>
+    </li>
+  </template>
+
+  <script src="../../main.js"></script>
+  <script src="../sesion_panel.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

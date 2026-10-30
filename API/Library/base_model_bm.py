@@ -78,6 +78,22 @@ class machine_not_password(BaseModel):
     date_updated : datetime | None = None
     last_use : datetime | None = None
     last_user : str | None = None
+
+#Datos que manda el panel: number, fechas y rol los pone la API
+class machine_new(BaseModel):
+    name : str
+    password : str
+    model : str
+    description : str | None = None
+
+class machine_update(BaseModel):
+    number : int
+    name : str
+    model : str
+    description : str | None = None
+
+class machine_number(BaseModel):
+    number : int
 #information about the machine and its sensors
 class auto_test_machine(BaseModel):
     microcontroller : bool

@@ -1,0 +1,70 @@
+/* ===== Máquinas ===== */
+.vista_maquina { display: flex; flex-direction: column; gap: 20px; animation: animacion_entrada .4s ease both; }
+.fila_campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 16px; }
+.campo_area { resize: vertical; min-height: 68px; line-height: 1.5; }
+.campo_busqueda { padding: 10px 14px; font-size: 14px; }
+
+/* Número de máquina: placa cuadrada para distinguirla del avatar redondo de usuarios */
+.numero_maquina {
+  width: 34px; height: 34px; flex: none; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fuente_mono); font-weight: 500; font-size: 12px;
+  color: var(--color_acento_claro); background: rgba(111, 180, 255, .1); border: 1px solid rgba(111, 180, 255, .45);
+}
+.numero_maquina_grande { width: 48px; height: 48px; font-size: 15px; border-radius: 10px; }
+
+/* ===== Ficha ===== */
+.maquina_ficha { display: flex; align-items: center; gap: 14px; }
+.maquina_ficha_textos { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.maquina_ficha_textos .titulo_tarjeta { overflow-wrap: anywhere; }
+.datos_maquina { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.dato_maquina {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+}
+.dato_maquina dt { font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #7d8fb2; }
+.dato_maquina dd { margin: 0; font-size: 13px; color: var(--color_texto_secundario); overflow-wrap: anywhere; }
+.bloque_maquina { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--color_linea); }
+.nota_resultado { margin: 0; font-size: 13px; color: var(--color_acento_claro); }
+.nota_resultado:empty { display: none; }
+.nota_resultado_error { color: var(--color_error); }
+
+/* ===== Lista ===== */
+.lista_maquinas {
+  margin: 0; padding: 0 4px 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 760px; overflow-y: auto;
+}
+.tarjeta_maquina {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "numero datos modelo boton";
+  align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 14px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+  transition: border-color .2s, background .2s;
+}
+.tarjeta_maquina_activa { border-color: rgba(111, 180, 255, .5); background: rgba(111, 180, 255, .06); }
+.tarjeta_maquina_numero { grid-area: numero; }
+.tarjeta_maquina_datos { grid-area: datos; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tarjeta_maquina_nombre { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarjeta_maquina_detalle { font-size: 13px; color: var(--color_texto_tenue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.insignia_modelo {
+  grid-area: modelo; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color_texto_secundario); border: 1px solid var(--color_linea);
+}
+.tarjeta_maquina_boton { grid-area: boton; padding: 6px 14px; font-size: 13px; }
+
+@media (max-width: 480px) {
+  .tarjeta_maquina {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "numero datos boton" "numero modelo boton";
+  }
+  .insignia_modelo { justify-self: start; }
+  .datos_maquina { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vista_maquina { animation: none; }
+}
