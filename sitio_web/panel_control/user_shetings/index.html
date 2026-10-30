@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styless.css">
+  <link rel="stylesheet" href="../styless.css">
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="../index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral">
+      <span class="etiqueta_pequena menu_lateral_titulo">Navegación</span>
+      <nav class="menu_lateral" aria-label="Secciones del panel">
+        <a href="../index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M6 9.5V20h12V9.5"></path>
+            <path d="M10 20v-5.5h4V20"></path>
+          </svg>
+          <span>Inicio</span>
+        </a>
+        <a href="../ingineer_log/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 9h20"></path>
+            <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path>
+            <path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>
+          </svg>
+          <span>Bitácora</span>
+        </a>
+        <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>
+          </svg>
+          <span>Usuarios</span>
+        </a>
+        <a href="../machine_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <circle cx="12" cy="12" r="6.5"></circle>
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>
+          </svg>
+          <span>Máquinas</span>
+        </a>
+      </nav>
+      <div class="barra_lateral_pie">
+        <span class="etiqueta_pequena">Sesión válida hasta</span>
+        <span class="numero_mono" id="sesion_expira">—</span>
+      </div>
+    </aside>
+
+    <main class="panel_contenido">
+      <section class="vista_panel">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <span class="etiqueta_mono">Administración</span>
+            <h1 class="titulo_panel">Usuarios</h1>
+          </div>
+          <div class="encabezado_panel_meta">
+            <span class="etiqueta_pequena">Registrados</span>
+            <span class="numero_mono" id="total_usuarios">—</span>
+          </div>
+        </div>
+
+        <!-- Un rol sin roles inferiores que asignar (nivel 1) solo ve este aviso -->
+        <article class="tarjeta_componente tarjeta_panel aviso_permisos" id="aviso_permisos" hidden>
+          <span class="etiqueta_mono">Acceso restringido</span>
+          <h2 class="titulo_tarjeta">Tu rol no permite administrar usuarios.</h2>
+        </article>
+
+        <div class="cuadricula_gestion" id="gestion_usuarios">
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
+            <!-- Modo alta: nuevo usuario -->
+            <form id="formulario_nuevo_usuario" class="vista_usuario" novalidate>
+              <div class="tarjeta_componente_cabecera"><span class="etiqueta_mono">Alta de usuario</span></div>
+              <h2 class="titulo_tarjeta">Nuevo usuario</h2>
+              <div class="grupo_campos">
+                <label for="campo_usuario_nuevo" class="campo">
+                  <span class="campo_etiqueta">Usuario</span>
+                  <input id="campo_usuario_nuevo" name="name" type="text" class="campo_entrada" autocomplete="off" spellcheck="false" placeholder="nombre_usuario">
+                </label>
+                <label for="campo_contrasena_nuevo" class="campo">
+                  <span class="campo_etiqueta">Contraseña</span>
+                  <span class="campo_contrasena_envoltura">
+                    <input id="campo_contrasena_nuevo" name="password" type="password" class="campo_entrada campo_entrada_contrasena" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                    <button type="button" class="boton_mostrar_contrasena" data-mostrar="campo_contrasena_nuevo">Mostrar</button>
+                  </span>
+                </label>
+                <label for="campo_rol_nuevo" class="campo">
+                  <span class="campo_etiqueta">Rol</span>
+                  <select id="campo_rol_nuevo" name="role" class="campo_entrada campo_selector"></select>
+                </label>
+                <div class="fila_campos">
+                  <label for="campo_empresa_nuevo" class="campo">
+                    <span class="campo_etiqueta">Empresa <span class="campo_opcional">(opcional)</span></span>
+                    <input id="campo_empresa_nuevo" name="company" type="text" class="campo_entrada" autocomplete="organization">
+                  </label>
+                  <label for="campo_telefono_nuevo" class="campo">
+                    <span class="campo_etiqueta">Teléfono <span class="campo_opcional">(opcional)</span></span>
+                    <input id="campo_telefono_nuevo" name="phone_number" type="tel" class="campo_entrada" autocomplete="tel" inputmode="numeric">
+                  </label>
+                </div>
+                <label for="campo_correo_nuevo" class="campo">
+                  <span class="campo_etiqueta">Correo <span class="campo_opcional">(opcional)</span></span>
+                  <input id="campo_correo_nuevo" name="email" type="email" class="campo_entrada" autocomplete="email">
+                </label>
+              </div>
+              <div id="mensaje_error_usuario" class="mensaje_error" role="alert" hidden>
+                <span class="mensaje_error_punto"></span>
+                <span id="mensaje_error_usuario_texto"></span>
+              </div>
+              <button type="submit" id="boton_crear_usuario" class="boton_primario">
+                <span class="indicador_carga"></span>
+                <span>Crear usuario</span>
+              </button>
+            </form>
+
+            <!-- Modo edición: usuario seleccionado en la lista -->
+            <div id="vista_editar_usuario" class="vista_usuario" hidden>
+              <div class="tarjeta_componente_cabecera">
+                <span class="etiqueta_mono">Editar usuario</span>
+                <button type="button" class="boton_acceso" id="boton_volver">Volver</button>
+              </div>
+              <div class="usuario_ficha">
+                <span class="usuario_avatar usuario_avatar_grande" id="ficha_avatar" aria-hidden="true"></span>
+                <div class="usuario_ficha_textos">
+                  <h2 class="titulo_tarjeta" id="ficha_nombre"></h2>
+                  <span class="etiqueta_pequena" id="ficha_meta"></span>
+                </div>
+              </div>
+              <p class="nota_cuenta_propia" id="nota_cuenta_propia" hidden>Es tu cuenta: puedes editar tu perfil y contraseña, pero no tu rol ni eliminarla.</p>
+              <p class="nota_cuenta_propia" id="nota_solo_lectura" hidden>Tiene tu mismo nivel: solo puedes consultar sus datos.</p>
+
+              <form id="formulario_perfil" class="bloque_usuario" novalidate>
+                <span class="etiqueta_pequena">Perfil</span>
+                <div class="fila_campos">
+                  <label for="campo_empresa_editar" class="campo">
+                    <span class="campo_etiqueta">Empresa</span>
+                    <input id="campo_empresa_editar" type="text" class="campo_entrada" autocomplete="off">
+                  </label>
+                  <label for="campo_telefono_editar" class="campo">
+                    <span class="campo_etiqueta">Teléfono</span>
+                    <input id="campo_telefono_editar" type="tel" class="campo_entrada" autocomplete="off" inputmode="numeric">
+                  </label>
+                </div>
+                <label for="campo_correo_editar" class="campo">
+                  <span class="campo_etiqueta">Correo</span>
+                  <input id="campo_correo_editar" type="email" class="campo_entrada" autocomplete="off">
+                </label>
+                <button type="submit" id="boton_guardar_perfil" class="boton_primario">
+                  <span class="indicador_carga"></span>
+                  <span>Guardar perfil</span>
+                </button>
+                <p class="nota_resultado" id="nota_perfil" role="status"></p>
+              </form>
+
+              <form id="formulario_rol" class="bloque_usuario" novalidate>
+                <label for="campo_rol_editar" class="etiqueta_pequena">Rol</label>
+                <div class="fila_accion">
+                  <select id="campo_rol_editar" class="campo_entrada campo_selector"></select>
+                  <button type="submit" id="boton_cambiar_rol" class="boton_acceso">Cambiar rol</button>
+                </div>
+                <p class="nota_resultado" id="nota_rol" role="status"></p>
+              </form>
+
+              <form id="formulario_contrasena" class="bloque_usuario" novalidate>
+                <label for="campo_contrasena_editar" class="etiqueta_pequena">Nueva contraseña</label>
+                <div class="fila_accion">
+                  <span class="campo_contrasena_envoltura">
+                    <input id="campo_contrasena_editar" type="password" class="campo_entrada campo_entrada_contrasena" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                    <button type="button" class="boton_mostrar_contrasena" data-mostrar="campo_contrasena_editar">Mostrar</button>
+                  </span>
+                  <button type="submit" id="boton_cambiar_contrasena" class="boton_acceso">Cambiar</button>
+                </div>
+                <p class="nota_resultado" id="nota_contrasena" role="status"></p>
+              </form>
+
+              <div class="bloque_usuario" id="bloque_eliminar_usuario">
+                <button type="button" class="boton_texto boton_eliminar" id="boton_eliminar_usuario">Eliminar usuario</button>
+                <p class="nota_resultado" id="nota_eliminar" role="status"></p>
+              </div>
+            </div>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera">
+              <span class="etiqueta_mono">Usuarios registrados</span>
+              <span class="etiqueta_pequena">Orden de creación</span>
+            </div>
+            <input type="search" id="campo_busqueda" class="campo_entrada campo_busqueda" placeholder="Buscar por nombre, correo o empresa" aria-label="Buscar usuarios" autocomplete="off">
+            <p class="estado_lista" id="estado_lista">Cargando usuarios…</p>
+            <ul class="lista_usuarios" id="lista_usuarios"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="plantilla_usuario">
+    <li class="tarjeta_usuario">
+      <span class="usuario_avatar tarjeta_usuario_avatar" aria-hidden="true"></span>
+      <div class="tarjeta_usuario_datos">
+        <div class="tarjeta_usuario_nombre">
+          <span class="tarjeta_usuario_texto_nombre"></span>
+          <span class="etiqueta_tu" hidden>Tú</span>
+        </div>
+        <span class="tarjeta_usuario_contacto"></span>
+      </div>
+      <span class="insignia_rol"></span>
+      <button type="button" class="boton_acceso tarjeta_usuario_boton">Editar</button>
+    </li>
+  </template>
+
+  <script src="../../main.js"></script>
+  <script src="../sesion_panel.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

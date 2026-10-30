@@ -30,6 +30,9 @@ class name(BaseModel):
 class name_password(BaseModel):
     name : str
     password : str
+class name_role(BaseModel):
+    name : str
+    role : str
 
 #-------------------------------------------------
 #Engeneer log 
@@ -38,7 +41,7 @@ class media(BaseModel):
     content_type : str
     url_path : str
     onwer : str
-class engeneer_log(BaseModel):
+class engineer_log(BaseModel):
     name : str
     onwer : str
     number : int #auto increment
@@ -62,7 +65,7 @@ class machine(BaseModel):
     model : str #esp32 s3, esp32 s2,etc
     description : str | None = None
     date_creation : datetime
-    date_update : datetime | None = None
+    date_updated : datetime | None = None
     last_use : datetime | None = None
     last_user : str | None = None
 
@@ -72,7 +75,7 @@ class machine_not_password(BaseModel):
     model : str #esp32 s3, esp32 s2,etc
     description : str | None = None
     date_creation : datetime
-    date_update : datetime | None = None
+    date_updated : datetime | None = None
     last_use : datetime | None = None
     last_user : str | None = None
 #information about the machine and its sensors
@@ -86,6 +89,7 @@ class auto_test_machine(BaseModel):
     servo_motor : bool
     camera : bool   
     esc_motor : bool
+    name : str #name of the machine
     date : datetime
 
 class acelerometer_gyroscope_data(BaseModel):

@@ -1,37 +1,13 @@
 // Panel de control. Depende de ../main.js (api_url, clave_token y el observador de .revelar)
-const ruta_inicio_sesion = '../index.html';
+// y de sesion_panel.js (leer_sesion, salir_del_panel y mostrar_datos_sesion)
 const ws_url = `${api_url.replace(/^http/, 'ws')}/ws/panel`;
 const tiempo_max_sin_senal_ms = 5000;
 const tiempo_max_autoprueba_ms = 30000;
 const voltaje_celda_minimo = 3.0;
 const voltaje_celda_maximo = 4.2;
 const voltaje_celda_bajo = 3.5;
-const max_eventos_registro = 40;
 
 // ===== Sesión =====
-function decodificar_token(token) {
-  const carga_base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-  const bytes = Uint8Array.from(atob(carga_base64), (caracter) => caracter.charCodeAt(0));
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
-
-function leer_sesion() {
-  const token = localStorage.getItem(clave_token);
-  if (!token) return null;
-  try {
-    const carga = decodificar_token(token);
-    if (carga.exp && carga.exp * 1000 <= Date.now()) return null;
-    return { token, nombre: carga.name, rol: carga.role, expira: carga.exp };
-  } catch (error) {
-    return null;
-  }
-}
-
-function salir_del_panel() {
-  localStorage.removeItem(clave_token);
-  window.location.replace(ruta_inicio_sesion);
-}
-
 const sesion = leer_sesion();
 if (!sesion) {
   // salir_del_panel();
@@ -49,8 +25,6 @@ function iniciar_panel() {
   const resumen_prueba = document.getElementById('resumen_prueba');
   const filas_prueba = document.querySelectorAll('#lista_prueba [data-componente]');
   const celdas_bateria = document.querySelectorAll('#celdas_bateria .celda_bateria');
-  const registro_eventos = document.getElementById('registro_eventos');
-  const boton_reconectar = document.getElementById('boton_reconectar');
 
   const textos_estado_enlace = {
     desconectado: 'Sin conexión con la API',
@@ -75,23 +49,11 @@ function iniciar_panel() {
 
   // ===== Datos del usuario =====
   const nombre_usuario = sesion.nombre || 'Usuario';
-  document.getElementById('usuario_nombre').textContent = nombre_usuario;
-  document.getElementById('usuario_avatar').textContent = nombre_usuario.charAt(0);
-  document.getElementById('usuario_rol').textContent = sesion.rol || 'Sin rol';
-  if (sesion.expira) {
-    document.getElementById('sesion_expira').textContent = formatear_fecha_hora(new Date(sesion.expira * 1000));
-    // Cierra la sesión justo cuando el token deja de ser válido
-    setTimeout(salir_del_panel, sesion.expira * 1000 - Date.now());
-  }
-  document.getElementById('boton_cerrar_sesion_panel').addEventListener('click', salir_del_panel);
+  mostrar_datos_sesion(sesion);
 
   // ===== Utilidades =====
   function formatear_hora(fecha) {
     return fecha.toLocaleTimeString('es-MX', { hour12: false });
-  }
-
-  function formatear_fecha_hora(fecha) {
-    return fecha.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   function escribir_valor(id, valor, decimales) {
@@ -100,18 +62,11 @@ function iniciar_panel() {
     elemento.textContent = es_numero ? valor.toFixed(decimales) : '—';
   }
 
+  // El panel ya no tiene tarjeta de registro: los eventos del enlace van a la consola del navegador
   function registrar_evento(texto, es_error = false) {
-    const fila = document.createElement('li');
-    fila.className = es_error ? 'registro_eventos_fila registro_eventos_fila_error' : 'registro_eventos_fila';
-    const hora = document.createElement('span');
-    hora.className = 'registro_eventos_hora';
-    hora.textContent = formatear_hora(new Date());
-    const contenido = document.createElement('span');
-    contenido.className = 'registro_eventos_texto';
-    contenido.textContent = texto;
-    fila.append(hora, contenido);
-    registro_eventos.prepend(fila);
-    while (registro_eventos.children.length > max_eventos_registro) registro_eventos.lastElementChild.remove();
+    const linea = `[${formatear_hora(new Date())}] ${texto}`;
+    if (es_error) console.warn(linea);
+    else console.info(linea);
   }
 
   // ===== Estado del enlace =====
@@ -202,10 +157,20 @@ function iniciar_panel() {
   }
 
   // ===== Telemetría =====
-  function pintar_telemetria({ bateria = {}, gps = {}, altitud, velocidad, rumbo }) {
+  // acelerometer_gyroscope y barometer llegan con los nombres de los BaseModel de la API (base_model_bm.py)
+  function pintar_telemetria({ bateria = {}, gps = {}, altitud, velocidad, rumbo, acelerometer_gyroscope = {}, barometer = {} }) {
     ultima_telemetria.textContent = formatear_hora(new Date());
     escribir_valor('bateria_voltaje', bateria.voltaje, 1);
     escribir_valor('bateria_porcentaje', bateria.porcentaje, 0);
+    escribir_valor('imu_cabeceo', acelerometer_gyroscope.pitch_angle, 1);
+    escribir_valor('imu_alabeo', acelerometer_gyroscope.roll_angle, 1);
+    escribir_valor('imu_guinada', acelerometer_gyroscope.yaw_angle, 1);
+    escribir_valor('imu_vel_cabeceo', acelerometer_gyroscope.pitch_velocity, 1);
+    escribir_valor('imu_vel_alabeo', acelerometer_gyroscope.roll_velocity, 1);
+    escribir_valor('imu_vel_guinada', acelerometer_gyroscope.yaw_velocity, 1);
+    escribir_valor('barometro_presion', barometer.pressure, 1);
+    escribir_valor('barometro_temperatura', barometer.temperature, 1);
+    escribir_valor('barometro_altitud', barometer.altitude, 1);
     escribir_valor('telemetria_latitud', gps.latitud, 6);
     escribir_valor('telemetria_longitud', gps.longitud, 6);
     escribir_valor('telemetria_satelites', gps.satelites, 0);
@@ -274,12 +239,6 @@ function iniciar_panel() {
         }
       });
     }, tiempo_max_autoprueba_ms);
-  });
-
-  boton_reconectar.addEventListener('click', () => {
-    intentos_reconexion = 0;
-    registrar_evento('Reconexión manual solicitada.');
-    conectar_socket();
   });
 
   // ===== Arranque =====

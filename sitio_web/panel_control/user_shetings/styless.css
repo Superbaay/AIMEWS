@@ -1,0 +1,82 @@
+/* ===== Usuarios ===== */
+.vista_usuario { display: flex; flex-direction: column; gap: 20px; animation: animacion_entrada .4s ease both; }
+.aviso_permisos { gap: 12px; }
+.fila_campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 16px; }
+
+/* Selector con la flecha en el color de acento, igual que los campos de texto */
+.campo_selector {
+  appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 40px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color_acento_claro) 50%),
+    linear-gradient(135deg, var(--color_acento_claro) 50%, transparent 50%);
+  background-position: calc(100% - 21px) 50%, calc(100% - 16px) 50%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+}
+.campo_selector option { background: var(--color_superficie); color: var(--color_texto); }
+.campo_entrada:disabled { opacity: .5; cursor: not-allowed; }
+.campo_busqueda { padding: 10px 14px; font-size: 14px; }
+
+/* ===== Editor ===== */
+.usuario_ficha { display: flex; align-items: center; gap: 14px; }
+.usuario_avatar_grande { width: 48px; height: 48px; font-size: 18px; }
+.usuario_ficha_textos { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.usuario_ficha_textos .titulo_tarjeta { overflow-wrap: anywhere; }
+.nota_cuenta_propia {
+  margin: 0; font-size: 13px; line-height: 1.5; color: var(--color_texto_secundario);
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(111, 180, 255, .06); border: 1px solid rgba(111, 180, 255, .2);
+}
+.bloque_usuario { display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid var(--color_linea); }
+.fila_accion { display: flex; gap: 10px; align-items: stretch; }
+.fila_accion > :first-child { flex: 1; min-width: 0; }
+.fila_accion .boton_acceso { flex: none; border-radius: 10px; }
+.boton_acceso:disabled { opacity: .45; cursor: not-allowed; background: transparent; color: var(--color_texto); border-color: rgba(140, 175, 235, .35); }
+.nota_resultado { margin: 0; font-size: 13px; color: var(--color_acento_claro); }
+.nota_resultado:empty { display: none; }
+.nota_resultado_error { color: var(--color_error); }
+
+/* ===== Lista ===== */
+.lista_usuarios {
+  margin: 0; padding: 0 4px 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 760px; overflow-y: auto;
+}
+.tarjeta_usuario {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "avatar datos rol boton";
+  align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 14px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+  transition: border-color .2s, background .2s;
+}
+.tarjeta_usuario_activa { border-color: rgba(111, 180, 255, .5); background: rgba(111, 180, 255, .06); }
+.tarjeta_usuario_avatar { grid-area: avatar; }
+.tarjeta_usuario_datos { grid-area: datos; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tarjeta_usuario_nombre { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tarjeta_usuario_texto_nombre { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.etiqueta_tu {
+  flex: none; padding: 2px 7px; border-radius: 999px;
+  font-family: var(--fuente_mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--color_acento_claro); border: 1px solid rgba(111, 180, 255, .35);
+}
+.tarjeta_usuario_contacto { font-size: 13px; color: var(--color_texto_tenue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.insignia_rol {
+  grid-area: rol; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color_texto_secundario); border: 1px solid var(--color_linea);
+}
+.insignia_rol_admin { color: var(--color_acento_claro); border-color: rgba(111, 180, 255, .45); background: rgba(111, 180, 255, .08); }
+.insignia_rol_desconocido { color: var(--color_alerta); border-color: rgba(242, 196, 107, .4); }
+.tarjeta_usuario_boton { grid-area: boton; padding: 6px 14px; font-size: 13px; }
+
+@media (max-width: 480px) {
+  .tarjeta_usuario {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "avatar datos boton" "avatar rol boton";
+  }
+  .insignia_rol { justify-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vista_usuario { animation: none; }
+}

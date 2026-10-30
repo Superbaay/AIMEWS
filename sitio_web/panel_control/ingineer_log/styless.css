@@ -1,0 +1,72 @@
+/* ===== Bitácora de ingeniería ===== */
+.formulario_registro, .vista_registro { display: flex; flex-direction: column; gap: 20px; animation: animacion_entrada .4s ease both; }
+.campo_area { resize: vertical; min-height: 68px; line-height: 1.5; }
+
+/* ===== Lista de registros ===== */
+.lista_registros {
+  margin: 0; padding: 0 4px 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 760px; overflow-y: auto;
+}
+.tarjeta_registro {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 16px 18px; border-radius: 14px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+  transition: border-color .2s, background .2s;
+}
+.tarjeta_registro_activa { border-color: rgba(111, 180, 255, .5); background: rgba(111, 180, 255, .06); }
+.tarjeta_registro_cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tarjeta_registro_titulo { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.titulo_registro {
+  margin: 0; font-family: var(--fuente_titulos); font-weight: 600; font-size: 16px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tarjeta_registro_boton { flex: none; padding: 6px 14px; font-size: 13px; }
+.tarjeta_registro_resumen {
+  margin: 0; font-size: 14px; line-height: 1.5; color: var(--color_texto_secundario);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ===== Detalle del registro ===== */
+.vista_registro_titulos { display: flex; flex-direction: column; gap: 6px; }
+.detalle_registro { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.detalle_registro dt {
+  margin-bottom: 4px;
+  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #7d8fb2;
+}
+.detalle_registro dd {
+  margin: 0; font-size: 15px; line-height: 1.6; color: var(--color_texto_secundario);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* Evidencia (imágenes y video): oculta hasta que se despliega con el botón */
+.evidencia { padding-top: 14px; border-top: 1px solid var(--color_linea); }
+.evidencia_resumen {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--color_acento_claro); padding: 6px 10px; border-radius: 6px;
+  border: 1px solid rgba(111, 180, 255, .3); transition: background .2s;
+}
+.evidencia_resumen::-webkit-details-marker { display: none; }
+.evidencia_resumen::before {
+  content: ''; width: 5px; height: 5px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform .2s;
+}
+.evidencia[open] .evidencia_resumen::before { transform: rotate(45deg); }
+.evidencia_resumen:hover { background: rgba(111, 180, 255, .12); }
+.evidencia_galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 14px; }
+.evidencia_archivo { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.evidencia_archivo img, .evidencia_archivo video {
+  display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+  border-radius: 10px; border: 1px solid var(--color_linea); background: rgba(6, 14, 30, .6);
+}
+.evidencia_archivo figcaption {
+  font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.evidencia_vacia { margin: 0; font-size: 13px; color: var(--color_texto_tenue); }
+
+@media (prefers-reduced-motion: reduce) {
+  .formulario_registro, .vista_registro { animation: none; }
+}
