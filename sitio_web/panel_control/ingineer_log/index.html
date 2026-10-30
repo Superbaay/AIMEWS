@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitácora de ingeniería · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styless.css">
+  <link rel="stylesheet" href="../styless.css">
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="../index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral">
+      <span class="etiqueta_pequena menu_lateral_titulo">Navegación</span>
+      <nav class="menu_lateral" aria-label="Secciones del panel">
+        <a href="../index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M6 9.5V20h12V9.5"></path>
+            <path d="M10 20v-5.5h4V20"></path>
+          </svg>
+          <span>Inicio</span>
+        </a>
+        <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 9h20"></path>
+            <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path>
+            <path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>
+          </svg>
+          <span>Bitácora</span>
+        </a>
+        <a href="../user_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>
+          </svg>
+          <span>Usuarios</span>
+        </a>
+        <a href="../machine_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <circle cx="12" cy="12" r="6.5"></circle>
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>
+          </svg>
+          <span>Máquinas</span>
+        </a>
+      </nav>
+      <div class="barra_lateral_pie">
+        <span class="etiqueta_pequena">Sesión válida hasta</span>
+        <span class="numero_mono" id="sesion_expira">—</span>
+      </div>
+    </aside>
+
+    <main class="panel_contenido">
+      <section class="vista_panel">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <span class="etiqueta_mono">Ingeniería</span>
+            <h1 class="titulo_panel">Bitácora</h1>
+          </div>
+          <div class="encabezado_panel_meta">
+            <span class="etiqueta_pequena">Registros</span>
+            <span class="numero_mono" id="total_registros">—</span>
+          </div>
+        </div>
+
+        <div class="cuadricula_gestion">
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
+            <!-- Modo formulario: nuevo registro -->
+            <form id="formulario_registro" class="formulario_registro" novalidate>
+              <div class="tarjeta_componente_cabecera"><span class="etiqueta_mono">Datos a llenar</span></div>
+              <h2 class="titulo_tarjeta">Nuevo registro</h2>
+              <div class="grupo_campos">
+                <label for="campo_nombre" class="campo">
+                  <span class="campo_etiqueta">Nombre</span>
+                  <input id="campo_nombre" name="name" type="text" class="campo_entrada" autocomplete="off" placeholder="Calibración del LiDAR" required>
+                </label>
+                <label for="campo_problema" class="campo">
+                  <span class="campo_etiqueta">Problema</span>
+                  <textarea id="campo_problema" name="problem" class="campo_entrada campo_area" rows="2" required></textarea>
+                </label>
+                <label for="campo_hipotesis" class="campo">
+                  <span class="campo_etiqueta">Hipótesis</span>
+                  <textarea id="campo_hipotesis" name="hipothesis" class="campo_entrada campo_area" rows="2" required></textarea>
+                </label>
+                <label for="campo_solucion" class="campo">
+                  <span class="campo_etiqueta">Solución</span>
+                  <textarea id="campo_solucion" name="solution" class="campo_entrada campo_area" rows="2" required></textarea>
+                </label>
+                <label for="campo_resultado" class="campo">
+                  <span class="campo_etiqueta">Resultado</span>
+                  <textarea id="campo_resultado" name="result" class="campo_entrada campo_area" rows="2" required></textarea>
+                </label>
+                <label for="campo_siguientes_pasos" class="campo">
+                  <span class="campo_etiqueta">Siguientes pasos <span class="campo_opcional">(opcional)</span></span>
+                  <textarea id="campo_siguientes_pasos" name="next_steps" class="campo_entrada campo_area" rows="2"></textarea>
+                </label>
+                <label for="campo_registro" class="campo">
+                  <span class="campo_etiqueta">Registro</span>
+                  <textarea id="campo_registro" name="log" class="campo_entrada campo_area" rows="3" placeholder="Mediciones, comandos y observaciones" required></textarea>
+                </label>
+              </div>
+              <div id="mensaje_error_registro" class="mensaje_error" role="alert" hidden>
+                <span class="mensaje_error_punto"></span>
+                <span id="mensaje_error_registro_texto"></span>
+              </div>
+              <button type="submit" id="boton_guardar_registro" class="boton_primario">
+                <span class="indicador_carga"></span>
+                <span id="texto_boton_guardar">Guardar registro</span>
+              </button>
+            </form>
+
+            <!-- Modo detalle: registro seleccionado en la lista -->
+            <div id="vista_registro" class="vista_registro" hidden>
+              <div class="tarjeta_componente_cabecera">
+                <span class="numero_mono" id="detalle_numero"></span>
+                <button type="button" class="boton_acceso" id="boton_volver">Volver</button>
+              </div>
+              <div class="vista_registro_titulos">
+                <h2 class="titulo_tarjeta" id="detalle_nombre"></h2>
+                <span class="etiqueta_pequena" id="detalle_meta"></span>
+              </div>
+              <dl class="detalle_registro" id="detalle_campos"></dl>
+              <div id="detalle_evidencia"></div>
+              <button type="button" class="boton_texto boton_eliminar" id="boton_eliminar_registro" hidden>Eliminar registro</button>
+            </div>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera">
+              <span class="etiqueta_mono">Registros anteriores</span>
+              <span class="etiqueta_pequena">Más reciente primero</span>
+            </div>
+            <p class="estado_lista" id="estado_lista">Cargando registros…</p>
+            <ul class="lista_registros" id="lista_registros"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="plantilla_registro">
+    <li class="tarjeta_registro">
+      <div class="tarjeta_registro_cabecera">
+        <div class="tarjeta_registro_titulo">
+          <span class="numero_mono tarjeta_registro_numero"></span>
+          <h3 class="titulo_registro"></h3>
+        </div>
+        <button type="button" class="boton_acceso tarjeta_registro_boton">Ver</button>
+      </div>
+      <p class="tarjeta_registro_resumen"></p>
+      <span class="etiqueta_pequena tarjeta_registro_meta"></span>
+    </li>
+  </template>
+
+  <script src="../../main.js"></script>
+  <script src="../sesion_panel.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

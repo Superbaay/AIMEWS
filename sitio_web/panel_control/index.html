@@ -42,6 +42,29 @@
           </svg>
           <span>Inicio</span>
         </a>
+        <a href="ingineer_log/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 9h20"></path>
+            <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path>
+            <path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>
+          </svg>
+          <span>Bitácora</span>
+        </a>
+        <a href="user_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>
+          </svg>
+          <span>Usuarios</span>
+        </a>
+        <a href="machine_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <circle cx="12" cy="12" r="6.5"></circle>
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>
+          </svg>
+          <span>Máquinas</span>
+        </a>
       </nav>
       <div class="barra_lateral_pie">
         <span class="etiqueta_pequena">Sesión válida hasta</span>
@@ -68,10 +91,7 @@
         <div class="cuadricula_panel">
           <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
             <div class="tarjeta_componente_cabecera"><span class="numero_mono">01</span><span class="etiqueta_pequena">Diagnóstico</span></div>
-            <div class="tarjeta_componente_texto">
-              <h2 class="titulo_tarjeta">Autoprueba</h2>
-              <p class="texto_secundario">Verifica sensores, actuadores y comunicación antes de iniciar una misión.</p>
-            </div>
+            <h2 class="titulo_tarjeta">Autoprueba</h2>
             <div class="informacion_prueba">
               <div class="informacion_prueba_cabecera">
                 <span class="etiqueta_mono">Información de la prueba</span>
@@ -96,11 +116,8 @@
           </article>
 
           <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Energía</span></div>
-            <div class="tarjeta_componente_texto">
-              <h2 class="titulo_tarjeta">Batería</h2>
-              <p class="texto_secundario">LiPo 6S de 22 000 mAh y 488 Wh. El dron mide cada celda antes de cada misión para confirmar que puede completarla y regresar.</p>
-            </div>
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Energía y sensores</span></div>
+            <h2 class="titulo_tarjeta">Batería</h2>
             <div class="cuadricula_datos cuadricula_datos_compacta">
               <div class="dato"><span class="dato_valor"><span id="bateria_voltaje">—</span><span class="dato_unidad">V</span></span><span class="dato_nombre">Voltaje total</span></div>
               <div class="dato"><span class="dato_valor"><span id="bateria_porcentaje">—</span><span class="dato_unidad">%</span></span><span class="dato_nombre">Carga</span></div>
@@ -113,14 +130,34 @@
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C5</span></div>
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C6</span></div>
             </div>
+
+            <div class="bloque_telemetria">
+              <h2 class="titulo_tarjeta">Telemetría</h2>
+              <div class="grupo_telemetria">
+                <span class="etiqueta_pequena">Acelerómetro y giroscopio</span>
+                <div class="cuadricula_datos cuadricula_datos_compacta cuadricula_datos_tres">
+                  <div class="dato"><span class="dato_valor"><span id="imu_cabeceo">—</span><span class="dato_unidad">°</span></span><span class="dato_nombre">Cabeceo</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="imu_alabeo">—</span><span class="dato_unidad">°</span></span><span class="dato_nombre">Alabeo</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="imu_guinada">—</span><span class="dato_unidad">°</span></span><span class="dato_nombre">Guiñada</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="imu_vel_cabeceo">—</span><span class="dato_unidad">°/s</span></span><span class="dato_nombre">Vel. cabeceo</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="imu_vel_alabeo">—</span><span class="dato_unidad">°/s</span></span><span class="dato_nombre">Vel. alabeo</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="imu_vel_guinada">—</span><span class="dato_unidad">°/s</span></span><span class="dato_nombre">Vel. guiñada</span></div>
+                </div>
+              </div>
+              <div class="grupo_telemetria">
+                <span class="etiqueta_pequena">Barómetro</span>
+                <div class="cuadricula_datos cuadricula_datos_compacta cuadricula_datos_tres">
+                  <div class="dato"><span class="dato_valor"><span id="barometro_presion">—</span><span class="dato_unidad">hPa</span></span><span class="dato_nombre">Presión</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="barometro_temperatura">—</span><span class="dato_unidad">°C</span></span><span class="dato_nombre">Temperatura</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="barometro_altitud">—</span><span class="dato_unidad">m</span></span><span class="dato_nombre">Altitud</span></div>
+                </div>
+              </div>
+            </div>
           </article>
 
-          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:180ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Telemetría</span></div>
-            <div class="tarjeta_componente_texto">
-              <h2 class="titulo_tarjeta">Posición y vuelo</h2>
-              <p class="texto_secundario">Datos del GPS, el barómetro y el magnetómetro transmitidos en tiempo real.</p>
-            </div>
+          <article class="tarjeta_componente tarjeta_panel tarjeta_panel_ancha revelar" style="--retraso:180ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Navegación</span></div>
+            <h2 class="titulo_tarjeta">Posición y vuelo</h2>
             <div class="cuadricula_datos cuadricula_datos_compacta">
               <div class="dato"><span class="dato_valor" id="telemetria_latitud">—</span><span class="dato_nombre">Latitud</span></div>
               <div class="dato"><span class="dato_valor" id="telemetria_longitud">—</span><span class="dato_nombre">Longitud</span></div>
@@ -130,22 +167,13 @@
               <div class="dato"><span class="dato_valor"><span id="telemetria_rumbo">—</span><span class="dato_unidad">°</span></span><span class="dato_nombre">Rumbo</span></div>
             </div>
           </article>
-
-          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:240ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">04</span><span class="etiqueta_pequena">WebSocket</span></div>
-            <div class="tarjeta_componente_texto">
-              <h2 class="titulo_tarjeta">Registro de enlace</h2>
-              <p class="texto_secundario">Eventos de la conexión entre el panel, la API y el dron.</p>
-            </div>
-            <ul class="registro_eventos" id="registro_eventos" aria-live="polite"></ul>
-            <button type="button" class="boton_texto" id="boton_reconectar">Reconectar ahora</button>
-          </article>
         </div>
       </section>
     </main>
   </div>
 
   <script src="../main.js"></script>
+  <script src="sesion_panel.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

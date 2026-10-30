@@ -87,12 +87,24 @@
 .tarjeta_panel { padding: 28px; gap: 20px; }
 .tarjeta_panel .titulo_tarjeta { font-size: 20px; }
 .tarjeta_panel .boton_primario:disabled:not(.esta_cargando) { cursor: not-allowed; opacity: .45; }
-.tarjeta_panel .boton_texto { margin-top: auto; }
+.tarjeta_panel .boton_primario { margin-top: auto; }
+.tarjeta_panel_ancha { grid-column: 1 / -1; }
 
 .cuadricula_datos_compacta { margin-top: 0; }
 .cuadricula_datos_compacta .dato { padding: 16px 18px; }
 .cuadricula_datos_compacta .dato_valor { font-size: 20px; overflow-wrap: anywhere; }
 .cuadricula_datos_compacta .dato_unidad { font-size: 13px; }
+
+/* Telemetría: comparte tarjeta con la batería, así que va más compacta */
+.bloque_telemetria {
+  display: flex; flex-direction: column; gap: 14px;
+  padding-top: 20px; border-top: 1px solid var(--color_linea);
+}
+.grupo_telemetria { display: flex; flex-direction: column; gap: 8px; }
+.cuadricula_datos_tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cuadricula_datos_tres .dato { padding: 10px 14px; gap: 4px; }
+.cuadricula_datos_tres .dato_valor { font-size: 17px; }
+.cuadricula_datos_tres .dato_unidad { font-size: 12px; }
 
 /* Autoprueba */
 .informacion_prueba {
@@ -123,7 +135,7 @@
 .celdas_bateria { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .celda_bateria { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .celda_bateria_barra {
-  position: relative; display: block; width: 100%; height: 76px; overflow: hidden;
+  position: relative; display: block; width: 100%; height: 56px; overflow: hidden;
   border-radius: 8px; background: rgba(6, 14, 30, .45); border: 1px solid rgba(140, 175, 235, .24);
 }
 .celda_bateria_relleno {
@@ -136,16 +148,15 @@
 .celda_bateria_baja .celda_bateria_relleno { background: linear-gradient(to top, rgba(255, 138, 120, .65), rgba(255, 138, 120, .25)); }
 .celda_bateria_baja .celda_bateria_valor { color: var(--color_error); }
 
-/* Registro de enlace */
-.registro_eventos {
-  margin: 0; padding: 6px 0; list-style: none;
-  min-height: 180px; max-height: 260px; overflow-y: auto;
-  font-family: var(--fuente_mono); font-size: 12px;
-  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea); border-radius: 14px;
+/* ===== Páginas de gestión (bitácora, usuarios): editor a la izquierda, lista a la derecha ===== */
+.cuadricula_gestion {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 20px; align-items: start;
 }
-.registro_eventos_fila { display: flex; gap: 14px; padding: 7px 16px; color: #c3cfe5; animation: animacion_entrada .4s ease both; }
-.registro_eventos_hora { color: var(--color_texto_tenue); flex: none; }
-.registro_eventos_fila_error .registro_eventos_texto { color: #ffc9c2; }
+.estado_lista { margin: 0; font-size: 14px; color: var(--color_texto_tenue); }
+.campo_opcional { color: var(--color_texto_tenue); font-weight: 400; }
+.boton_eliminar { color: var(--color_error); }
+.boton_eliminar:hover { color: #ffc9c2; }
 
 /* ===== Responsivo ===== */
 @media (max-width: 900px) {
@@ -154,7 +165,7 @@
     position: static; height: auto; flex-direction: row; align-items: center;
     padding: 10px 22px; border-right: none; border-bottom: 1px solid var(--color_linea);
   }
-  .menu_lateral { flex-direction: row; }
+  .menu_lateral { flex-direction: row; min-width: 0; overflow-x: auto; }
   .menu_lateral_titulo { display: none; }
   .barra_lateral_pie { margin-top: 0; margin-left: auto; padding: 0; border-top: none; align-items: flex-end; }
   .panel_contenido { padding: 28px 22px 56px; }
@@ -171,5 +182,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .estado_enlace_punto::after { animation: none !important; }
-  .celda_bateria_relleno, .registro_eventos_fila { transition: none; animation: none; }
+  .celda_bateria_relleno { transition: none; }
 }
