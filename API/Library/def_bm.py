@@ -52,19 +52,29 @@ def search_machine_rt(name:str, number:int):
     machine_bm = base_model_bm.machine(**machine)
     return machine_bm
 
-def new_machine_rt(machine_data: base_model_bm.machine):
+def search_machine_rt_by_number(number:int):
+    machine = db.local.machine_rt.user.find_one({"number" : number})
+    if machine == None :
+        raise HTTPException(status.HTTP_404_NOT_FOUND,detail="Machine dont found")
+    del machine["_id"]
+    return base_model_bm.machine_not_password(**machine)
+
+def new_machine_rt(machine_data: base_model_bm.machine_new):
     machine = db.local.machine_rt.user.find_one({"name" : machine_data.name})
     if machine != None :
-        raise HTTPException(status.HTTP_400_BAD_REQUEST,detail="Machine already exists")
+        raise HTTPException(status.HTTP_409_CONFLICT,detail="Machine already exists")
     machine = db.local.machine_rt.user.count_documents({})
     number = machine + 1
     new_machine = machine_data.model_dump()
+    #Import local para evitar el ciclo: segurity_bm ya importa def_bm
+    from Library import segurity_bm
+    new_machine["password"] = segurity_bm.encode_password(machine_data.password)
     new_machine["number"] = number
     new_machine["role"] = "4"
-    new_machine["created_at"] = datetime.now(timezone.utc)
+    new_machine["date_creation"] = datetime.now(timezone.utc)
     db.local.machine_rt.user.insert_one(new_machine)
     del new_machine["_id"]
-    machine_bm = base_model_bm.machine(**new_machine)
+    machine_bm = base_model_bm.machine_not_password(**new_machine)
     return machine_bm
 
 def search_machine_rt_not_password(number:int, name:str | None):
@@ -89,17 +99,20 @@ def search_all_machine_rt_not():
         machines_list.append(base_model_bm.machine_not_password(**machine))
     return machines_list
 
-def update_machine_rt(machine_data: base_model_bm.machine):
+#Solo cambia nombre, modelo y descripcion; contraseña, rol y fechas de alta no se tocan
+def update_machine_rt(machine_data: base_model_bm.machine_update):
     machine = db.local.machine_rt.user.find_one({"number" : machine_data.number})
     if machine == None :
         raise HTTPException(status.HTTP_404_NOT_FOUND,detail="Machine dont found")
-    updated_machine = machine_data.model_dump()
-    updated_machine["date_updated"] = datetime.now(timezone.utc) 
-    updated_machine["password"] = machine["password"]
-    updated_machine["role"] = machine["role"]
-    db.local.machine_rt.user.update_one({"number" : machine_data.number}, {"$set": updated_machine})
-    del updated_machine["_id"]
-    machine_bm = base_model_bm.machine(**updated_machine)
+    same_name = db.local.machine_rt.user.find_one({"name" : machine_data.name})
+    if same_name != None and same_name["number"] != machine_data.number :
+        raise HTTPException(status.HTTP_409_CONFLICT,detail="Machine already exists")
+    changes = machine_data.model_dump(exclude={"number"})
+    changes["date_updated"] = datetime.now(timezone.utc)
+    db.local.machine_rt.user.update_one({"number" : machine_data.number}, {"$set": changes})
+    machine.update(changes)
+    del machine["_id"]
+    machine_bm = base_model_bm.machine_not_password(**machine)
     return machine_bm
 
 def delete_machine_rt(number:int):
