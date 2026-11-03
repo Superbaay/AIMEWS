@@ -2,6 +2,60 @@
 .formulario_registro, .vista_registro { display: flex; flex-direction: column; gap: 20px; animation: animacion_entrada .4s ease both; }
 .campo_area { resize: vertical; min-height: 68px; line-height: 1.5; }
 
+/* ===== Zona de evidencia: clic/toque abre el selector, en PC también acepta arrastrar ===== */
+.zona_evidencia {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 26px 18px; border-radius: 14px; text-align: center; cursor: pointer;
+  border: 1.5px dashed rgba(111, 180, 255, .32); background: rgba(6, 14, 30, .45);
+  transition: border-color .2s, background .2s, transform .2s var(--curva_suave);
+}
+.zona_evidencia:hover, .zona_evidencia:has(.entrada_oculta:focus-visible) {
+  border-color: var(--color_acento); background: rgba(111, 180, 255, .06);
+}
+.zona_evidencia:has(.entrada_oculta:focus-visible) { box-shadow: 0 0 0 4px rgba(111, 180, 255, .18); }
+.zona_evidencia.esta_arrastrando {
+  border-style: solid; border-color: var(--color_acento_claro);
+  background: rgba(111, 180, 255, .12); transform: translateY(-2px);
+}
+/* Oculta el input nativo sin sacarlo del orden de tabulación */
+.entrada_oculta { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.zona_evidencia_marca {
+  width: 14px; height: 14px; margin-bottom: 4px; transform: rotate(45deg);
+  border: 1.5px solid var(--color_acento); transition: background .2s;
+}
+.zona_evidencia.esta_arrastrando .zona_evidencia_marca { background: rgba(111, 180, 255, .35); }
+.zona_evidencia_titulo { font-family: var(--fuente_titulos); font-weight: 500; font-size: 15px; color: var(--color_texto); }
+.zona_evidencia_texto { font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .06em; color: var(--color_texto_tenue); }
+/* En pantallas táctiles no se puede arrastrar: se muestra el texto de la galería */
+.texto_tactil { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .texto_puntero { display: none; }
+  .texto_tactil { display: inline; }
+  .zona_evidencia { padding: 22px 16px; }
+}
+
+/* Archivos elegidos, pendientes de subir */
+.lista_adjuntos { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lista_adjuntos:empty { display: none; }
+.adjunto {
+  display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border-radius: 10px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+  animation: animacion_entrada .3s ease both;
+}
+.adjunto_invalido { border-color: rgba(255, 138, 120, .45); }
+.adjunto_vista {
+  flex: none; width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
+  display: grid; place-items: center; background: rgba(111, 180, 255, .08);
+  font-family: var(--fuente_mono); font-size: 10px; letter-spacing: .08em; color: var(--color_acento_claro);
+}
+.adjunto_vista img { width: 100%; height: 100%; object-fit: cover; }
+.adjunto_datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.adjunto_nombre { font-size: 14px; color: var(--color_texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adjunto_meta { font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue); }
+.adjunto_invalido .adjunto_meta { color: var(--color_error); }
+.adjunto_quitar { flex: none; font-size: 13px; }
+.evidencia_cargando { font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue); }
+
 /* ===== Lista de registros ===== */
 .lista_registros {
   margin: 0; padding: 0 4px 0 0; list-style: none;
@@ -61,6 +115,72 @@
   display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
   border-radius: 10px; border: 1px solid var(--color_linea); background: rgba(6, 14, 30, .6);
 }
+
+/* Miniatura clicable: abre el visor */
+.evidencia_miniatura {
+  position: relative; display: block; width: 100%; padding: 0;
+  background: none; border: none; border-radius: 10px; cursor: zoom-in;
+}
+.evidencia_miniatura img, .evidencia_miniatura video { transition: border-color .25s, opacity .25s; pointer-events: none; }
+.evidencia_miniatura:hover img, .evidencia_miniatura:hover video { border-color: rgba(111, 180, 255, .55); }
+.evidencia_miniatura:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(111, 180, 255, .3); }
+.evidencia_miniatura:disabled { cursor: progress; }
+.evidencia_miniatura:disabled img, .evidencia_miniatura:disabled video { opacity: .5; }
+/* Marca de reproducir sobre los videos */
+.evidencia_miniatura_video::after {
+  content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(10, 20, 40, .75); border: 1px solid rgba(111, 180, 255, .5);
+  transition: background .25s;
+}
+.evidencia_miniatura_video::before {
+  content: ''; position: absolute; left: 50%; top: 50%; z-index: 1; transform: translate(-35%, -50%);
+  border-style: solid; border-width: 7px 0 7px 12px;
+  border-color: transparent transparent transparent var(--color_acento_claro);
+}
+.evidencia_miniatura_video:hover::after { background: rgba(111, 180, 255, .25); }
+
+/* ===== Visor de evidencia (pantalla completa) ===== */
+body:has(.visor_evidencia[open]) { overflow: hidden; }
+.visor_evidencia {
+  width: 100%; height: 100%; max-width: none; max-height: none; margin: 0;
+  padding: 16px 76px 28px; border: none;
+  background: rgba(6, 12, 26, .96); color: var(--color_texto);
+}
+.visor_evidencia[open] { display: flex; flex-direction: column; gap: 16px; animation: animacion_entrada .25s ease both; }
+.visor_evidencia::backdrop { background: rgba(6, 12, 26, .7); }
+.visor_evidencia_barra { display: flex; align-items: center; gap: 16px; min-height: 40px; }
+.visor_evidencia_nombre {
+  flex: 1; min-width: 0; font-family: var(--fuente_mono); font-size: 13px; color: var(--color_texto_secundario);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.visor_evidencia_marco { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.visor_evidencia_medio {
+  display: block; max-width: 100%; max-height: 100%; object-fit: contain;
+  border-radius: 10px; background: #000;
+}
+.visor_evidencia_flecha {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+  background: rgba(13, 26, 51, .85); border: 1px solid rgba(140, 175, 235, .3);
+  transition: background .25s, border-color .25s;
+}
+.visor_evidencia_flecha:hover { background: var(--color_superficie_hover); border-color: var(--color_acento); }
+.visor_evidencia_flecha::before {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px;
+  border-left: 2px solid var(--color_acento_claro); border-bottom: 2px solid var(--color_acento_claro);
+}
+.visor_evidencia_flecha_anterior { left: 16px; }
+.visor_evidencia_flecha_anterior::before { transform: translate(-30%, -50%) rotate(45deg); }
+.visor_evidencia_flecha_siguiente { right: 16px; }
+.visor_evidencia_flecha_siguiente::before { transform: translate(-70%, -50%) rotate(-135deg); }
+
+@media (max-width: 720px) {
+  .visor_evidencia { padding: 12px 12px 20px; }
+  /* En el teléfono las flechas quedan abajo para no tapar la imagen */
+  .visor_evidencia_flecha { top: auto; bottom: 20px; transform: none; }
+  .visor_evidencia_marco { padding-bottom: 60px; }
+}
 .evidencia_archivo figcaption {
   font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -68,5 +188,7 @@
 .evidencia_vacia { margin: 0; font-size: 13px; color: var(--color_texto_tenue); }
 
 @media (prefers-reduced-motion: reduce) {
-  .formulario_registro, .vista_registro { animation: none; }
+  .formulario_registro, .vista_registro, .adjunto { animation: none; }
+  .zona_evidencia.esta_arrastrando { transform: none; }
+  .visor_evidencia[open] { animation: none; }
 }

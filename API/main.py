@@ -10,11 +10,13 @@ from pymongo import MongoClient
 from jose import JWTError
 from Routers_BM.user_rt import user
 from Routers_BM.machine_rt import router as machine_rt
-
+from Routers_BM.enginer_log_rt import engineer
 db = MongoClient()
 app = FastAPI()
 app.include_router(user)
 app.include_router(machine_rt)
+app.include_router(engineer)
+
 
 
 app.add_middleware(
@@ -36,7 +38,7 @@ async def post_token(fomrdata:OAuth2PasswordRequestForm = Depends()):
     return segurity_bm.create_token(user)
 
 @app.post("/user")
-async def new_user(user:base_model_bm.user, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+async def new_user(user:base_model_bm.user, token:dict  = Depends(segurity_bm.verify_role_Depends_O5)):
     if not segurity_bm.can_assign_role(token, user.role):
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
     if def_bm.search_username(user.name)  != None:

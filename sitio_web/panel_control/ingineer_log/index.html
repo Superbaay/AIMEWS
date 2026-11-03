@@ -76,7 +76,6 @@
       <section class="vista_panel">
         <div class="encabezado_panel revelar" style="--retraso:0ms">
           <div class="encabezado_panel_titulos">
-            <span class="etiqueta_mono">Ingeniería</span>
             <h1 class="titulo_panel">Bitácora</h1>
           </div>
           <div class="encabezado_panel_meta">
@@ -121,6 +120,21 @@
                   <textarea id="campo_registro" name="log" class="campo_entrada campo_area" rows="3" placeholder="Mediciones, comandos y observaciones" required></textarea>
                 </label>
               </div>
+              <!-- Evidencia: en el teléfono abre la galería (image/*, video/*); en PC además se pueden arrastrar archivos.
+                   Sin name: no viaja en el JSON del registro, se sube aparte a POST /engineer_log/evidence -->
+              <div class="campo">
+                <span class="campo_etiqueta">Evidencia <span class="campo_opcional">(opcional)</span></span>
+                <label for="campo_evidencia" class="zona_evidencia" id="zona_evidencia">
+                  <input id="campo_evidencia" type="file" class="entrada_oculta" accept="image/*,video/*" multiple>
+                  <span class="zona_evidencia_marca" aria-hidden="true"></span>
+                  <span class="zona_evidencia_titulo">
+                    <span class="texto_puntero">Arrastra archivos aquí o haz clic para elegirlos</span>
+                    <span class="texto_tactil">Toca para elegir fotos o videos de la galería</span>
+                  </span>
+                  <span class="zona_evidencia_texto">JPG, PNG, WEBP, MP4, MOV o PDF · máx. 20 MB por archivo</span>
+                </label>
+                <ul class="lista_adjuntos" id="lista_adjuntos"></ul>
+              </div>
               <div id="mensaje_error_registro" class="mensaje_error" role="alert" hidden>
                 <span class="mensaje_error_punto"></span>
                 <span id="mensaje_error_registro_texto"></span>
@@ -160,6 +174,18 @@
     </main>
   </div>
 
+  <!-- Visor de evidencia: la imagen o el video a pantalla completa. Esc o clic fuera lo cierran -->
+  <dialog class="visor_evidencia" id="visor_evidencia" aria-labelledby="visor_nombre">
+    <div class="visor_evidencia_barra">
+      <span class="numero_mono" id="visor_contador"></span>
+      <span class="visor_evidencia_nombre" id="visor_nombre"></span>
+      <button type="button" class="boton_acceso" id="visor_cerrar">Cerrar</button>
+    </div>
+    <div class="visor_evidencia_marco" id="visor_marco"></div>
+    <button type="button" class="visor_evidencia_flecha visor_evidencia_flecha_anterior" id="visor_anterior" aria-label="Archivo anterior"></button>
+    <button type="button" class="visor_evidencia_flecha visor_evidencia_flecha_siguiente" id="visor_siguiente" aria-label="Archivo siguiente"></button>
+  </dialog>
+
   <template id="plantilla_registro">
     <li class="tarjeta_registro">
       <div class="tarjeta_registro_cabecera">
@@ -171,6 +197,17 @@
       </div>
       <p class="tarjeta_registro_resumen"></p>
       <span class="etiqueta_pequena tarjeta_registro_meta"></span>
+    </li>
+  </template>
+
+  <template id="plantilla_adjunto">
+    <li class="adjunto">
+      <span class="adjunto_vista"></span>
+      <span class="adjunto_datos">
+        <span class="adjunto_nombre"></span>
+        <span class="adjunto_meta"></span>
+      </span>
+      <button type="button" class="boton_texto adjunto_quitar">Quitar</button>
     </li>
   </template>
 
