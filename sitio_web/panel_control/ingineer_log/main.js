@@ -12,6 +12,17 @@ const campos_detalle = [
   ['log', 'Registro'],
 ];
 
+// Igual que allowed_types y max_size de enginer_log_rt.py. La API vuelve a comprobarlo con los bytes reales,
+// esto solo avisa antes de subir. archivo.type viene vacío si el navegador no reconoce la extensión
+const tipos_evidencia = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'application/pdf'];
+const tamano_maximo_evidencia = 20 * 1024 * 1024;
+
+// Devuelve el motivo por el que el archivo no se puede subir (se muestra en rojo en la lista) o null si es válido
+function validar_archivo(archivo) {
+  // TODO(human)
+  return null;
+}
+
 const sesion = leer_sesion();
 if (!sesion) {
   // salir_del_panel();
@@ -37,9 +48,23 @@ function iniciar_bitacora() {
   const estado_lista = document.getElementById('estado_lista');
   const lista_registros = document.getElementById('lista_registros');
   const plantilla_registro = document.getElementById('plantilla_registro');
+  const zona_evidencia = document.getElementById('zona_evidencia');
+  const campo_evidencia = document.getElementById('campo_evidencia');
+  const lista_adjuntos = document.getElementById('lista_adjuntos');
+  const plantilla_adjunto = document.getElementById('plantilla_adjunto');
+  const visor_evidencia = document.getElementById('visor_evidencia');
+  const visor_contador = document.getElementById('visor_contador');
+  const visor_nombre = document.getElementById('visor_nombre');
+  const visor_marco = document.getElementById('visor_marco');
+  const visor_anterior = document.getElementById('visor_anterior');
+  const visor_siguiente = document.getElementById('visor_siguiente');
 
   let registros = [];
   let numero_seleccionado = null;
+  let adjuntos = []; // { archivo, url_vista, error }: elegidos y pendientes de subir
+  let urls_evidencia = []; // URLs blob de la evidencia mostrada; se liberan al cambiar de registro
+  let medios_visor = []; // { tipo, url, nombre } por posición en la galería; solo imágenes y videos ya descargados
+  let posicion_visor = 0;
 
   mostrar_datos_sesion(sesion);
 
@@ -58,6 +83,79 @@ function iniciar_bitacora() {
     formulario_registro.querySelectorAll('.campo_entrada_invalido').forEach((campo) => campo.classList.remove('campo_entrada_invalido'));
   }
 
+  function formatear_tamano(bytes) {
+    return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  // ===== Adjuntos: evidencia elegida que se sube después de crear el registro =====
+  function agregar_adjuntos(archivos) {
+    [...archivos].forEach((archivo) => {
+      const repetido = adjuntos.some(({ archivo: otro }) => otro.name === archivo.name && otro.size === archivo.size && otro.lastModified === archivo.lastModified);
+      if (repetido) return;
+      const url_vista = archivo.type.startsWith('image/') ? URL.createObjectURL(archivo) : null;
+      adjuntos.push({ archivo, url_vista, error: validar_archivo(archivo) });
+    });
+    pintar_adjuntos();
+  }
+
+  function quitar_adjunto(adjunto) {
+    if (adjunto.url_vista) URL.revokeObjectURL(adjunto.url_vista);
+    adjuntos = adjuntos.filter((otro) => otro !== adjunto);
+    pintar_adjuntos();
+  }
+
+  function limpiar_adjuntos() {
+    adjuntos.forEach(({ url_vista }) => url_vista && URL.revokeObjectURL(url_vista));
+    adjuntos = [];
+    pintar_adjuntos();
+  }
+
+  function pintar_adjuntos() {
+    lista_adjuntos.replaceChildren();
+    adjuntos.forEach((adjunto) => {
+      const fila = plantilla_adjunto.content.firstElementChild.cloneNode(true);
+      const vista = fila.querySelector('.adjunto_vista');
+      if (adjunto.url_vista) {
+        const imagen = document.createElement('img');
+        imagen.src = adjunto.url_vista;
+        imagen.alt = '';
+        vista.append(imagen);
+      } else {
+        vista.textContent = adjunto.archivo.name.split('.').pop().slice(0, 4).toUpperCase();
+      }
+      fila.classList.toggle('adjunto_invalido', Boolean(adjunto.error));
+      fila.querySelector('.adjunto_nombre').textContent = adjunto.archivo.name;
+      fila.querySelector('.adjunto_meta').textContent = adjunto.error || formatear_tamano(adjunto.archivo.size);
+      fila.querySelector('.adjunto_quitar').addEventListener('click', () => quitar_adjunto(adjunto));
+      lista_adjuntos.append(fila);
+    });
+  }
+
+  function motivo_rechazo(error) {
+    if (error.estado === 415) return 'tipo no permitido';
+    if (error.estado === 413) return 'supera el tamaño máximo';
+    return error.message;
+  }
+
+  // De uno en uno para mostrar el progreso; devuelve los archivos que la API rechazó
+  async function subir_adjuntos(numero) {
+    const fallidos = [];
+    const validos = adjuntos.filter(({ error }) => !error);
+    for (const [indice, { archivo }] of validos.entries()) {
+      texto_boton_guardar.textContent = `Subiendo evidencia ${indice + 1}/${validos.length}…`;
+      const datos = new FormData();
+      datos.append('file', archivo);
+      try {
+        // Sin Content-Type: el navegador lo pone con el separador del multipart
+        await pedir_api(`/engineer_log/evidence?number=${numero}`, { method: 'POST', body: datos });
+      } catch (error) {
+        if (error.message === 'sesion_invalida') throw error;
+        fallidos.push(`${archivo.name}: ${motivo_rechazo(error)}`);
+      }
+    }
+    return fallidos;
+  }
+
   // ===== Lista =====
   async function cargar_registros() {
     estado_lista.hidden = false;
@@ -68,7 +166,8 @@ function iniciar_bitacora() {
       pintar_lista();
     } catch (error) {
       if (error.message === 'sesion_invalida') return;
-      estado_lista.textContent = error.message;
+      // La bitácora exige nivel 4 (verify_role_Depends_4); un rol menor recibe 403
+      estado_lista.textContent = error.estado === 403 ? 'Tu rol no tiene acceso a la bitácora (se requiere nivel 4).' : error.message;
     }
   }
 
@@ -132,6 +231,9 @@ function iniciar_bitacora() {
 
   // La evidencia queda plegada; los archivos solo se crean (y descargan) al desplegarla
   function pintar_evidencia(evidencia) {
+    urls_evidencia.forEach((url) => URL.revokeObjectURL(url));
+    urls_evidencia = [];
+    medios_visor = [];
     detalle_evidencia.replaceChildren();
     if (!Array.isArray(evidencia) || evidencia.length === 0) {
       const vacia = document.createElement('p');
@@ -152,46 +254,164 @@ function iniciar_bitacora() {
 
     desplegable.addEventListener('toggle', () => {
       if (!desplegable.open || galeria.childElementCount > 0) return;
-      evidencia.forEach((archivo) => galeria.append(crear_archivo_evidencia(archivo)));
+      evidencia.forEach((archivo, indice) => galeria.append(crear_archivo_evidencia(archivo, indice)));
     });
     detalle_evidencia.append(desplegable);
   }
 
+  // GET /engineer_log/files exige token y un <img src> no puede enviarlo: se descarga con fetch y se muestra como blob
+  async function descargar_evidencia(url) {
+    const respuesta = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem(clave_token)}` } });
+    if (respuesta.status === 401) salir_del_panel();
+    if (!respuesta.ok) throw new Error(`no se pudo cargar (${respuesta.status})`);
+    const url_blob = URL.createObjectURL(await respuesta.blob());
+    urls_evidencia.push(url_blob);
+    return url_blob;
+  }
+
   // archivo sigue el BaseModel media: filename, content_type, url_path, onwer
-  function crear_archivo_evidencia({ filename = 'archivo', content_type = '', url_path = '' }) {
+  // indice es la posición en la galería: el visor recorre los archivos en ese mismo orden
+  function crear_archivo_evidencia({ filename = 'archivo', content_type = '', url_path = '' }, indice) {
     const figura = document.createElement('figure');
     figura.className = 'evidencia_archivo';
     const url = new URL(url_path, api_url);
-    // Solo http(s): una url_path con "javascript:" no debe convertirse en un enlace ejecutable
-    if (!['http:', 'https:'].includes(url.protocol)) return figura;
+    // Solo la propia API: el token no debe enviarse a otro servidor ni a una url_path con "javascript:"
+    if (url.origin !== new URL(api_url).origin) return figura;
 
+    const tipo = content_type.startsWith('image/') ? 'imagen' : content_type.startsWith('video/') ? 'video' : 'otro';
     let vista;
-    if (content_type.startsWith('image/')) {
-      vista = document.createElement('img');
-      vista.src = url.href;
-      vista.alt = filename;
-      vista.loading = 'lazy';
-    } else if (content_type.startsWith('video/')) {
-      vista = document.createElement('video');
-      vista.src = url.href;
-      vista.controls = true;
-      vista.preload = 'metadata';
-    } else {
+    let miniatura = null;
+    if (tipo === 'otro') {
       vista = document.createElement('a');
-      vista.href = url.href;
       vista.target = '_blank';
       vista.rel = 'noopener';
       vista.textContent = 'Abrir archivo';
+    } else {
+      // La miniatura solo muestra; se reproduce y se ve completa en el visor
+      vista = document.createElement(tipo === 'imagen' ? 'img' : 'video');
+      if (tipo === 'imagen') vista.alt = filename;
+      else Object.assign(vista, { muted: true, playsInline: true, preload: 'metadata' });
+      miniatura = document.createElement('button');
+      miniatura.type = 'button';
+      miniatura.className = `evidencia_miniatura evidencia_miniatura_${tipo}`;
+      miniatura.disabled = true;
+      miniatura.setAttribute('aria-label', `Ampliar ${filename}`);
+      miniatura.append(vista);
+      miniatura.addEventListener('click', () => abrir_visor(indice));
     }
     const pie = document.createElement('figcaption');
-    pie.textContent = filename;
-    figura.append(vista, pie);
+    pie.textContent = `${filename} · cargando…`;
+    figura.append(miniatura || vista, pie);
+
+    descargar_evidencia(url.href)
+      .then((url_blob) => {
+        if (tipo === 'otro') {
+          vista.href = url_blob;
+        } else {
+          vista.src = url_blob;
+          medios_visor[indice] = { tipo, url: url_blob, nombre: filename };
+          miniatura.disabled = false;
+        }
+        pie.textContent = filename;
+      })
+      .catch((error) => { pie.textContent = `${filename} · ${error.message}`; });
     return figura;
   }
 
+  // ===== Visor de evidencia =====
+  // medios_visor puede tener huecos (PDF o archivos que aún no bajan): se navega solo entre los disponibles
+  function posiciones_disponibles() {
+    return medios_visor.flatMap((medio, indice) => (medio ? [indice] : []));
+  }
+
+  function abrir_visor(indice) {
+    if (!medios_visor[indice]) return;
+    mostrar_en_visor(indice);
+    if (!visor_evidencia.open) visor_evidencia.showModal();
+  }
+
+  function mostrar_en_visor(indice) {
+    posicion_visor = indice;
+    const { tipo, url, nombre } = medios_visor[indice];
+    const medio = document.createElement(tipo === 'imagen' ? 'img' : 'video');
+    medio.className = 'visor_evidencia_medio';
+    medio.src = url;
+    if (tipo === 'imagen') {
+      medio.alt = nombre;
+    } else {
+      Object.assign(medio, { controls: true, autoplay: true, playsInline: true });
+    }
+    // Reemplazar el contenido detiene el video anterior
+    visor_marco.replaceChildren(medio);
+    visor_nombre.textContent = nombre;
+
+    const disponibles = posiciones_disponibles();
+    visor_contador.textContent = `${disponibles.indexOf(indice) + 1} / ${disponibles.length}`;
+    visor_anterior.hidden = disponibles.length < 2;
+    visor_siguiente.hidden = disponibles.length < 2;
+  }
+
+  // paso: -1 anterior, 1 siguiente. Da la vuelta al llegar a un extremo
+  function mover_visor(paso) {
+    const disponibles = posiciones_disponibles();
+    if (disponibles.length < 2) return;
+    const actual = disponibles.indexOf(posicion_visor);
+    mostrar_en_visor(disponibles[(actual + paso + disponibles.length) % disponibles.length]);
+  }
+
+  function cerrar_visor() {
+    visor_evidencia.close();
+  }
+
   // ===== Eventos =====
+  document.getElementById('visor_cerrar').addEventListener('click', cerrar_visor);
+  visor_anterior.addEventListener('click', () => mover_visor(-1));
+  visor_siguiente.addEventListener('click', () => mover_visor(1));
+  // Clic en el fondo (fuera de la imagen o el video) cierra el visor
+  visor_evidencia.addEventListener('click', (evento) => {
+    if (evento.target === visor_evidencia || evento.target === visor_marco) cerrar_visor();
+  });
+  visor_evidencia.addEventListener('keydown', (evento) => {
+    // Con el video enfocado, las flechas adelantan o retroceden el video
+    if (evento.target.tagName === 'VIDEO') return;
+    if (evento.key === 'ArrowLeft') mover_visor(-1);
+    if (evento.key === 'ArrowRight') mover_visor(1);
+  });
+  // Esc, el botón o el clic fuera pasan por aquí: vaciar el marco detiene el video
+  visor_evidencia.addEventListener('close', () => visor_marco.replaceChildren());
+
   formulario_registro.addEventListener('input', ocultar_error);
   boton_volver.addEventListener('click', mostrar_formulario);
+
+  campo_evidencia.addEventListener('change', () => {
+    agregar_adjuntos(campo_evidencia.files);
+    campo_evidencia.value = ''; // permite volver a elegir el mismo archivo después de quitarlo
+  });
+
+  // Arrastrar y soltar (PC). El contador evita que el resaltado parpadee al pasar sobre los hijos de la zona
+  let profundidad_arrastre = 0;
+  zona_evidencia.addEventListener('dragenter', (evento) => {
+    evento.preventDefault();
+    profundidad_arrastre += 1;
+    zona_evidencia.classList.add('esta_arrastrando');
+  });
+  zona_evidencia.addEventListener('dragover', (evento) => {
+    evento.preventDefault();
+    evento.dataTransfer.dropEffect = 'copy';
+  });
+  zona_evidencia.addEventListener('dragleave', () => {
+    profundidad_arrastre = Math.max(0, profundidad_arrastre - 1);
+    if (profundidad_arrastre === 0) zona_evidencia.classList.remove('esta_arrastrando');
+  });
+  zona_evidencia.addEventListener('drop', (evento) => {
+    evento.preventDefault();
+    profundidad_arrastre = 0;
+    zona_evidencia.classList.remove('esta_arrastrando');
+    agregar_adjuntos(evento.dataTransfer.files);
+  });
+  // Un archivo soltado fuera de la zona abriría el archivo en la pestaña y se perdería el formulario
+  window.addEventListener('dragover', (evento) => evento.preventDefault());
+  window.addEventListener('drop', (evento) => evento.preventDefault());
 
   formulario_registro.addEventListener('submit', async (evento) => {
     evento.preventDefault();
@@ -200,6 +420,10 @@ function iniciar_bitacora() {
       vacios.forEach((campo) => campo.classList.add('campo_entrada_invalido'));
       vacios[0].focus();
       mostrar_error('Completa los campos obligatorios.');
+      return;
+    }
+    if (adjuntos.some(({ error }) => error)) {
+      mostrar_error('Quita los archivos marcados en rojo antes de guardar.');
       return;
     }
 
@@ -219,10 +443,17 @@ function iniciar_bitacora() {
     boton_guardar_registro.classList.add('esta_cargando');
     texto_boton_guardar.textContent = 'Guardando…';
     try {
-      await enviar_json('/engineer_log/new', 'POST', cuerpo);
+      // Dos pasos: el registro va en JSON y la evidencia en multipart, cada archivo a POST /engineer_log/evidence
+      const { number } = await enviar_json('/engineer_log/new', 'POST', cuerpo);
+      const fallidos = await subir_adjuntos(number);
       formulario_registro.reset();
+      limpiar_adjuntos();
       await cargar_registros();
-      if (registros.length > 0) mostrar_registro(registros[0]);
+      const creado = registros.find((registro) => registro.number === number) || registros[0];
+      if (creado) mostrar_registro(creado);
+      if (fallidos.length > 0) {
+        window.alert(`El registro ${formatear_numero(number)} se guardó, pero esta evidencia no se subió:\n\n${fallidos.join('\n')}`);
+      }
     } catch (error) {
       if (error.message === 'sesion_invalida') return;
       mostrar_error(error.message);

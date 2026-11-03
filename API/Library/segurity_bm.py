@@ -55,31 +55,31 @@ async def verify_role_Depends_O5(token:base_model_bm.user = Depends(verify_token
     if token.get("role") == "O5-1":
         return token
     else:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
+        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
     
 async def verify_role_Depends_4(token:base_model_bm.user = Depends(verify_token_Depends)):
     if token.get("role") == "4" or token.get("role") == "O5-1":
         return token
     else:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
+        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
 async def verify_role_Depends_3(token:base_model_bm.user = Depends(verify_token_Depends)):
     if token.get("role") == "3" or token.get("role") == "O5-1" or token.get("role") == "4":
         return token
     else:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
+        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
 async def verify_role_Depends_2(token:base_model_bm.user = Depends(verify_token_Depends)):
     if token.get("role") == "2" or token.get("role") == "O5-1" or token.get("role") == "3" or token.get("role") == "4":
         return token
     else:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
+        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
 async def verify_role_Depends_1(token:base_model_bm.user = Depends(verify_token_Depends)):
     if token.get("role") == "1" or token.get("role") == "O5-1" or token.get("role") == "2" or token.get("role") == "3" or token.get("role") == "4":
         return token
     else:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="Role insuficiente")
+        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
 #Jerarquia de roles: O5-1 > 4 > 3 > 2 > 1. Un rol desconocido (por ejemplo "admin") vale 0
 role_rank = {"1": 1, "2": 2, "3": 3, "4": 4, "O5-1": 5}
