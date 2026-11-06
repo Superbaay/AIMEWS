@@ -27,12 +27,14 @@ def veryfy_user( user : str, password : str ):
     verify_password(password,full_user.password)
 
 #Token
-def create_token(user:base_model_bm.user):
+#El type sale del modelo: base_model_bm.user da "user" y base_model_bm.machine da "machine"
+def create_token(user:base_model_bm.user | base_model_bm.machine):
     expire_time = datetime.now(timezone.utc) + timedelta(hours=expire_time_hours)
     playload ={
         "name" : user.name,
         "exp" : expire_time,
-        "role" : user.role
+        "role" : user.role,
+        "type" : user.type
     }
     return jwt.encode(playload,secret_key,algoticmo)
 
@@ -51,31 +53,45 @@ async def decode_token(token: str):
 async def verify_token_Depends(token:str = Depends(segurity)):
     return await verify_token(token)
 
-async def verify_role_Depends_O5(token:base_model_bm.user = Depends(verify_token_Depends)):
+#Solo personas. Un token sin "type" es de antes del cambio y solo podia ser de usuario
+async def verify_user_Depends(token:dict = Depends(verify_token_Depends)):
+    if token.get("type", "user") != "user":
+        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Machine tokens cannot access user routes")
+    return token
+
+#Rutas que usan tanto el dron como los ingenieros desde el panel (telemetria, misiones)
+async def verify_machine_or_role_4(token:dict = Depends(verify_token_Depends)):
+    if (token.get("type") == "machine" and token.get("role") == "4") or token.get("role") == "O5-1" \
+    or (token.get("role") == "4" and token.get("type") == "user"):
+        return token
+    else:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Role insuficiente")
+
+async def verify_role_Depends_O5(token:base_model_bm.user = Depends(verify_user_Depends)):
     if token.get("role") == "O5-1":
         return token
     else:
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
     
-async def verify_role_Depends_4(token:base_model_bm.user = Depends(verify_token_Depends)):
+async def verify_role_Depends_4(token:base_model_bm.user = Depends(verify_user_Depends)):
     if token.get("role") == "4" or token.get("role") == "O5-1":
         return token
     else:
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
-async def verify_role_Depends_3(token:base_model_bm.user = Depends(verify_token_Depends)):
+async def verify_role_Depends_3(token:base_model_bm.user = Depends(verify_user_Depends)):
     if token.get("role") == "3" or token.get("role") == "O5-1" or token.get("role") == "4":
         return token
     else:
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
-async def verify_role_Depends_2(token:base_model_bm.user = Depends(verify_token_Depends)):
+async def verify_role_Depends_2(token:base_model_bm.user = Depends(verify_user_Depends)):
     if token.get("role") == "2" or token.get("role") == "O5-1" or token.get("role") == "3" or token.get("role") == "4":
         return token
     else:
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
 
-async def verify_role_Depends_1(token:base_model_bm.user = Depends(verify_token_Depends)):
+async def verify_role_Depends_1(token:base_model_bm.user = Depends(verify_user_Depends)):
     if token.get("role") == "1" or token.get("role") == "O5-1" or token.get("role") == "2" or token.get("role") == "3" or token.get("role") == "4":
         return token
     else:
@@ -103,6 +119,8 @@ def can_assign_role(token:dict, role):
         return False
     own_rank = rank_of(token.get("role"))
     return own_rank == top_rank or role_rank[role] < own_rank
+
+
 
 
 

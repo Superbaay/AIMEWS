@@ -58,7 +58,7 @@ function iniciar_maquinas() {
 
   mostrar_datos_sesion(sesion);
 
-  // Sin nivel 4 la API respondería 401 y pedir_api cerraría la sesión: mejor no llamarla
+  // Sin nivel 4 la API respondería 403: mejor no llamarla y mostrar el aviso
   if (!roles_con_acceso.includes(sesion.rol)) {
     aviso_permisos.hidden = false;
     gestion_maquinas.hidden = true;

@@ -6,16 +6,17 @@ from Library import def_bm
 from Library import segurity_bm
 from Library import api_bm
 from datetime import datetime,timezone
-from pymongo import MongoClient
+from Library.base_model_bm import db
 from jose import JWTError
 from Routers_BM.user_rt import user
 from Routers_BM.machine_rt import router as machine_rt
 from Routers_BM.enginer_log_rt import engineer
-db = MongoClient()
+from Routers_BM.machine_telemetry_rt import router as machine_telemetry_rt
 app = FastAPI()
 app.include_router(user)
 app.include_router(machine_rt)
 app.include_router(engineer)
+app.include_router(machine_telemetry_rt)
 
 
 
@@ -46,7 +47,7 @@ async def new_user(user:base_model_bm.user, token:dict  = Depends(segurity_bm.ve
     user.date = datetime.now(timezone.utc)
     user.password = segurity_bm.encode_password(user.password)
     user_dict = user.model_dump()
-    db.local.user.insert_one(user_dict)
+    db.user.insert_one(user_dict)
     #Se responde sin la contraseña para no devolver el hash
     return base_model_bm.user_not_password(**user_dict)
 

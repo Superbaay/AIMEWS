@@ -1,6 +1,8 @@
 // Panel de control. Depende de ../main.js (api_url, clave_token y el observador de .revelar)
 // y de sesion_panel.js (leer_sesion, salir_del_panel y mostrar_datos_sesion)
-const ws_url = `${api_url.replace(/^http/, 'ws')}/ws/panel`;
+// La API expone /ws y espera el token en el primer mensaje: {"token": "..."} (main.py)
+const ws_url = `${api_url.replace(/^http/, 'ws')}/ws`;
+const metros_por_segundo_a_km_h = 3.6;
 const tiempo_max_sin_senal_ms = 5000;
 const tiempo_max_autoprueba_ms = 30000;
 const voltaje_celda_minimo = 3.0;
@@ -41,6 +43,7 @@ function iniciar_panel() {
   };
 
   let socket = null;
+  let sesion_rechazada = false;
   let intentos_reconexion = 0;
   let temporizador_reconexion = null;
   let ultimo_mensaje_dron_ms = 0;
@@ -90,17 +93,20 @@ function iniciar_panel() {
   }
 
   // ===== WebSocket =====
-  // El navegador no permite cabeceras en WebSocket, así que el JWT viaja como parámetro de la URL
+  // El navegador no permite cabeceras en WebSocket: el JWT va en el primer mensaje, no en la URL,
+  // así no queda escrito en los registros del servidor ni en el historial
   function conectar_socket() {
     clearTimeout(temporizador_reconexion);
+    if (sesion_rechazada) return;
     if (socket && socket.readyState <= WebSocket.OPEN) return;
 
-    socket = new WebSocket(`${ws_url}?token=${encodeURIComponent(sesion.token)}`);
+    socket = new WebSocket(ws_url);
     refrescar_estado_enlace();
 
     socket.addEventListener('open', () => {
       intentos_reconexion = 0;
-      registrar_evento('Conectado a la API.');
+      socket.send(JSON.stringify({ token: sesion.token }));
+      registrar_evento('Conectado a la API. Enviando sesión…');
       refrescar_estado_enlace();
     });
 
@@ -114,8 +120,9 @@ function iniciar_panel() {
 
     socket.addEventListener('close', (evento) => {
       refrescar_estado_enlace();
-      // 1008 (policy violation): la API rechazó el token
-      if (evento.code === 1008) {
+      // 1008 (policy violation) o un "Unauthorized" previo: la API rechazó el token, reconectar no sirve
+      if (sesion_rechazada || evento.code === 1008) {
+        sesion_rechazada = true;
         registrar_evento('La API rechazó la sesión. Redirigiendo…', true);
         setTimeout(salir_del_panel, 1200);
         return;
@@ -127,13 +134,28 @@ function iniciar_panel() {
     });
   }
 
+  // La API lee info.get("action") (api_bm.api_function) y devuelve el mismo mensaje con api_response
   function enviar_comando(accion) {
     if (!socket || socket.readyState !== WebSocket.OPEN) return false;
-    socket.send(JSON.stringify({ tipo: 'comando', accion }));
+    socket.send(JSON.stringify({ tipo: 'comando', action: accion }));
     return true;
   }
 
+  // Mensajes del saludo inicial de la API: {"message": "..."} sin campo tipo
+  function procesar_mensaje_api(texto) {
+    if (texto === 'Unauthorized' || texto.startsWith('WebSocket error')) {
+      sesion_rechazada = true;
+      registrar_evento(`La API rechazó la sesión: ${texto}`, true);
+      return;
+    }
+    registrar_evento(`API: ${texto}`);
+  }
+
   function procesar_mensaje(mensaje) {
+    if (!mensaje.tipo && typeof mensaje.message === 'string') {
+      procesar_mensaje_api(mensaje.message);
+      return;
+    }
     switch (mensaje.tipo) {
       case 'estado_dron':
         ultimo_mensaje_dron_ms = Date.now();
@@ -141,11 +163,16 @@ function iniciar_panel() {
         break;
       case 'telemetria':
         ultimo_mensaje_dron_ms = Date.now();
-        pintar_telemetria(mensaje);
+        pintar_telemetria(mensaje.datos ?? mensaje);
         break;
       case 'autoprueba':
         ultimo_mensaje_dron_ms = Date.now();
-        pintar_resultado_prueba(mensaje.componente, mensaje.estado);
+        // resultado tiene la forma de auto_test_machine: {gps: true, camera: false, ...}
+        if (mensaje.resultado) pintar_autoprueba_completa(mensaje.resultado);
+        else pintar_resultado_prueba(mensaje.componente, mensaje.estado);
+        break;
+      case 'comando':
+        registrar_evento(`Comando ${mensaje.action}: ${mensaje.api_response?.message ?? 'sin respuesta'}`);
         break;
       case 'error':
         registrar_evento(mensaje.detalle || 'La API reportó un error.', true);
@@ -157,11 +184,14 @@ function iniciar_panel() {
   }
 
   // ===== Telemetría =====
-  // acelerometer_gyroscope y barometer llegan con los nombres de los BaseModel de la API (base_model_bm.py)
-  function pintar_telemetria({ bateria = {}, gps = {}, altitud, velocidad, rumbo, acelerometer_gyroscope = {}, barometer = {} }) {
+  // Los datos tienen la forma del BaseModel sensor_data de la API (base_model_bm.py)
+  function pintar_telemetria({ batery = {}, gps = {}, lidar_distance = {}, magnetometer = {}, acelerometer_gyroscope = {}, barometer = {} }) {
+    const celdas = [batery.c1, batery.c2, batery.c3, batery.c4, batery.c5, batery.c6];
     ultima_telemetria.textContent = formatear_hora(new Date());
-    escribir_valor('bateria_voltaje', bateria.voltaje, 1);
-    escribir_valor('bateria_porcentaje', bateria.porcentaje, 0);
+    escribir_valor('bateria_voltaje', batery.voltage, 1);
+    escribir_valor('bateria_porcentaje', estimar_carga(celdas), 0);
+    escribir_valor('bateria_corriente', batery.current, 1);
+    escribir_valor('bateria_temperatura', batery.temperature, 1);
     escribir_valor('imu_cabeceo', acelerometer_gyroscope.pitch_angle, 1);
     escribir_valor('imu_alabeo', acelerometer_gyroscope.roll_angle, 1);
     escribir_valor('imu_guinada', acelerometer_gyroscope.yaw_angle, 1);
@@ -171,13 +201,27 @@ function iniciar_panel() {
     escribir_valor('barometro_presion', barometer.pressure, 1);
     escribir_valor('barometro_temperatura', barometer.temperature, 1);
     escribir_valor('barometro_altitud', barometer.altitude, 1);
-    escribir_valor('telemetria_latitud', gps.latitud, 6);
-    escribir_valor('telemetria_longitud', gps.longitud, 6);
-    escribir_valor('telemetria_satelites', gps.satelites, 0);
-    escribir_valor('telemetria_altitud', altitud, 1);
+    escribir_valor('magnetometro_x', magnetometer.x, 2);
+    escribir_valor('magnetometro_y', magnetometer.y, 2);
+    escribir_valor('magnetometro_z', magnetometer.z, 2);
+    escribir_valor('telemetria_latitud', gps.latitude, 6);
+    escribir_valor('telemetria_longitud', gps.longitude, 6);
+    escribir_valor('telemetria_altitud', gps.altitude, 1);
+    // La API manda gps.speed en m/s y el panel lo muestra en km/h
+    const velocidad = typeof gps.speed === 'number' ? gps.speed * metros_por_segundo_a_km_h : null;
     escribir_valor('telemetria_velocidad', velocidad, 1);
-    escribir_valor('telemetria_rumbo', rumbo, 0);
-    if (Array.isArray(bateria.celdas)) pintar_celdas(bateria.celdas);
+    escribir_valor('lidar_distancia', lidar_distance.distance, 2);
+    pintar_celdas(celdas);
+  }
+
+  // batery_6s no trae porcentaje: se estima con el promedio de las celdas entre el mínimo y el máximo de una LiPo.
+  // Es lineal, así que es aproximado (la curva real de descarga es plana en el centro)
+  function estimar_carga(voltajes) {
+    const validos = voltajes.filter((voltaje) => typeof voltaje === 'number' && Number.isFinite(voltaje));
+    if (validos.length === 0) return null;
+    const promedio = validos.reduce((suma, voltaje) => suma + voltaje, 0) / validos.length;
+    const nivel = (promedio - voltaje_celda_minimo) / (voltaje_celda_maximo - voltaje_celda_minimo);
+    return Math.min(1, Math.max(0, nivel)) * 100;
   }
 
   function pintar_celdas(voltajes) {
@@ -202,6 +246,14 @@ function iniciar_panel() {
     etiqueta.dataset.estado = estado;
     if (estado === 'falla') registrar_evento(`Autoprueba: falla en ${fila.firstElementChild.textContent}.`, true);
     revisar_fin_autoprueba();
+  }
+
+  // Cada data-componente del HTML coincide con un campo bool de auto_test_machine
+  function pintar_autoprueba_completa(resultado) {
+    filas_prueba.forEach((fila) => {
+      const valor = resultado[fila.dataset.componente];
+      if (typeof valor === 'boolean') pintar_resultado_prueba(fila.dataset.componente, valor ? 'correcto' : 'falla');
+    });
   }
 
   function establecer_autoprueba_en_curso(en_curso) {
