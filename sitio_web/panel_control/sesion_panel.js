@@ -14,7 +14,11 @@ function leer_sesion() {
   try {
     const carga = decodificar_token(token);
     if (carga.exp && carga.exp * 1000 <= Date.now()) return null;
-    return { token, nombre: carga.name, rol: carga.role, expira: carga.exp };
+    // El panel es solo para personas: la API rechaza un token de máquina en las rutas de usuario (verify_user_Depends).
+    // Un token sin type es anterior a ese campo y solo podía ser de usuario
+    const tipo = carga.type ?? 'user';
+    if (tipo !== 'user') return null;
+    return { token, nombre: carga.name, rol: carga.role, tipo, expira: carga.exp };
   } catch (error) {
     return null;
   }

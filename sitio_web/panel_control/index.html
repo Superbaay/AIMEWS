@@ -97,15 +97,15 @@
                 <span class="numero_mono" id="resumen_prueba">Sin ejecutar</span>
               </div>
               <ul class="lista_prueba" id="lista_prueba">
-                <li class="lista_prueba_fila" data-componente="microcontrolador"><span>ESP32-S3</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="imu"><span>Acelerómetro y giroscopio</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="magnetometro"><span>Magnetómetro</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="barometro"><span>Barómetro</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="microcontroller"><span>ESP32-S3</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="acelerometer_gyroscope"><span>Acelerómetro y giroscopio</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="magnetometer"><span>Magnetómetro</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="barometer"><span>Barómetro</span><span class="estado_prueba">Pendiente</span></li>
                 <li class="lista_prueba_fila" data-componente="gps"><span>GPS</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="lidar"><span>LiDAR TF Mini Plus</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="servomotores"><span>Servomotores</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="camara"><span>Cámara</span><span class="estado_prueba">Pendiente</span></li>
-                <li class="lista_prueba_fila" data-componente="motores"><span>Motores y ESC</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="lidar_distance"><span>LiDAR TF Mini Plus</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="servo_motor"><span>Servomotores</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="camera"><span>Cámara</span><span class="estado_prueba">Pendiente</span></li>
+                <li class="lista_prueba_fila" data-componente="esc_motor"><span>Motores y ESC</span><span class="estado_prueba">Pendiente</span></li>
               </ul>
             </div>
             <button type="button" class="boton_primario" id="boton_autoprueba" disabled>
@@ -119,7 +119,9 @@
             <h2 class="titulo_tarjeta">Batería</h2>
             <div class="cuadricula_datos cuadricula_datos_compacta">
               <div class="dato"><span class="dato_valor"><span id="bateria_voltaje">—</span><span class="dato_unidad">V</span></span><span class="dato_nombre">Voltaje total</span></div>
-              <div class="dato"><span class="dato_valor"><span id="bateria_porcentaje">—</span><span class="dato_unidad">%</span></span><span class="dato_nombre">Carga</span></div>
+              <div class="dato"><span class="dato_valor"><span id="bateria_porcentaje">—</span><span class="dato_unidad">%</span></span><span class="dato_nombre">Carga estimada</span></div>
+              <div class="dato"><span class="dato_valor"><span id="bateria_corriente">—</span><span class="dato_unidad">A</span></span><span class="dato_nombre">Corriente</span></div>
+              <div class="dato"><span class="dato_valor"><span id="bateria_temperatura">—</span><span class="dato_unidad">°C</span></span><span class="dato_nombre">Temperatura</span></div>
             </div>
             <div class="celdas_bateria" id="celdas_bateria">
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C1</span></div>
@@ -151,6 +153,14 @@
                   <div class="dato"><span class="dato_valor"><span id="barometro_altitud">—</span><span class="dato_unidad">m</span></span><span class="dato_nombre">Altitud</span></div>
                 </div>
               </div>
+              <div class="grupo_telemetria">
+                <span class="etiqueta_pequena">Magnetómetro</span>
+                <div class="cuadricula_datos cuadricula_datos_compacta cuadricula_datos_tres">
+                  <div class="dato"><span class="dato_valor"><span id="magnetometro_x">—</span></span><span class="dato_nombre">Eje X</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="magnetometro_y">—</span></span><span class="dato_nombre">Eje Y</span></div>
+                  <div class="dato"><span class="dato_valor"><span id="magnetometro_z">—</span></span><span class="dato_nombre">Eje Z</span></div>
+                </div>
+              </div>
             </div>
           </article>
 
@@ -160,10 +170,9 @@
             <div class="cuadricula_datos cuadricula_datos_compacta">
               <div class="dato"><span class="dato_valor" id="telemetria_latitud">—</span><span class="dato_nombre">Latitud</span></div>
               <div class="dato"><span class="dato_valor" id="telemetria_longitud">—</span><span class="dato_nombre">Longitud</span></div>
-              <div class="dato"><span class="dato_valor"><span id="telemetria_satelites">—</span></span><span class="dato_nombre">Satélites</span></div>
               <div class="dato"><span class="dato_valor"><span id="telemetria_altitud">—</span><span class="dato_unidad">m</span></span><span class="dato_nombre">Altitud</span></div>
               <div class="dato"><span class="dato_valor"><span id="telemetria_velocidad">—</span><span class="dato_unidad">km/h</span></span><span class="dato_nombre">Velocidad</span></div>
-              <div class="dato"><span class="dato_valor"><span id="telemetria_rumbo">—</span><span class="dato_unidad">°</span></span><span class="dato_nombre">Rumbo</span></div>
+              <div class="dato"><span class="dato_valor"><span id="lidar_distancia">—</span><span class="dato_unidad">m</span></span><span class="dato_nombre">Distancia LiDAR</span></div>
             </div>
           </article>
         </div>

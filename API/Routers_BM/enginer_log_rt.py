@@ -2,15 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import FileResponse
 from Library import base_model_bm,def_bm,segurity_bm
 from datetime import datetime, timezone
-from pymongo import MongoClient
+from Library.base_model_bm import db
 from pathlib import Path
 import re
 import uuid
 import aiofiles
 import filetype
 
-db = MongoClient()
-engineer_log_collection = db.local.engineer_log
+engineer_log_collection = db.engineer_log
 
 #Evidencia: el archivo va a disco (API/uploads/engineer_log) y en Mongo solo se guarda el BaseModel media
 upload_dir = Path(__file__).resolve().parent.parent / "uploads" / "engineer_log"
@@ -37,12 +36,12 @@ def read_engineer_log(body:base_model_bm.engineer_log , token: dict = Depends(se
 
 #{"_id": 0} excluye el ObjectId de Mongo, que FastAPI no puede convertir a JSON
 @engineer.get("/all")
-def get_engineer_logs(token: dict = Depends(segurity_bm.verify_role_Depends_4)):
+def get_engineer_logs(token: dict = Depends(segurity_bm.verify_role_Depends_3)):
     logs = list(engineer_log_collection.find({}, {"_id": 0}))
     return logs
 
 @engineer.get("/number")
-def get_engineer_log(number: int, token: dict = Depends(segurity_bm.verify_role_Depends_4)):
+def get_engineer_log(number: int, token: dict = Depends(segurity_bm.verify_role_Depends_3)):
     log = engineer_log_collection.find_one({"number": number}, {"_id": 0})
     if not log:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Engineer log not found")
@@ -118,7 +117,7 @@ async def upload_evidence(number: int, file: UploadFile = File(...), token: dict
 
 #Protegido con token: la web lo pide con fetch (un <img src> no puede enviar Authorization)
 @engineer.get("/files/{file_name}")
-def get_evidence_file(file_name: str, token: dict = Depends(segurity_bm.verify_role_Depends_4)):
+def get_evidence_file(file_name: str, token: dict = Depends(segurity_bm.verify_role_Depends_3)):
     disk_path = upload_dir / file_name
     if not file_name_pattern.fullmatch(file_name) or not disk_path.is_file():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")

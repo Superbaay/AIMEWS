@@ -15,7 +15,7 @@ const campos_detalle = [
 // Igual que allowed_types y max_size de enginer_log_rt.py. La API vuelve a comprobarlo con los bytes reales,
 // esto solo avisa antes de subir. archivo.type viene vacío si el navegador no reconoce la extensión
 const tipos_evidencia = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'application/pdf'];
-const tamano_maximo_evidencia = 20 * 1024 * 1024;
+const tamano_maximo_evidencia = 200 * 1024 * 1024;
 
 // Devuelve el motivo por el que el archivo no se puede subir (se muestra en rojo en la lista) o null si es válido
 function validar_archivo(archivo) {

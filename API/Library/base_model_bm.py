@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Literal
+from pymongo import MongoClient
 
+db = MongoClient().SAMATI
 
 #-------------------------------------------------
 #user model for the database
@@ -13,6 +16,8 @@ class user(BaseModel):
     phone_number : int | None = None
     role : str | None = None
     exp : str | None = None
+    #Literal: un usuario solo puede ser "user"; el cliente no puede mandar "machine"
+    type : Literal["user"] = "user"
 
 class user_not_password(BaseModel):
     name : str
@@ -68,6 +73,7 @@ class machine(BaseModel):
     date_updated : datetime | None = None
     last_use : datetime | None = None
     last_user : str | None = None
+    type : Literal["machine"] = "machine"
 
 class machine_not_password(BaseModel):
     name : str
@@ -105,8 +111,8 @@ class auto_test_machine(BaseModel):
     servo_motor : bool
     camera : bool   
     esc_motor : bool
-    name : str #name of the machine
-    date : datetime
+    name : str | None = None #name of the machine 
+    date : datetime | None = None
 
 class acelerometer_gyroscope_data(BaseModel):
     pitch_angle : float #grados
@@ -139,13 +145,6 @@ class lidar_distance_data(BaseModel):
     distance : float #m
     date : datetime | None = None
 
-class sensor_data(BaseModel):
-    acelerometer_gyroscope : acelerometer_gyroscope_data
-    magnetometer : magnetometer_data
-    barometer : barometer_data
-    gps : gps_data
-    lidar_distance : lidar_distance_data
-
 class batery_6s(BaseModel):
     voltage : float
     current : float
@@ -157,5 +156,32 @@ class batery_6s(BaseModel):
     c4 : float
     c5 : float
     c6 : float
+
+class sensor_data(BaseModel):
+    acelerometer_gyroscope : acelerometer_gyroscope_data
+    magnetometer : magnetometer_data
+    barometer : barometer_data
+    gps : gps_data
+    lidar_distance : lidar_distance_data
+    batery : batery_6s
+    date : datetime | None = None
+    machine_name : str | None = None
+
+#machine mision data
+class coordinates(BaseModel):
+    latitude : float
+    longitude : float
+    altitude : float | None = None
+
+class machine_mision_data(BaseModel):
+    number : int | None = None
+    start_date : datetime | None = None
+    end_date : datetime | None = None
+    description : str | None = None
+    status : str | None = None
+    sensors : list[str] | None = None
+    name : str  
+    last_update : datetime | None = None
+    coordinates_list : list[coordinates] = []
 
 
