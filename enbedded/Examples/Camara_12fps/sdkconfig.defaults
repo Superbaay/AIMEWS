@@ -1,0 +1,30 @@
+# Valores base del ejemplo. "sdkconfig" se genera a partir de este archivo
+# (y está en .gitignore); si cambias algo aquí, borra sdkconfig y recompila.
+
+# Placa AI-Thinker ESP32-CAM: ESP32-D0WD-V3, 4 MB de flash, PSRAM de 8 MB.
+CONFIG_IDF_TARGET="esp32"
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHMODE_DIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# PSRAM: imprescindible. Un frame UXGA no cabe en la RAM interna (~300 KB).
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+
+# Sensores que puede traer la placa (la nuestra lleva OV3660).
+CONFIG_OV3660_SUPPORT=y
+CONFIG_OV2640_SUPPORT=y
+CONFIG_OV5640_SUPPORT=y
+# La tarea interna del driver de cámara en el núcleo 1 (junto a la nuestra).
+CONFIG_CAMERA_CORE1=y
+
+# Tick de FreeRTOS de 1 ms: el ritmo de captura se ajusta con vTaskDelay y
+# con el tick por defecto (10 ms) cada frame podría salir hasta 10 ms tarde.
+CONFIG_FREERTOS_HZ=1000
+
+# La placa se cuelga de un USB flojo en el pico de arranque: brownout al mínimo.
+CONFIG_ESP_BROWNOUT_DET_LVL_SEL_0=y

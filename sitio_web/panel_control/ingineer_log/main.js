@@ -261,7 +261,7 @@ function iniciar_bitacora() {
 
   // GET /engineer_log/files exige token y un <img src> no puede enviarlo: se descarga con fetch y se muestra como blob
   async function descargar_evidencia(url) {
-    const respuesta = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem(clave_token)}` } });
+    const respuesta = await fetch(url, { headers: { Authorization: `Bearer ${leer_token()}` } });
     if (respuesta.status === 401) salir_del_panel();
     if (!respuesta.ok) throw new Error(`no se pudo cargar (${respuesta.status})`);
     const url_blob = URL.createObjectURL(await respuesta.blob());

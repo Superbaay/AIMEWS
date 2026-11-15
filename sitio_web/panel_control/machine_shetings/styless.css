@@ -68,3 +68,8 @@
 @media (prefers-reduced-motion: reduce) {
   .vista_maquina { animation: none; }
 }
+
+
+/* Contraseña del dispositivo: se oculta con CSS en vez de type="password"
+   para que el navegador no la guarde como credencial del login */
+.campo_enmascarado { -webkit-text-security: disc; text-security: disc; }
