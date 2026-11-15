@@ -42,6 +42,17 @@
           </svg>
           <span>Home</span>
         </a>
+        <a href="../Control_dron/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="6" cy="6" r="2.5"></circle>
+            <circle cx="18" cy="6" r="2.5"></circle>
+            <circle cx="6" cy="18" r="2.5"></circle>
+            <circle cx="18" cy="18" r="2.5"></circle>
+            <path d="M8 8l2.2 2.2M16 8l-2.2 2.2M8 16l2.2-2.2M16 16l-2.2-2.2"></path>
+            <rect x="10" y="10" width="4" height="4" rx="1"></rect>
+          </svg>
+          <span>Dron</span>
+        </a>
         <a href="../ingineer_log/index.html" class="enlace_lateral">
           <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2 9h20"></path>
@@ -110,7 +121,8 @@
                 <label for="campo_contrasena_nueva" class="campo">
                   <span class="campo_etiqueta">Contraseña del dispositivo</span>
                   <span class="campo_contrasena_envoltura">
-                    <input id="campo_contrasena_nueva" name="password" type="password" class="campo_entrada campo_entrada_contrasena" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                    <!-- type="text" + máscara CSS: con type="password" el navegador guardaba "Modelo" como usuario y lo autocompletaba en el login -->
+                    <input id="campo_contrasena_nueva" name="device_password" type="text" class="campo_entrada campo_entrada_contrasena campo_enmascarado" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="Mínimo 8 caracteres">
                     <button type="button" class="boton_mostrar_contrasena" data-mostrar="campo_contrasena_nueva">Mostrar</button>
                   </span>
                 </label>
@@ -230,8 +242,8 @@
     </li>
   </template>
 
-  <script src="../../main.js"></script>
-  <script src="../sesion_panel.js"></script>
+  <script src="../../main.js?v=6"></script>
+  <script src="../sesion_panel.js?v=4"></script>
   <script src="main.js"></script>
 </body>
 </html>

@@ -12,19 +12,23 @@ from Routers_BM.user_rt import user
 from Routers_BM.machine_rt import router as machine_rt
 from Routers_BM.enginer_log_rt import engineer
 from Routers_BM.machine_telemetry_rt import router as machine_telemetry_rt
+from Routers_BM.camera_rt import router as camera_rt
 app = FastAPI()
 app.include_router(user)
 app.include_router(machine_rt)
 app.include_router(engineer)
 app.include_router(machine_telemetry_rt)
+app.include_router(camera_rt)
 
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^https:\/\/.*\.superbaay\.org$",
+    #Subdominios de superbaay.org y superbaay.dev (el sitio se publica por el tunel en superbaay.dev)
+    allow_origin_regex=r"^https:\/\/([a-z0-9-]+\.)*superbaay\.(org|dev)$",
     allow_origins=[
         "https://superbaay.org",
+        "https://superbaay.dev",
         "http://127.0.0.1:5500",
         "http://localhost:5500"],
     allow_credentials=True,
@@ -86,6 +90,9 @@ async def websocket_endpoint(websocket: WebSocket):
             api_response = api_bm.api_function(info.get("action"))
             info["api_response"] = api_response
             await websocket.send_json(info)
+    except WebSocketDisconnect:
+        #El panel cerro o recargo la pestaña: es el fin normal, no un error
+        pass
     except WebSocketException as e:
         print(f"WebSocket error: {e}")
         

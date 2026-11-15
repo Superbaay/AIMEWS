@@ -9,7 +9,8 @@ function decodificar_token(token) {
 }
 
 function leer_sesion() {
-  const token = localStorage.getItem(clave_token);
+  // leer_token (main.js) busca en localStorage, sessionStorage y cookie
+  const token = leer_token();
   if (!token) return null;
   try {
     const carga = decodificar_token(token);
@@ -25,7 +26,7 @@ function leer_sesion() {
 }
 
 function salir_del_panel() {
-  localStorage.removeItem(clave_token);
+  borrar_token();
   window.location.replace(ruta_inicio_sesion);
 }
 
@@ -52,7 +53,7 @@ async function pedir_api(ruta, opciones = {}) {
   try {
     respuesta = await fetch(`${api_url}${ruta}`, {
       ...opciones,
-      headers: { Authorization: `Bearer ${localStorage.getItem(clave_token)}`, ...opciones.headers },
+      headers: { Authorization: `Bearer ${leer_token()}`, ...opciones.headers },
     });
   } catch (error) {
     throw new Error('No se pudo conectar con el servidor.');

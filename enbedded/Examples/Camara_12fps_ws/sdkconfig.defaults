@@ -1,0 +1,53 @@
+# Valores base del ejemplo. "sdkconfig" se genera a partir de este archivo
+# (y está en .gitignore); si cambias algo aquí, borra sdkconfig y recompila.
+
+# Placa AI-Thinker ESP32-CAM: ESP32-D0WD-V3, 4 MB de flash, PSRAM de 8 MB.
+CONFIG_IDF_TARGET="esp32"
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHMODE_DIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# PSRAM: imprescindible. Un frame UXGA no cabe en la RAM interna (~300 KB).
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+
+# Sensores que puede traer la placa (la nuestra lleva OV3660).
+CONFIG_OV3660_SUPPORT=y
+CONFIG_OV2640_SUPPORT=y
+CONFIG_OV5640_SUPPORT=y
+# La tarea interna del driver de cámara en el núcleo 1 (junto a la nuestra).
+CONFIG_CAMERA_CORE1=y
+
+# Tick de FreeRTOS de 1 ms: el ritmo de captura se ajusta con vTaskDelay y
+# con el tick por defecto (10 ms) cada frame podría salir hasta 10 ms tarde.
+CONFIG_FREERTOS_HZ=1000
+
+# La placa se cuelga de un USB flojo en el pico de arranque: brownout al mínimo.
+CONFIG_ESP_BROWNOUT_DET_LVL_SEL_0=y
+
+# --- Añadido para el envío por WebSocket ---
+# Buffers de WiFi más grandes: cada frame son ~25 KB que salen de golpe.
+# Con PSRAM+WiFi en PSRAM los buffers TX son ESTÁTICOS: se sube su número y la
+# ventana de agregación AMPDU (de 6 a 32 paquetes por ráfaga).
+CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM=32
+CONFIG_ESP_WIFI_TX_BA_WIN=32
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=16
+CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=64
+CONFIG_LWIP_TCP_SND_BUF_DEFAULT=65534
+CONFIG_LWIP_TCP_WND_DEFAULT=65534
+CONFIG_LWIP_WND_SCALE=y
+CONFIG_LWIP_TCP_RCV_SCALE=3
+# Los buffers de lwIP/WiFi pueden ir a PSRAM y dejar la RAM interna libre.
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+# TLS (wss/https): el handshake de mbedTLS necesita más pila que los 3,5 KB por defecto de app_main.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+# Registros TLS de 16 KB (antes 4 KB): menos registros y escrituras por frame,
+# importa mucho con la latencia alta de los datos móviles.
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=16384
+# mbedTLS en PSRAM: con 32 buffers TX y registros de 16 KB la RAM interna no alcanza
+# para el TLS del WebSocket (mbedtls_ssl_setup -> PSA_ERROR_INSUFFICIENT_MEMORY).
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y

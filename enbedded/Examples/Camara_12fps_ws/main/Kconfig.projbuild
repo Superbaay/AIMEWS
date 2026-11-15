@@ -1,0 +1,48 @@
+menu "Camara 12 fps por WebSocket"
+
+    config CAM_WIFI_SSID
+        string "Nombre de la red WiFi (SSID)"
+        default "mi_red"
+
+    config CAM_WIFI_PASSWORD
+        string "Contraseña de la red WiFi"
+        default "mi_clave"
+
+    config CAM_API_HOST
+        string "IP o dominio de la API (FastAPI)"
+        default "192.168.1.100"
+        help
+            La PC donde corre la API. Arráncala con: uvicorn main:app --host 0.0.0.0
+            (con 127.0.0.1 solo acepta conexiones de la misma PC).
+
+    config CAM_API_TLS
+        bool "Conectar con TLS (https:// y wss://)"
+        default n
+        help
+            Para una API publicada en internet, p. ej. api.superbaay.dev detrás de un
+            túnel de Cloudflare (puerto 443). El certificado se valida con el bundle de
+            CAs de ESP-IDF (CONFIG_MBEDTLS_CERTIFICATE_BUNDLE).
+
+    config CAM_API_PORT
+        int "Puerto de la API"
+        default 443 if CAM_API_TLS
+        default 8000
+
+    config CAM_MACHINE_NAME
+        string "Nombre de la máquina registrada en la API"
+        default "kanan_01"
+
+    config CAM_MACHINE_PASSWORD
+        string "Contraseña de la máquina"
+        default ""
+
+    config CAM_JPEG_QUALITY
+        int "Calidad JPEG inicial (4 = mejor ... 63 = peor)"
+        range 4 63
+        default 25
+        help
+            A calidad 12 un UXGA ronda 55 KB (5,3 Mbit/s a 12 fps), más de lo que
+            sostiene el WiFi de la ESP32. A 25 baja a ~25 KB. Se puede cambiar en
+            vivo desde el panel: {"set": "quality", "value": 20}.
+
+endmenu

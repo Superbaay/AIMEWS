@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control del dron · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styless.css">
+  <link rel="stylesheet" href="../styless.css">
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="../index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral">
+      <nav class="menu_lateral" aria-label="Secciones del panel">
+        <a href="../index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M6 9.5V20h12V9.5"></path>
+            <path d="M10 20v-5.5h4V20"></path>
+          </svg>
+          <span>Home</span>
+        </a>
+        <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="6" cy="6" r="2.5"></circle>
+            <circle cx="18" cy="6" r="2.5"></circle>
+            <circle cx="6" cy="18" r="2.5"></circle>
+            <circle cx="18" cy="18" r="2.5"></circle>
+            <path d="M8 8l2.2 2.2M16 8l-2.2 2.2M8 16l2.2-2.2M16 16l-2.2-2.2"></path>
+            <rect x="10" y="10" width="4" height="4" rx="1"></rect>
+          </svg>
+          <span>Dron</span>
+        </a>
+        <a href="../ingineer_log/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 9h20"></path>
+            <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path>
+            <path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>
+          </svg>
+          <span>Logbook</span>
+        </a>
+        <a href="../user_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5"></circle>
+            <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>
+          </svg>
+          <span>Users</span>
+        </a>
+        <a href="../machine_shetings/index.html" class="enlace_lateral">
+          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <circle cx="12" cy="12" r="6.5"></circle>
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>
+          </svg>
+          <span>Machines</span>
+        </a>
+      </nav>
+      <div class="barra_lateral_pie">
+        <span class="etiqueta_pequena">Sesión válida hasta</span>
+        <span class="numero_mono" id="sesion_expira">—</span>
+      </div>
+    </aside>
+
+    <main class="panel_contenido">
+      <section class="vista_panel vista_control">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <div class="estado_enlace estado_enlace_desconectado" id="estado_enlace" role="status" aria-live="polite">
+              <span class="estado_enlace_punto"></span>
+              <span id="estado_enlace_texto">Sin conexión con la API</span>
+            </div>
+            <h1 class="titulo_panel">Control del dron</h1>
+          </div>
+          <label for="selector_maquina" class="campo selector_maquina">
+            <span class="etiqueta_pequena">Máquina</span>
+            <select id="selector_maquina" class="campo_entrada campo_selector" autocomplete="off">
+              <option value="">Cargando máquinas…</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- camera_rt.py y el /ws del panel solo aceptan roles 4 y O5-1 -->
+        <article class="tarjeta_componente tarjeta_panel" id="aviso_permisos" hidden>
+          <span class="etiqueta_mono">Acceso restringido</span>
+          <h2 class="titulo_tarjeta">Tu rol no permite controlar el dron.</h2>
+        </article>
+
+        <div class="cuadricula_control" id="cuadricula_control">
+          <div class="columna_control">
+            <!-- ===== Vídeo ===== -->
+            <article class="tarjeta_componente tarjeta_panel tarjeta_video revelar" style="--retraso:60ms">
+              <div class="tarjeta_componente_cabecera">
+                <span class="etiqueta_mono">Cámara ESP32-CAM</span>
+                <span class="estado_camara estado_camara_sin_maquina" id="estado_camara" role="status" aria-live="polite">
+                  <span class="estado_camara_punto"></span>
+                  <span id="estado_camara_texto">Sin máquina</span>
+                </span>
+              </div>
+
+              <div class="marco_video" id="marco_video">
+                <img class="imagen_video" id="imagen_video" alt="Vídeo en vivo de la cámara del dron" hidden>
+                <div class="video_espera" id="video_espera">
+                  <span class="logo_marca video_espera_marca"></span>
+                  <p id="video_espera_texto">Selecciona una máquina para ver su cámara.</p>
+                </div>
+
+                <div class="hud" id="hud" aria-hidden="true">
+                  <span class="hud_esquina hud_esquina_superior_izquierda"></span>
+                  <span class="hud_esquina hud_esquina_superior_derecha"></span>
+                  <span class="hud_esquina hud_esquina_inferior_izquierda"></span>
+                  <span class="hud_esquina hud_esquina_inferior_derecha"></span>
+
+                  <div class="hud_superior">
+                    <span class="hud_etiqueta hud_en_vivo" id="hud_en_vivo">Sin señal</span>
+                    <span class="hud_etiqueta hud_rumbo">RUMBO <span id="hud_rumbo">—</span>°</span>
+                    <span class="hud_etiqueta" id="hud_estadisticas">— fps · — kB/s</span>
+                  </div>
+
+                  <div class="hud_horizonte" id="hud_horizonte">
+                    <span class="hud_horizonte_linea"></span>
+                    <span class="hud_horizonte_marca hud_horizonte_marca_arriba"></span>
+                    <span class="hud_horizonte_marca hud_horizonte_marca_abajo"></span>
+                  </div>
+                  <span class="hud_reticula"></span>
+
+                  <div class="hud_inferior">
+                    <div class="hud_dato"><span class="hud_dato_valor" id="hud_altitud">—</span><span class="hud_dato_nombre">Alt · m</span></div>
+                    <div class="hud_dato"><span class="hud_dato_valor" id="hud_velocidad">—</span><span class="hud_dato_nombre">Vel · km/h</span></div>
+                    <div class="hud_dato"><span class="hud_dato_valor" id="hud_lidar">—</span><span class="hud_dato_nombre">LiDAR · m</span></div>
+                    <div class="hud_dato"><span class="hud_dato_valor" id="hud_bateria">—</span><span class="hud_dato_nombre">Batería · %</span></div>
+                    <div class="hud_dato hud_dato_modo"><span class="hud_dato_valor" id="hud_modo">—</span><span class="hud_dato_nombre" id="hud_armado">Desarmado</span></div>
+                  </div>
+                </div>
+
+                <!-- Solo visible en pantalla completa: la barra de botones queda fuera del marco -->
+                <button type="button" class="boton_salir_pantalla" id="boton_salir_pantalla">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5"></path></svg>
+                  <span>Salir</span>
+                  <kbd>Esc</kbd>
+                </button>
+              </div>
+
+              <div class="barra_video">
+                <div class="barra_video_botones">
+                  <button type="button" class="boton_icono" id="boton_captura" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+                    <span>Captura</span>
+                  </button>
+                  <button type="button" class="boton_icono" id="boton_hud" aria-pressed="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"></path><path d="M8 12h8"></path></svg>
+                    <span>HUD</span>
+                  </button>
+                  <button type="button" class="boton_icono" id="boton_pantalla_completa" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"></path></svg>
+                    <span id="texto_pantalla_completa">Pantalla completa</span>
+                  </button>
+                </div>
+                <span class="numero_mono barra_video_resolucion" id="texto_resolucion">—</span>
+              </div>
+
+              <details class="ajustes_camara">
+                <summary class="ajustes_camara_titulo">
+                  <span class="etiqueta_mono">Ajustes de imagen</span>
+                  <span class="etiqueta_pequena">Se aplican en la cámara</span>
+                </summary>
+                <div class="ajustes_camara_cuerpo">
+                  <label for="control_flash" class="control_rango">
+                    <span class="control_rango_cabecera"><span class="campo_etiqueta">Flash</span><output class="numero_mono" id="valor_flash" for="control_flash">0</output></span>
+                    <input type="range" id="control_flash" class="deslizador" min="0" max="255" step="1" value="0">
+                  </label>
+                  <label for="control_brillo" class="control_rango">
+                    <span class="control_rango_cabecera"><span class="campo_etiqueta">Brillo</span><output class="numero_mono" id="valor_brillo" for="control_brillo">0</output></span>
+                    <input type="range" id="control_brillo" class="deslizador" min="-2" max="2" step="1" value="0" data-ajuste="brightness">
+                  </label>
+                  <label for="control_contraste" class="control_rango">
+                    <span class="control_rango_cabecera"><span class="campo_etiqueta">Contraste</span><output class="numero_mono" id="valor_contraste" for="control_contraste">0</output></span>
+                    <input type="range" id="control_contraste" class="deslizador" min="-2" max="2" step="1" value="0" data-ajuste="contrast">
+                  </label>
+                  <label for="control_calidad" class="campo">
+                    <span class="campo_etiqueta">Calidad JPEG</span>
+                    <!-- OV3660: un número menor es mejor calidad y frames más pesados. 25 es CONFIG_CAM_JPEG_QUALITY del firmware;
+                         por debajo de 12 un frame UXGA puede pasar de max_frame_bytes (256 KB) y la API lo descarta -->
+                    <select id="control_calidad" class="campo_entrada campo_selector" data-ajuste="quality">
+                      <option value="12">Alta (12)</option>
+                      <option value="18">Media (18)</option>
+                      <option value="25" selected>Normal (25)</option>
+                      <option value="35">Ligera (35)</option>
+                    </select>
+                  </label>
+                  <label for="control_resolucion" class="campo">
+                    <span class="campo_etiqueta">Resolución</span>
+                    <!-- value = índice de framesize_t en la versión de esp32-camera del firmware (incluye 128X128 y 320X320);
+                         data-nombre = el que manda esp32cam_status_json() para sincronizar el selector -->
+                    <select id="control_resolucion" class="campo_entrada campo_selector" data-ajuste="framesize">
+                      <option value="6" data-nombre="QVGA">QVGA · 320×240</option>
+                      <option value="10" data-nombre="VGA">VGA · 640×480</option>
+                      <option value="11" data-nombre="SVGA">SVGA · 800×600</option>
+                      <option value="12" data-nombre="XGA">XGA · 1024×768</option>
+                      <option value="13" data-nombre="HD">HD · 1280×720</option>
+                      <option value="14" data-nombre="SXGA">SXGA · 1280×1024</option>
+                      <option value="15" data-nombre="UXGA" selected>UXGA · 1600×1200</option>
+                    </select>
+                  </label>
+                  <div class="ajustes_camara_interruptores">
+                    <label for="control_espejo" class="interruptor">
+                      <input type="checkbox" id="control_espejo" data-ajuste="hmirror">
+                      <span class="interruptor_pista" aria-hidden="true"></span>
+                      <span class="campo_etiqueta">Espejo</span>
+                    </label>
+                    <label for="control_invertir" class="interruptor">
+                      <input type="checkbox" id="control_invertir" data-ajuste="vflip">
+                      <span class="interruptor_pista" aria-hidden="true"></span>
+                      <span class="campo_etiqueta">Invertir</span>
+                    </label>
+                  </div>
+                </div>
+              </details>
+            </article>
+
+            <!-- ===== Movimiento ===== -->
+            <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:180ms">
+              <div class="tarjeta_componente_cabecera">
+                <div class="cabecera_titulo">
+                  <span class="etiqueta_mono">Movimiento</span>
+                  <h2 class="titulo_tarjeta">Palancas de vuelo</h2>
+                </div>
+                <label for="control_teclado" class="interruptor">
+                  <input type="checkbox" id="control_teclado" checked>
+                  <span class="interruptor_pista" aria-hidden="true"></span>
+                  <span class="campo_etiqueta">Teclado</span>
+                </label>
+              </div>
+
+              <div class="zona_palancas">
+                <div class="palanca_envoltura">
+                  <div class="palanca" id="palanca_izquierda" data-eje_x="guinada" data-eje_y="potencia" role="application" aria-label="Palanca izquierda: potencia y guiñada">
+                    <span class="palanca_cruz"></span>
+                    <span class="palanca_perilla"></span>
+                  </div>
+                  <span class="etiqueta_pequena">Potencia · Guiñada</span>
+                </div>
+
+                <dl class="lecturas_ejes">
+                  <div class="lectura_eje"><dt>Potencia</dt><dd><span class="barra_eje"><span class="barra_eje_relleno" id="barra_potencia"></span></span><span class="numero_mono" id="valor_potencia">0</span></dd></div>
+                  <div class="lectura_eje"><dt>Guiñada</dt><dd><span class="barra_eje"><span class="barra_eje_relleno" id="barra_guinada"></span></span><span class="numero_mono" id="valor_guinada">0</span></dd></div>
+                  <div class="lectura_eje"><dt>Cabeceo</dt><dd><span class="barra_eje"><span class="barra_eje_relleno" id="barra_cabeceo"></span></span><span class="numero_mono" id="valor_cabeceo">0</span></dd></div>
+                  <div class="lectura_eje"><dt>Alabeo</dt><dd><span class="barra_eje"><span class="barra_eje_relleno" id="barra_alabeo"></span></span><span class="numero_mono" id="valor_alabeo">0</span></dd></div>
+                </dl>
+
+                <div class="palanca_envoltura">
+                  <div class="palanca" id="palanca_derecha" data-eje_x="alabeo" data-eje_y="cabeceo" role="application" aria-label="Palanca derecha: cabeceo y alabeo">
+                    <span class="palanca_cruz"></span>
+                    <span class="palanca_perilla"></span>
+                  </div>
+                  <span class="etiqueta_pequena">Cabeceo · Alabeo</span>
+                </div>
+              </div>
+
+              <label for="control_limite" class="control_rango">
+                <span class="control_rango_cabecera"><span class="campo_etiqueta">Límite de mando</span><output class="numero_mono" id="valor_limite" for="control_limite">50 %</output></span>
+                <input type="range" id="control_limite" class="deslizador" min="10" max="100" step="5" value="50">
+              </label>
+
+              <ul class="guia_teclas" aria-label="Atajos de teclado">
+                <li><kbd>W</kbd><kbd>S</kbd><span>Subir · bajar</span></li>
+                <li><kbd>A</kbd><kbd>D</kbd><span>Girar</span></li>
+                <li><kbd>↑</kbd><kbd>↓</kbd><span>Adelante · atrás</span></li>
+                <li><kbd>←</kbd><kbd>→</kbd><span>Izquierda · derecha</span></li>
+                <li><kbd>Espacio</kbd><span>Centrar mandos</span></li>
+              </ul>
+              <p class="nota_control" id="nota_movimiento">Los mandos solo se envían con los motores armados. Al soltar, todas las palancas vuelven al centro.</p>
+            </article>
+          </div>
+
+          <div class="columna_control">
+            <!-- ===== Mandos ===== -->
+            <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+              <div class="tarjeta_componente_cabecera">
+                <div class="cabecera_titulo">
+                  <span class="etiqueta_mono">Mandos de vuelo</span>
+                  <h2 class="titulo_tarjeta">Operación</h2>
+                </div>
+                <span class="insignia_armado" id="insignia_armado">Desarmado</span>
+              </div>
+
+              <button type="button" class="boton_armar" id="boton_armar" aria-pressed="false" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.3 7.2a8 8 0 1 0 11.4 0"></path></svg>
+                <span id="texto_boton_armar">Armar motores</span>
+              </button>
+
+              <div class="cuadricula_mandos">
+                <button type="button" class="boton_mando" data-accion="despegar" data-requiere_armado disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"></path><path d="M5 21h14"></path></svg>
+                  <span>Despegar</span>
+                </button>
+                <button type="button" class="boton_mando" data-accion="aterrizar" data-requiere_armado disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13M6.5 11.5 12 17l5.5-5.5"></path><path d="M5 21h14"></path></svg>
+                  <span>Aterrizar</span>
+                </button>
+                <button type="button" class="boton_mando" data-accion="mantener_posicion" data-requiere_armado disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                  <span>Mantener</span>
+                </button>
+                <button type="button" class="boton_mando" data-accion="regresar_casa" data-requiere_armado disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"></path><path d="M6.5 10v9h11v-9"></path></svg>
+                  <span>Regresar a casa</span>
+                </button>
+              </div>
+
+              <fieldset class="selector_segmentos" id="selector_modo" disabled>
+                <legend class="campo_etiqueta">Modo de vuelo</legend>
+                <div class="selector_segmentos_opciones">
+                  <label class="segmento"><input type="radio" name="modo_vuelo" value="estabilizado" checked><span>Estabilizado</span></label>
+                  <label class="segmento"><input type="radio" name="modo_vuelo" value="altitud"><span>Altitud</span></label>
+                  <label class="segmento"><input type="radio" name="modo_vuelo" value="posicion"><span>Posición</span></label>
+                </div>
+              </fieldset>
+
+              <button type="button" class="boton_paro" id="boton_paro" disabled>
+                <span class="boton_paro_progreso" aria-hidden="true"></span>
+                <span class="boton_paro_texto">Mantén para paro de emergencia</span>
+              </button>
+              <p class="nota_control">El paro corta los motores al instante, incluso en el aire. Mantén presionado para confirmar.</p>
+            </article>
+
+            <!-- ===== Registro ===== -->
+            <article class="tarjeta_componente tarjeta_panel tarjeta_registro revelar" style="--retraso:240ms">
+              <div class="tarjeta_componente_cabecera">
+                <span class="etiqueta_mono">Registro de enlace</span>
+                <button type="button" class="boton_texto" id="boton_limpiar_registro">Limpiar</button>
+              </div>
+              <ol class="lista_registro" id="lista_registro" aria-live="polite"></ol>
+            </article>
+          </div>
+
+          <!-- ===== PID ===== -->
+          <article class="tarjeta_componente tarjeta_panel tarjeta_pid revelar" style="--retraso:300ms">
+            <div class="tarjeta_componente_cabecera">
+              <div class="cabecera_titulo">
+                <span class="etiqueta_mono">Controlador</span>
+                <h2 class="titulo_tarjeta">Ajuste PID</h2>
+              </div>
+              <span class="estado_pid" id="estado_pid">Sin enviar</span>
+            </div>
+
+            <div class="pestanas_pid" role="tablist" aria-label="Eje del controlador">
+              <button type="button" class="pestana_pid pestana_pid_activa" role="tab" aria-selected="true" aria-controls="panel_pid" data-eje="alabeo">Alabeo</button>
+              <button type="button" class="pestana_pid" role="tab" aria-selected="false" aria-controls="panel_pid" data-eje="cabeceo">Cabeceo</button>
+              <button type="button" class="pestana_pid" role="tab" aria-selected="false" aria-controls="panel_pid" data-eje="guinada">Guiñada</button>
+              <button type="button" class="pestana_pid" role="tab" aria-selected="false" aria-controls="panel_pid" data-eje="altitud">Altitud</button>
+            </div>
+
+            <div class="cuerpo_pid">
+              <div class="panel_pid" id="panel_pid" role="tabpanel">
+                <div class="fila_pid" data-ganancia="kp">
+                  <div class="fila_pid_textos">
+                    <label for="rango_kp" class="campo_etiqueta">Kp · Proporcional</label>
+                    <span class="texto_ayuda">Fuerza de la corrección ante el error actual.</span>
+                  </div>
+                  <input type="range" id="rango_kp" class="deslizador" min="0" max="5" step="0.01">
+                  <input type="number" id="numero_kp" class="campo_entrada campo_numero" min="0" max="5" step="0.01" aria-label="Valor de Kp" autocomplete="off">
+                </div>
+                <div class="fila_pid" data-ganancia="ki">
+                  <div class="fila_pid_textos">
+                    <label for="rango_ki" class="campo_etiqueta">Ki · Integral</label>
+                    <span class="texto_ayuda">Elimina el error que se acumula con el tiempo.</span>
+                  </div>
+                  <input type="range" id="rango_ki" class="deslizador" min="0" max="2" step="0.005">
+                  <input type="number" id="numero_ki" class="campo_entrada campo_numero" min="0" max="2" step="0.005" aria-label="Valor de Ki" autocomplete="off">
+                </div>
+                <div class="fila_pid" data-ganancia="kd">
+                  <div class="fila_pid_textos">
+                    <label for="rango_kd" class="campo_etiqueta">Kd · Derivativo</label>
+                    <span class="texto_ayuda">Amortigua la oscilación y el sobrepaso.</span>
+                  </div>
+                  <input type="range" id="rango_kd" class="deslizador" min="0" max="2" step="0.01">
+                  <input type="number" id="numero_kd" class="campo_entrada campo_numero" min="0" max="2" step="0.01" aria-label="Valor de Kd" autocomplete="off">
+                </div>
+
+                <div class="acciones_pid">
+                  <button type="button" class="boton_primario" id="boton_enviar_pid" disabled>
+                    <span class="indicador_carga"></span>
+                    <span>Enviar al dron</span>
+                  </button>
+                  <button type="button" class="boton_acceso" id="boton_leer_pid" disabled>Leer del dron</button>
+                  <button type="button" class="boton_texto" id="boton_restablecer_pid">Restablecer eje</button>
+                </div>
+              </div>
+
+              <div class="resumen_pid">
+                <span class="etiqueta_pequena">Resumen de ganancias</span>
+                <table class="tabla_pid">
+                  <thead>
+                    <tr><th scope="col">Eje</th><th scope="col">Kp</th><th scope="col">Ki</th><th scope="col">Kd</th></tr>
+                  </thead>
+                  <tbody id="tabla_pid_cuerpo"></tbody>
+                </table>
+                <p class="nota_control">Los valores iniciales son de referencia. Ajusta un eje a la vez, en pasos pequeños y con el dron sujeto.</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../main.js?v=6"></script>
+  <script src="../sesion_panel.js?v=4"></script>
+  <script src="main.js"></script>
+</body>
+</html>

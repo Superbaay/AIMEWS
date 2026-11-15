@@ -2,3 +2,14 @@ context/
 __pycache__/
 *.pyc
 .venv/
+.claude
+
+# Evidencia subida a la API (fotos/videos de bitácoras): datos, no código
+API/uploads/
+
+# Firmware ESP-IDF: red de seguridad por si un ejemplo no trae su .gitignore
+# (sdkconfig guarda contraseñas de WiFi y de la máquina)
+enbedded/**/build/
+enbedded/**/managed_components/
+enbedded/**/sdkconfig
+enbedded/**/sdkconfig.old

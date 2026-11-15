@@ -207,8 +207,8 @@ function iniciar_maquinas() {
   document.querySelectorAll('[data-mostrar]').forEach((boton) => {
     boton.addEventListener('click', () => {
       const campo = document.getElementById(boton.dataset.mostrar);
-      const es_oculta = campo.type === 'password';
-      campo.type = es_oculta ? 'text' : 'password';
+      // Se alterna la máscara CSS, no el type: un type="password" haría que el navegador ofrezca guardarla
+      const es_oculta = campo.classList.toggle('campo_enmascarado') === false;
       boton.textContent = es_oculta ? 'Ocultar' : 'Mostrar';
     });
   });
