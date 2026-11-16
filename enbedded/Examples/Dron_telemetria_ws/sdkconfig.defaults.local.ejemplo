@@ -1,0 +1,6 @@
+# Copia este archivo como "sdkconfig.defaults.local" (está en .gitignore),
+# pon tus datos, borra sdkconfig y recompila.
+CONFIG_DRON_WIFI_SSID="mi_red"
+CONFIG_DRON_WIFI_PASSWORD="mi_clave"
+CONFIG_DRON_MACHINE_NAME="kanan_01"
+CONFIG_DRON_MACHINE_PASSWORD="clave_de_la_maquina"

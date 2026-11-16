@@ -58,6 +58,41 @@ function guardar_preferencia(clave, valor) {
   try { localStorage.setItem(clave, JSON.stringify(valor)); } catch (error) { /* sin almacenamiento */ }
 }
 
+// ===== Pestañas del panel: Vuelo · PID · Registro =====
+// Son solo de interfaz: se conectan siempre, aunque no haya sesión o falle algo en iniciar_control()
+function iniciar_pestanas_control() {
+  const pestanas = [...document.querySelectorAll('.pestana_control')];
+
+  function mostrar_pestana(pestana) {
+    for (const otra of pestanas) {
+      const activa = otra === pestana;
+      otra.setAttribute('aria-selected', String(activa));
+      otra.tabIndex = activa ? 0 : -1;
+      document.getElementById(otra.getAttribute('aria-controls')).hidden = !activa;
+    }
+    if (pestana.id === 'pestana_registro') document.getElementById('aviso_registro').hidden = true;
+    guardar_preferencia('pestana_control', pestana.id);
+  }
+
+  pestanas.forEach((pestana, indice) => {
+    pestana.addEventListener('click', () => mostrar_pestana(pestana));
+    // Flechas izquierda y derecha entre pestañas; stopPropagation evita que muevan el dron
+    pestana.addEventListener('keydown', (evento) => {
+      if (evento.key !== 'ArrowRight' && evento.key !== 'ArrowLeft') return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      const siguiente = pestanas[(indice + (evento.key === 'ArrowRight' ? 1 : -1) + pestanas.length) % pestanas.length];
+      mostrar_pestana(siguiente);
+      siguiente.focus();
+    });
+  });
+
+  // Vuelve a la última pestaña usada
+  const guardada = pestanas.find((pestana) => pestana.id === leer_preferencia('pestana_control'));
+  if (guardada) mostrar_pestana(guardada);
+}
+iniciar_pestanas_control();
+
 const sesion = leer_sesion();
 if (!sesion) {
   // salir_del_panel();
@@ -115,6 +150,9 @@ function iniciar_control() {
   // Registro
   const lista_registro = document.getElementById('lista_registro');
   const boton_limpiar_registro = document.getElementById('boton_limpiar_registro');
+  // Punto de aviso de la pestaña Registro (las pestañas se manejan en iniciar_pestanas_control)
+  const pestana_registro = document.getElementById('pestana_registro');
+  const aviso_registro = document.getElementById('aviso_registro');
 
   mostrar_datos_sesion(sesion);
 
@@ -154,6 +192,8 @@ function iniciar_control() {
     fila.append(hora, mensaje);
     lista_registro.prepend(fila);
     while (lista_registro.children.length > maximo_registro) lista_registro.lastElementChild.remove();
+    // Un error con el registro oculto enciende el punto de la pestaña
+    if (tipo === 'error' && pestana_registro.getAttribute('aria-selected') !== 'true') aviso_registro.hidden = false;
   }
 
   function vaciar_registro() {

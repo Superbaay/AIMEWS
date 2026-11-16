@@ -18,8 +18,16 @@ const tipos_evidencia = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', '
 const tamano_maximo_evidencia = 200 * 1024 * 1024;
 
 // Devuelve el motivo por el que el archivo no se puede subir (se muestra en rojo en la lista) o null si es válido
+// Extensión -> tipo, para cuando archivo.type llega vacío (mismo mapa que allowed_types de la API, al revés)
+const tipo_por_extension = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4', mov: 'video/quicktime', pdf: 'application/pdf' };
+
 function validar_archivo(archivo) {
-  // TODO(human)
+  if (archivo.size === 0) return 'archivo vacío';
+  // Mismos textos que motivo_rechazo(): el aviso previo y la respuesta de la API dicen lo mismo
+  if (archivo.size > tamano_maximo_evidencia) return 'supera el tamaño máximo';
+  const extension = archivo.name.includes('.') ? archivo.name.split('.').pop().toLowerCase() : '';
+  const tipo = archivo.type || tipo_por_extension[extension] || '';
+  if (!tipos_evidencia.includes(tipo)) return 'tipo no permitido';
   return null;
 }
 

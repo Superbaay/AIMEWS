@@ -1,3 +1,5 @@
+import secrets
+from pathlib import Path
 from jose import jwt
 import bcrypt
 from fastapi import status,HTTPException,Depends
@@ -7,7 +9,12 @@ from Library import base_model_bm
 from Library import def_bm
 
 algoticmo = "HS256"
-secret_key = "hhdopiqjdiuhmvnbmlañqoryhrtmvjdklfgterweqczmxñpolgihnvb"
+# La clave que firma los JWT vive fuera de git, en API/secret_key.txt (está en .gitignore).
+# Si no existe se genera una aleatoria. Cambiarla cierra todas las sesiones abiertas
+ruta_secret_key = Path(__file__).resolve().parent.parent / 'secret_key.txt'
+if not ruta_secret_key.exists():
+    ruta_secret_key.write_text(secrets.token_urlsafe(48), encoding='utf-8')
+secret_key = ruta_secret_key.read_text(encoding='utf-8').strip()
 expire_time_hours = 24
 segurity = OAuth2PasswordBearer("token")
 

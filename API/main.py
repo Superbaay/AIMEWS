@@ -1,10 +1,11 @@
+import asyncio
+import json
 from fastapi import FastAPI,HTTPException,WebSocket,WebSocketDisconnect,WebSocketException,status,Depends,File
 from fastapi.security import OAuth2PasswordRequestForm
 from  fastapi.middleware.cors import CORSMiddleware
 from Library import base_model_bm
 from Library import def_bm
 from Library import segurity_bm
-from Library import api_bm
 from datetime import datetime,timezone
 from Library.base_model_bm import db
 from jose import JWTError
@@ -13,12 +14,14 @@ from Routers_BM.machine_rt import router as machine_rt
 from Routers_BM.enginer_log_rt import engineer
 from Routers_BM.machine_telemetry_rt import router as machine_telemetry_rt
 from Routers_BM.camera_rt import router as camera_rt
+from Routers_BM import drone_ws_rt as drone_ws
 app = FastAPI()
 app.include_router(user)
 app.include_router(machine_rt)
 app.include_router(engineer)
 app.include_router(machine_telemetry_rt)
 app.include_router(camera_rt)
+app.include_router(drone_ws.router)
 
 
 
@@ -55,49 +58,72 @@ async def new_user(user:base_model_bm.user, token:dict  = Depends(segurity_bm.ve
     #Se responde sin la contraseña para no devolver el hash
     return base_model_bm.user_not_password(**user_dict)
 
-list_of_users = []
+#Panel de control <-> dron. El dron entra por /ws/machine (Routers_BM/drone_ws_rt.py);
+#aquí entran los paneles y comparten el mismo manager para recibir su telemetría.
+#Protocolo del panel (sitio_web/panel_control/main.js):
+#   1. Primer mensaje {"token": "<token de /token>"}; sin él en 5 s, o con un token
+#      inválido o un rol que no sea 4 / O5-1, se cierra con 1008.
+#   2. Recibe lo que manda el dron: estado_dron, telemetria, autoprueba (con "machine").
+#   3. Manda {"tipo": "comando", "action": "iniciar_autoprueba"} y recibe la respuesta
+#      {"tipo": "comando", "action": ..., "api_response": {"message": ...}}.
+panel_roles = ("O5-1", "4")
+
+async def panel_auth(websocket: WebSocket) -> dict | None:
+    await websocket.send_json({"message": "WebSocket connection established"})
+    await websocket.send_json({"message": "please send a password"})
+    try:
+        data = await asyncio.wait_for(websocket.receive_json(), drone_ws.auth_timeout_s)
+        token = data.get("token") if isinstance(data, dict) else None
+        if not isinstance(token, str):
+            raise ValueError("missing token")
+        user = await segurity_bm.decode_token(token)
+    except WebSocketDisconnect:
+        return None
+    #Antes un mensaje sin "token" lanzaba AttributeError fuera del except y tumbaba la conexion
+    except (asyncio.TimeoutError, ValueError, KeyError, JWTError):
+        user = None
+    if user is None or user.get("type", "user") != "user" or user.get("role") not in panel_roles             or not user.get("name"):
+        try:
+            await websocket.send_json({"message": "Unauthorized"})
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Unauthorized")
+        except (WebSocketDisconnect, RuntimeError):
+            pass
+        return None
+    await websocket.send_json({"message": "Password received"})
+    return user
+
+async def panel_receiver(websocket: WebSocket, panel: drone_ws.panel_conn, user: dict):
+    while True:
+        try:
+            info = json.loads(await websocket.receive_text())
+        except ValueError:
+            continue    #un mensaje mal formado no tumba el panel
+        if not isinstance(info, dict):
+            continue
+        action = info.get("action")
+        answer = {"tipo": "comando", "action": action, "name": user.get("name"), "role": user.get("role")}
+        if action not in drone_ws.drone_actions:
+            answer["api_response"] = {"message": "Unknown action"}
+        else:
+            sent = await drone_ws.manager.send_command(action, user.get("name"), info.get("machine"))
+            answer["api_response"] = {"message": f"Enviado a {sent} dron(es)" if sent else "Ningún dron conectado"}
+        panel.push_event(answer)
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    await websocket.send_json({"message": "WebSocket connection established"})
-    await websocket.send_json({"message": "please send a password"})
-    try: # Receive and validate the token from the client
-        data = await websocket.receive_json() #DATA IS A TOKEN
-        data = await segurity_bm.decode_token(data.get("token"))
-        role = data.get("role")
-        name = data.get("name")
-        if not (role in ("O5-1", "4")):
-            await websocket.send_json({"message": "Unauthorized"})
-            await websocket.close()
-            return
-        if name is None or name == "":
-            await websocket.send_json({"message": "Unauthorized"})
-            await websocket.close()
-            return
-        list_of_users.append(data)
-        print(f"Current list of users: {list_of_users}")
-        await websocket.send_json({"message": "Password received"})
-    except (WebSocketException, WebSocketDisconnect,JWTError) as e:
-        await websocket.send_json({"message": f"WebSocket error: {e}"})
-        await websocket.close()
-    
+    user = await panel_auth(websocket)
+    if user is None:
         return
+    panel = drone_ws.panel_conn(websocket, user.get("name"))
+    drone_ws.manager.add_panel(panel)
+    tasks = {asyncio.create_task(panel.sender()), asyncio.create_task(panel_receiver(websocket, panel, user))}
     try:
-        while True:
-            info = await websocket.receive_json()
-            info["name"] = name
-            info["role"] = role
-            api_response = api_bm.api_function(info.get("action"))
-            info["api_response"] = api_response
-            await websocket.send_json(info)
-    except WebSocketDisconnect:
-        #El panel cerro o recargo la pestaña: es el fin normal, no un error
-        pass
-    except WebSocketException as e:
-        print(f"WebSocket error: {e}")
-        
-        await websocket.close()
+        #Cuando una termina (el panel cerró o recargó la pestaña) se cancela la otra
+        done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        for task in done:
+            task.exception()    #marca la excepcion como vista; la desconexion es el fin normal
     finally:
-        list_of_users.remove(data)
-
-
+        for task in tasks:
+            task.cancel()
+        drone_ws.manager.remove_panel(panel)

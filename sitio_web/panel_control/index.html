@@ -7,16 +7,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styless.css">
-  <link rel="stylesheet" href="styless.css">
+  <link rel="stylesheet" href="styless.css?v=4">
 </head>
-<body class="pagina_panel">
+<body class="pagina_panel pagina_inicio">
 
   <header class="barra_navegacion barra_navegacion_panel">
     <div class="barra_navegacion_interior">
-      <a href="index.html" class="logo">
-        <span class="logo_marca"></span>
-        <span class="logo_texto">SAMATI</span>
-      </a>
+      <div class="marca_panel">
+        <a href="index.html" class="logo">
+          <span class="logo_marca"></span>
+          <span class="logo_texto">SAMATI</span>
+        </a>
+        <div class="estado_enlace estado_enlace_desconectado" id="estado_enlace" role="status" aria-live="polite">
+          <span class="estado_enlace_punto"></span>
+          <span id="estado_enlace_texto">Sin conexión con la API</span>
+        </div>
+      </div>
       <div class="menu_navegacion">
         <div class="usuario_sesion">
           <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
@@ -32,6 +38,15 @@
 
   <div class="panel_estructura">
     <aside class="barra_lateral">
+      <!-- Retrae la barra a solo íconos; la preferencia la guarda sesion_panel.js para todas las páginas -->
+      <button type="button" class="boton_retraer_lateral" id="boton_retraer_lateral" aria-expanded="true">
+        <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect>
+          <path d="M9.5 4.5v15"></path>
+          <path class="flecha_retraer" d="M16 9.5 13.5 12l2.5 2.5"></path>
+        </svg>
+        <span id="texto_retraer_lateral">Retraer menú</span>
+      </button>
       <nav class="menu_lateral" aria-label="Secciones del panel">
         <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
           <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
@@ -83,24 +98,11 @@
     </aside>
 
     <main class="panel_contenido">
-      <section id="vista_inicio" class="vista_panel">
-        <div class="encabezado_panel revelar" style="--retraso:0ms">
-          <div class="encabezado_panel_titulos">
-            <div class="estado_enlace estado_enlace_desconectado" id="estado_enlace" role="status" aria-live="polite">
-              <span class="estado_enlace_punto"></span>
-              <span id="estado_enlace_texto">Sin conexión con la API</span>
-            </div>
-            <h1 class="titulo_panel" id="titulo_dron">Dron SAMATI V0.1</h1>
-          </div>
-          <div class="encabezado_panel_meta">
-            <span class="etiqueta_pequena">Última telemetría</span>
-            <span class="numero_mono" id="ultima_telemetria">—</span>
-          </div>
-        </div>
-
-        <div class="cuadricula_panel">
-          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">01</span><span class="etiqueta_pequena">Diagnóstico</span></div>
+      <section id="vista_inicio" class="vista_panel vista_inicio" aria-label="Estado del dron">
+        <div class="cuadricula_panel cuadricula_inicio">
+          <article class="tarjeta_componente tarjeta_panel tarjeta_prueba revelar" style="--retraso:60ms">
+            <!-- main.js reemplaza el nombre con la versión que reporta el dron -->
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">01</span><span class="etiqueta_pequena" id="titulo_dron">Dron SAMATI V0.1</span></div>
             <h2 class="titulo_tarjeta">Autoprueba</h2>
             <div class="informacion_prueba">
               <div class="informacion_prueba_cabecera">
@@ -125,15 +127,22 @@
             </button>
           </article>
 
-          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Energía y sensores</span></div>
+          <article class="tarjeta_componente tarjeta_panel tarjeta_bateria revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Energía</span></div>
             <h2 class="titulo_tarjeta">Batería</h2>
-            <div class="cuadricula_datos cuadricula_datos_compacta">
-              <div class="dato"><span class="dato_valor"><span id="bateria_voltaje">—</span><span class="dato_unidad">V</span></span><span class="dato_nombre">Voltaje total</span></div>
-              <div class="dato"><span class="dato_valor"><span id="bateria_porcentaje">—</span><span class="dato_unidad">%</span></span><span class="dato_nombre">Carga estimada</span></div>
-              <div class="dato"><span class="dato_valor"><span id="bateria_corriente">—</span><span class="dato_unidad">A</span></span><span class="dato_nombre">Corriente</span></div>
-              <div class="dato"><span class="dato_valor"><span id="bateria_temperatura">—</span><span class="dato_unidad">°C</span></span><span class="dato_nombre">Temperatura</span></div>
+            <div class="resumen_bateria">
+              <!-- El anillo se llena con --carga (0 a 100), que pinta main.js junto con el porcentaje -->
+              <div class="anillo_carga" id="anillo_carga" style="--carga: 0">
+                <span class="anillo_carga_valor"><span id="bateria_porcentaje">—</span><span class="dato_unidad">%</span></span>
+                <span class="dato_nombre">Carga</span>
+              </div>
+              <dl class="lista_bateria">
+                <div class="fila_bateria"><dt class="dato_nombre">Voltaje total</dt><dd><span id="bateria_voltaje">—</span><span class="dato_unidad">V</span></dd></div>
+                <div class="fila_bateria"><dt class="dato_nombre">Corriente</dt><dd><span id="bateria_corriente">—</span><span class="dato_unidad">A</span></dd></div>
+                <div class="fila_bateria"><dt class="dato_nombre">Temperatura</dt><dd><span id="bateria_temperatura">—</span><span class="dato_unidad">°C</span></dd></div>
+              </dl>
             </div>
+            <span class="etiqueta_pequena etiqueta_celdas">Celdas · 6S</span>
             <div class="celdas_bateria" id="celdas_bateria">
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C1</span></div>
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C2</span></div>
@@ -142,9 +151,12 @@
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C5</span></div>
               <div class="celda_bateria"><span class="celda_bateria_barra"><span class="celda_bateria_relleno"></span></span><span class="numero_mono celda_bateria_valor">—</span><span class="etiqueta_pequena">C6</span></div>
             </div>
+          </article>
 
+          <article class="tarjeta_componente tarjeta_panel tarjeta_telemetria revelar" style="--retraso:150ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Última telemetría · <span id="ultima_telemetria">—</span></span></div>
+            <h2 class="titulo_tarjeta">Telemetría</h2>
             <div class="bloque_telemetria">
-              <h2 class="titulo_tarjeta">Telemetría</h2>
               <div class="grupo_telemetria">
                 <span class="etiqueta_pequena">Acelerómetro y giroscopio</span>
                 <div class="cuadricula_datos cuadricula_datos_compacta cuadricula_datos_tres">
@@ -175,8 +187,8 @@
             </div>
           </article>
 
-          <article class="tarjeta_componente tarjeta_panel tarjeta_panel_ancha revelar" style="--retraso:180ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Navegación</span></div>
+          <article class="tarjeta_componente tarjeta_panel tarjeta_panel_ancha tarjeta_posicion revelar" style="--retraso:180ms">
+            <div class="tarjeta_componente_cabecera"><span class="numero_mono">04</span><span class="etiqueta_pequena">Navegación</span></div>
             <h2 class="titulo_tarjeta">Posición y vuelo</h2>
             <div class="cuadricula_datos cuadricula_datos_compacta">
               <div class="dato"><span class="dato_valor" id="telemetria_latitud">—</span><span class="dato_nombre">Latitud</span></div>
@@ -191,8 +203,8 @@
     </main>
   </div>
 
-  <script src="../main.js?v=6"></script>
-  <script src="sesion_panel.js?v=4"></script>
-  <script src="main.js"></script>
+  <script src="../main.js?v=7"></script>
+  <script src="sesion_panel.js?v=5"></script>
+  <script src="main.js?v=2"></script>
 </body>
 </html>

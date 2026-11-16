@@ -5,7 +5,10 @@ if (location.protocol === 'http:' && location.hostname.endsWith('superbaay.dev')
 }
 
 // Configuración de la API (FastAPI)
-const api_url = 'https://api.superbaay.dev';
+// Abierto en local (Live Server en localhost:5500) usa la API de esta PC directo, sin depender del túnel.
+// Publicado, usa el dominio del túnel, que apunta a esa misma API (uvicorn :8001)
+const es_sitio_local = ['localhost', '127.0.0.1'].includes(location.hostname);
+const api_url = es_sitio_local ? 'http://127.0.0.1:8001' : 'https://api.superbaay.dev';
 const clave_token = 'samati_token';
 const duracion_sesion_s = 24 * 60 * 60; // el JWT de la API dura 24 h
 

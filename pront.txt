@@ -1,0 +1,7 @@
+hola tengo un esp 32 s3 coneptado al pc conforme al proyecto de AIMEWS querio y las libreias que tengo creaste
+  previamente quiero que lo programes para que funcione con el panel de control y websokets, el esp32 esta coneptado
+  al barometro , giroscopio,gps, el giroscopio deve funcionar a 1000hz, el gps a 5hz, y el barometro a la mayor que
+  funcione de foema estable,dime la dispocicion de pines de comunicacion para qie los conepte, adicionamente, en la
+  api solo puedes modificar el main.py para aregal el websoket de este, si lo necesitas puedes crear un nuevo ruter y
+  modificar el main.py para agregarlo,el codigo que hagas para el esp32 guardalo en el apartado de ejemplos, solociona
+  los todo human,puedes modificar el sitio web solo si es necesario

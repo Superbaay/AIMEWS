@@ -13,3 +13,6 @@ enbedded/**/build/
 enbedded/**/managed_components/
 enbedded/**/sdkconfig
 enbedded/**/sdkconfig.old
+
+# Clave que firma los JWT de la API (se genera sola si falta)
+API/secret_key.txt

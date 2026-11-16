@@ -1,0 +1,4 @@
+# Cliente WebSocket oficial (desde IDF 5 ya no viene dentro del framework).
+dependencies:
+  idf: ">=6.0"
+  espressif/esp_websocket_client: "^1.4.0"
