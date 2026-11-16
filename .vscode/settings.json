@@ -1,3 +1,5 @@
 {
-    "idf.currentSetup": "C:\\Espressif\\frameworks\\esp-idf-v6.0.3"
+    "idf.currentSetup": "C:\\Espressif\\frameworks\\esp-idf-v6.0.3",
+    // Live Server sirve solo el sitio: el túnel de api.superbaay.dev publica lo que haya en :5500
+    "liveServer.settings.root": "/sitio_web"
 }

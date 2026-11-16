@@ -25,6 +25,36 @@ function leer_sesion() {
   }
 }
 
+// ===== Barra lateral retraíble =====
+// Se ejecuta al cargar, con o sin sesión. La preferencia vale para todas las páginas del panel
+const clave_lateral_retraida = 'samati_lateral_retraida';
+
+function iniciar_barra_lateral() {
+  const boton = document.getElementById('boton_retraer_lateral');
+  if (!boton) return;
+  const texto = document.getElementById('texto_retraer_lateral');
+
+  function aplicar(retraida) {
+    document.body.classList.toggle('lateral_retraida', retraida);
+    boton.setAttribute('aria-expanded', String(!retraida));
+    texto.textContent = retraida ? 'Expandir menú' : 'Retraer menú';
+  }
+
+  let retraida = false;
+  try { retraida = localStorage.getItem(clave_lateral_retraida) === '1'; } catch (error) { /* sin almacenamiento */ }
+  // El estado guardado se aplica sin animación; las transiciones se activan después del primer pintado
+  document.body.classList.add('sin_transicion_lateral');
+  aplicar(retraida);
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('sin_transicion_lateral')));
+
+  boton.addEventListener('click', () => {
+    retraida = !retraida;
+    aplicar(retraida);
+    try { localStorage.setItem(clave_lateral_retraida, retraida ? '1' : '0'); } catch (error) { /* sin almacenamiento */ }
+  });
+}
+iniciar_barra_lateral();
+
 function salir_del_panel() {
   borrar_token();
   window.location.replace(ruta_inicio_sesion);

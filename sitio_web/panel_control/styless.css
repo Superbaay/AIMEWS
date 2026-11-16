@@ -46,9 +46,58 @@
   border-top: 1px solid rgba(140, 175, 235, .12);
 }
 
+/* ===== Barra lateral retraíble ===== */
+.boton_retraer_lateral {
+  position: relative; display: flex; align-items: center; gap: 12px; width: 100%;
+  margin-bottom: 8px; padding: 9px 12px; border-radius: 10px;
+  font-family: var(--fuente_texto); font-size: 13px; color: var(--color_texto_tenue); white-space: nowrap;
+  background: transparent; border: 1px dashed rgba(140, 175, 235, .2); cursor: pointer;
+  transition: color .2s, background .2s, border-color .2s;
+}
+.boton_retraer_lateral:hover { color: var(--color_texto); background: rgba(111, 180, 255, .08); border-color: rgba(111, 180, 255, .35); }
+.boton_retraer_lateral:focus-visible, .enlace_lateral:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(111, 180, 255, .4); }
+.flecha_retraer { transform-origin: 14.75px 12px; transition: transform .3s var(--curva_suave); }
+
+@media (min-width: 901px) {
+  .panel_estructura { transition: grid-template-columns .3s var(--curva_suave); }
+  .barra_lateral { z-index: 10; transition: padding .3s var(--curva_suave); }
+  .enlace_lateral { position: relative; }
+  /* Al expandir, los textos aparecen cuando la barra ya ganó ancho */
+  .enlace_lateral > span, .boton_retraer_lateral > span { transition: opacity .2s .15s; }
+
+  .lateral_retraida .panel_estructura { grid-template-columns: 76px minmax(0, 1fr); }
+  .lateral_retraida .barra_lateral { padding-left: 12px; padding-right: 12px; }
+  .lateral_retraida .enlace_lateral,
+  .lateral_retraida .boton_retraer_lateral { justify-content: center; gap: 0; padding: 10px; }
+  .lateral_retraida .flecha_retraer { transform: scaleX(-1); }
+  .lateral_retraida .barra_lateral_pie { display: none; }
+
+  /* Retraída, el texto se vuelve una etiqueta flotante que aparece al pasar el ratón o al enfocar */
+  .lateral_retraida .enlace_lateral > span,
+  .lateral_retraida .boton_retraer_lateral > span {
+    position: absolute; left: calc(100% + 14px); top: 50%; z-index: 30;
+    padding: 6px 11px; border-radius: 8px; white-space: nowrap; pointer-events: none;
+    font-size: 13px; color: var(--color_texto);
+    background: var(--color_superficie); border: 1px solid rgba(111, 180, 255, .35);
+    box-shadow: 0 10px 30px -12px rgba(0, 0, 0, .7);
+    opacity: 0; transform: translate(-4px, -50%);
+    transition: opacity .15s, transform .15s;
+  }
+  .lateral_retraida .enlace_lateral:hover > span, .lateral_retraida .enlace_lateral:focus-visible > span,
+  .lateral_retraida .boton_retraer_lateral:hover > span, .lateral_retraida .boton_retraer_lateral:focus-visible > span {
+    opacity: 1; transform: translate(0, -50%);
+  }
+
+  /* El estado guardado se aplica al cargar sin animar */
+  .sin_transicion_lateral .panel_estructura, .sin_transicion_lateral .barra_lateral,
+  .sin_transicion_lateral .enlace_lateral > span, .sin_transicion_lateral .boton_retraer_lateral > span,
+  .sin_transicion_lateral .flecha_retraer { transition: none !important; }
+}
+
 /* ===== Contenido ===== */
 .panel_contenido { padding: 40px 40px 64px; min-width: 0; }
-.vista_panel { display: flex; flex-direction: column; gap: 32px; max-width: 1240px; }
+/* Centrado: con la barra retraída o en pantallas anchas no queda un hueco a la derecha */
+.vista_panel { display: flex; flex-direction: column; gap: 32px; max-width: 1320px; margin-inline: auto; }
 .encabezado_panel {
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px;
   padding-bottom: 28px; border-bottom: 1px solid var(--color_linea);
@@ -59,6 +108,10 @@
   font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; letter-spacing: -.02em;
 }
 .encabezado_panel_meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+/* Logo y estado del enlace juntos en la barra superior */
+.marca_panel { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.marca_panel .estado_enlace { padding: 5px 12px; white-space: nowrap; }
 
 /* Estado del enlace (verificado por WebSocket) */
 .estado_enlace {
@@ -147,6 +200,102 @@
 .celda_bateria_baja .celda_bateria_relleno { background: linear-gradient(to top, rgba(255, 138, 120, .65), rgba(255, 138, 120, .25)); }
 .celda_bateria_baja .celda_bateria_valor { color: var(--color_error); }
 
+/* Celdas como medidores: marcas al 25, 50 y 75 % para que vacías no parezcan cajas en blanco */
+.celda_bateria_barra {
+  background-image: repeating-linear-gradient(to top, transparent 0 calc(25% - 1px), rgba(140, 175, 235, .12) calc(25% - 1px) 25%);
+}
+.etiqueta_celdas { margin-bottom: -6px; }
+
+/* Resumen de batería: anillo de carga + lista de datos.
+   @property hace que --carga sea un número animable: el aro se llena con transición */
+@property --carga { syntax: '<number>'; inherits: false; initial-value: 0; }
+.resumen_bateria { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 26px; align-items: center; }
+.anillo_carga {
+  --tam_anillo: 148px;
+  position: relative; width: var(--tam_anillo); aspect-ratio: 1; border-radius: 50%; flex: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: conic-gradient(from -90deg, var(--color_acento) calc(var(--carga, 0) * 1%), rgba(140, 175, 235, .12) 0);
+  transition: --carga .6s;
+}
+/* El centro tapa el disco y deja solo el aro */
+.anillo_carga::before {
+  content: ''; position: absolute; inset: 11px; border-radius: 50%;
+  background: var(--color_superficie); box-shadow: inset 0 0 0 1px rgba(140, 175, 235, .12);
+}
+.anillo_carga > * { position: relative; }
+.anillo_carga_valor { font-family: var(--fuente_titulos); font-size: 34px; font-weight: 600; line-height: 1; }
+.anillo_carga.esta_baja { background: conic-gradient(from -90deg, var(--color_error) calc(var(--carga, 0) * 1%), rgba(255, 138, 120, .14) 0); }
+.anillo_carga.esta_baja .anillo_carga_valor { color: var(--color_error); }
+.lista_bateria { margin: 0; display: flex; flex-direction: column; }
+.fila_bateria {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 13px 0; border-bottom: 1px solid rgba(140, 175, 235, .1);
+}
+.fila_bateria:last-child { border-bottom: none; }
+.fila_bateria dd { margin: 0; font-family: var(--fuente_titulos); font-size: 20px; font-weight: 600; white-space: nowrap; }
+
+/* Estados de la autoprueba como píldoras */
+.estado_prueba { padding: 4px 10px; border-radius: 999px; background: rgba(140, 175, 235, .07); }
+.estado_prueba_en_curso { background: rgba(111, 180, 255, .1); }
+.estado_prueba_correcto { background: rgba(111, 180, 255, .14); }
+.estado_prueba_falla { background: rgba(255, 110, 90, .12); }
+
+/* ===== Home en pantalla única (escritorio) =====
+   autoprueba | batería | telemetría
+   posición y vuelo (a todo el ancho)
+   El contenido se reparte en el alto de cada tarjeta; si la ventana es baja, la tarjeta se desplaza por dentro */
+@media (min-width: 1181px) {
+  .pagina_inicio .panel_contenido { height: calc(100vh - var(--alto_barra_panel)); padding: 20px 24px; overflow: hidden; }
+  .vista_inicio { height: 100%; max-width: none; }
+  .cuadricula_inicio {
+    flex: 1; min-height: 0; gap: 20px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "prueba bateria telemetria" "posicion posicion posicion";
+  }
+  .tarjeta_prueba { grid-area: prueba; }
+  .tarjeta_bateria { grid-area: bateria; }
+  .tarjeta_telemetria { grid-area: telemetria; }
+  .tarjeta_posicion { grid-area: posicion; }
+  .cuadricula_inicio .tarjeta_panel {
+    min-height: 0; overflow-y: auto; padding: 22px 24px; gap: 16px;
+    scrollbar-width: thin; scrollbar-color: rgba(140, 175, 235, .3) transparent;
+  }
+  .cuadricula_inicio .titulo_tarjeta { font-size: 20px; }
+  .cuadricula_inicio .cuadricula_datos { margin-top: 0; }
+
+  /* Autoprueba: las filas se reparten el alto, el botón queda al pie */
+  .tarjeta_prueba .informacion_prueba { flex: 1 1 auto; padding: 14px 18px; gap: 4px; }
+  .tarjeta_prueba .lista_prueba { flex: 1 1 auto; }
+  .tarjeta_prueba .lista_prueba_fila { flex: 1 1 auto; padding: 6px 0; }
+
+  /* Batería: las celdas crecen con el espacio libre */
+  .tarjeta_bateria .celdas_bateria { flex: 1 1 auto; min-height: 110px; }
+  .tarjeta_bateria .celda_bateria_barra { flex: 1 1 auto; height: auto; min-height: 50px; }
+
+  /* Telemetría: grupos repartidos en el alto, valores grandes */
+  /* Los mosaicos crecen con el alto de la ventana (vh) en vez de abrir huecos entre grupos */
+  .tarjeta_telemetria .bloque_telemetria { flex: 1 1 auto; justify-content: space-between; gap: clamp(12px, 1.8vh, 20px); }
+  .tarjeta_telemetria .cuadricula_datos_tres .dato { padding: clamp(12px, 2.1vh, 24px) 16px; gap: 6px; }
+  .tarjeta_telemetria .cuadricula_datos_tres .dato_valor { font-size: clamp(19px, 2.3vh, 24px); }
+
+  /* Posición: una fila de cinco */
+  .tarjeta_posicion { gap: 14px; }
+  .tarjeta_posicion .cuadricula_datos { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .tarjeta_posicion .dato { padding: 14px 20px; }
+  .tarjeta_posicion .dato_valor { font-size: 22px; }
+}
+
+/* Ventanas bajas: anillo más chico */
+@media (min-width: 1181px) and (max-height: 960px) {
+  .anillo_carga { --tam_anillo: 128px; }
+  .anillo_carga_valor { font-size: 30px; }
+  .fila_bateria { padding: 10px 0; }
+}
+
+/* Telemetría separada de la batería: sin la línea divisoria también en móvil */
+.tarjeta_telemetria .bloque_telemetria { padding-top: 0; border-top: none; }
+
 /* ===== Páginas de gestión (bitácora, usuarios): editor a la izquierda, lista a la derecha ===== */
 .cuadricula_gestion {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
@@ -165,6 +314,7 @@
     padding: 10px 22px; border-right: none; border-bottom: 1px solid var(--color_linea);
   }
   .menu_lateral { flex-direction: row; min-width: 0; overflow-x: auto; }
+  .boton_retraer_lateral { display: none; }
   .barra_lateral_pie { margin-top: 0; margin-left: auto; padding: 0; border-top: none; align-items: flex-end; }
   .panel_contenido { padding: 28px 22px 56px; }
 }
@@ -173,9 +323,19 @@
   .barra_navegacion_panel .barra_navegacion_interior { padding-left: 16px; padding-right: 16px; }
   .usuario_datos { display: none; }
   .barra_lateral_pie { display: none; }
+  /* En móvil el estado queda solo como punto; el texto sigue disponible para lectores de pantalla */
+  .marca_panel { gap: 12px; }
+  .marca_panel .estado_enlace { padding: 7px; }
+  .marca_panel #estado_enlace_texto {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
   .encabezado_panel_meta { align-items: flex-start; }
   .tarjeta_panel { padding: 22px; }
   .celdas_bateria { gap: 6px; }
+  .resumen_bateria { gap: 18px; }
+  .anillo_carga { --tam_anillo: 116px; }
+  .anillo_carga_valor { font-size: 26px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

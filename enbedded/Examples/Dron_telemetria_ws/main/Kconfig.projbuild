@@ -1,0 +1,45 @@
+menu "Dron SAMATI: telemetría por WebSocket"
+
+    config DRON_WIFI_SSID
+        string "Nombre de la red WiFi (SSID)"
+        default "mi_red"
+
+    config DRON_WIFI_PASSWORD
+        string "Contraseña de la red WiFi"
+        default "mi_clave"
+
+    config DRON_API_HOST
+        string "IP o dominio de la API (FastAPI)"
+        default "api.superbaay.dev"
+        help
+            Por defecto la API publicada por el túnel de Cloudflare. Para una PC
+            de la red local pon su IP, desactiva TLS y usa el puerto de uvicorn
+            (arrancado con --host 0.0.0.0).
+
+    config DRON_API_TLS
+        bool "Conectar con TLS (https:// y wss://)"
+        default y
+
+    config DRON_API_PORT
+        int "Puerto de la API"
+        default 443 if DRON_API_TLS
+        default 8001
+
+    config DRON_MACHINE_NAME
+        string "Nombre de la máquina registrada en la API"
+        default "kanan_01"
+
+    config DRON_MACHINE_PASSWORD
+        string "Contraseña de la máquina"
+        default ""
+
+    config DRON_TELEMETRIA_HZ
+        int "Mensajes de telemetría por segundo hacia el panel"
+        range 1 50
+        default 10
+        help
+            Los sensores se leen a su ritmo (IMU 1000 Hz, barómetro ~89 Hz,
+            GPS 5 Hz); esto es solo cuántas veces por segundo se manda la
+            última lectura al panel. Una pantalla no necesita más de 10-20.
+
+endmenu

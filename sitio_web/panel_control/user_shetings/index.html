@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../styless.css">
-  <link rel="stylesheet" href="../styless.css">
+  <link rel="stylesheet" href="../styless.css?v=4">
   <link rel="stylesheet" href="styless.css">
 </head>
 <body class="pagina_panel">
@@ -33,6 +33,15 @@
 
   <div class="panel_estructura">
     <aside class="barra_lateral">
+      <!-- Retrae la barra a solo íconos; la preferencia la guarda sesion_panel.js para todas las páginas -->
+      <button type="button" class="boton_retraer_lateral" id="boton_retraer_lateral" aria-expanded="true">
+        <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect>
+          <path d="M9.5 4.5v15"></path>
+          <path class="flecha_retraer" d="M16 9.5 13.5 12l2.5 2.5"></path>
+        </svg>
+        <span id="texto_retraer_lateral">Retraer menú</span>
+      </button>
       <nav class="menu_lateral" aria-label="Secciones del panel">
         <a href="../index.html" class="enlace_lateral">
           <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
@@ -244,8 +253,8 @@
     </li>
   </template>
 
-  <script src="../../main.js?v=6"></script>
-  <script src="../sesion_panel.js?v=4"></script>
+  <script src="../../main.js?v=7"></script>
+  <script src="../sesion_panel.js?v=5"></script>
   <script src="main.js"></script>
 </body>
 </html>

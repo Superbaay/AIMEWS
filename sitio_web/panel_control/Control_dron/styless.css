@@ -1,10 +1,11 @@
 /* ===== Control del dron =====
    Depende de ../../styless.css (variables y componentes) y ../styless.css (estructura del panel) */
 
-.vista_control { max-width: 1440px; }
+.vista_control { max-width: none; }
 
-/* Selector de máquina en el encabezado */
-.selector_maquina { min-width: 220px; gap: 6px; }
+/* Selector de máquina en la cabecera de la tarjeta de vídeo */
+.selector_maquina { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.selector_maquina .campo_selector { width: auto; min-width: 200px; max-width: 100%; padding-top: 8px; padding-bottom: 8px; }
 .campo_selector {
   appearance: none; -webkit-appearance: none; cursor: pointer;
   padding: 11px 40px 11px 14px; font-size: 14px;
@@ -18,12 +19,44 @@
 .campo_selector option { background: var(--color_superficie); color: var(--color_texto); }
 
 /* ===== Distribución ===== */
+/* Escritorio: vídeo grande | panel con pestañas (Vuelo · PID · Registro) */
 .cuadricula_control {
-  display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
+  display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(420px, 1fr);
   gap: 20px; align-items: start;
 }
-.columna_control { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.tarjeta_pid { grid-column: 1 / -1; }
+.columna_control { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cuadricula_control[hidden] { display: none; }
+.panel_pestana { display: flex; flex-direction: column; gap: 16px; min-height: 0; animation: animacion_entrada .3s ease both; }
+.panel_pestana[hidden] { display: none; }
+
+/* Pestañas del panel: mismo estilo segmentado que las del PID, a todo el ancho */
+.pestanas_control {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 5px; flex: none;
+  border-radius: 14px; background: var(--color_superficie); border: 1px solid var(--color_linea);
+}
+.pestana_control {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--fuente_texto); font-size: 14px; font-weight: 500; color: var(--color_texto_secundario);
+  background: transparent; border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer;
+  transition: background .25s, color .25s;
+}
+.pestana_control:hover { color: var(--color_texto); background: rgba(111, 180, 255, .08); }
+.pestana_control[aria-selected="true"], .pestana_control[aria-selected="true"]:hover { background: var(--color_acento); color: #071226; }
+.pestana_control:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(111, 180, 255, .4); }
+.pestana_control_aviso { width: 7px; height: 7px; border-radius: 50%; background: var(--color_error); box-shadow: 0 0 0 3px rgba(255, 110, 90, .2); }
+.pestana_control_aviso[hidden] { display: none; }
+
+/* Operación: armar y paro lado a lado, luego los cuatro mandos y el modo */
+.tarjeta_operacion {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "cabecera cabecera" "armar paro" "mandos mandos" "modo modo" "nota nota";
+}
+.tarjeta_operacion > .tarjeta_componente_cabecera { grid-area: cabecera; }
+.tarjeta_operacion > .boton_armar { grid-area: armar; }
+.tarjeta_operacion > .boton_paro { grid-area: paro; }
+.tarjeta_operacion > .cuadricula_mandos { grid-area: mandos; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tarjeta_operacion > .selector_segmentos { grid-area: modo; }
+.tarjeta_operacion > .nota_control { grid-area: nota; }
 .cabecera_titulo { display: flex; flex-direction: column; gap: 6px; }
 .tarjeta_componente_cabecera { gap: 12px; flex-wrap: wrap; }
 .nota_control { margin: 0; font-size: 13px; line-height: 1.5; color: var(--color_texto_tenue); }
@@ -97,6 +130,8 @@
   transition: opacity .3s;
 }
 .marco_video.hud_oculto .hud { opacity: 0; }
+/* Sin vídeo, el horizonte y la retícula no deben cruzar el aviso del centro */
+.marco_video:has(.video_espera:not([hidden])) :is(.hud_horizonte, .hud_reticula) { opacity: 0; }
 .hud_esquina { position: absolute; width: 22px; height: 22px; border: 0 solid rgba(140, 196, 255, .7); }
 .hud_esquina_superior_izquierda { top: 14px; left: 14px; border-top-width: 2px; border-left-width: 2px; }
 .hud_esquina_superior_derecha { top: 14px; right: 14px; border-top-width: 2px; border-right-width: 2px; }
@@ -452,6 +487,62 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
 @keyframes animacion_parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 @keyframes animacion_giro_lento { from { transform: rotate(45deg); } to { transform: rotate(405deg); } }
 
+/* ===== Pantalla única (escritorio): todo cabe en el alto de la ventana, sin scroll de página =====
+   Si la ventana es baja, solo el panel derecho se desplaza por dentro */
+@media (min-width: 1181px) {
+  .panel_contenido { height: calc(100vh - var(--alto_barra_panel)); padding: 20px 24px; overflow: hidden; }
+  .vista_control { height: 100%; gap: 16px; }
+  .cuadricula_control { flex: 1; min-height: 0; align-items: stretch; }
+
+  .columna_control {
+    min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: rgba(140, 175, 235, .3) transparent;
+  }
+  .panel_pestana { flex: 1 1 auto; }
+
+  .vista_control .tarjeta_panel { padding: 20px 22px; gap: 16px; }
+  .vista_control .tarjeta_panel .titulo_tarjeta { font-size: 18px; }
+  .cabecera_titulo { gap: 4px; }
+
+  /* Vídeo: el marco ocupa todo el alto libre de la columna */
+  .tarjeta_video { flex: 1 1 auto; min-height: 0; }
+  .marco_video { flex: 1 1 0; min-height: 260px; aspect-ratio: auto; }
+  .ajustes_camara_cuerpo { padding-top: 14px; }
+
+  /* Vuelo: las palancas se llevan el espacio que sobra */
+  #panel_vuelo .tarjeta_panel { gap: 14px; }
+  .tarjeta_operacion > .cuadricula_mandos { gap: 8px; }
+  .tarjeta_operacion .boton_mando { flex-direction: row; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; }
+  .tarjeta_operacion .boton_mando svg { width: 19px; height: 19px; flex: none; }
+  .selector_segmentos legend { margin-bottom: 8px; }
+  .tarjeta_movimiento { flex: 1 1 auto; }
+  .tarjeta_movimiento .zona_palancas { flex: 1 1 auto; }
+  .palanca { width: min(100%, 144px); }
+  .guia_teclas { gap: 8px 14px; padding-top: 12px; }
+  .guia_teclas li { font-size: 12px; }
+  .nota_control { font-size: 12px; }
+  /* El botón ya lo dice; el texto completo queda en su title */
+  .tarjeta_operacion > .nota_control { display: none; }
+
+  /* PID y registro llenan el alto de su pestaña */
+  .tarjeta_registro { flex: 1 1 auto; }
+  .tarjeta_registro { min-height: 0; }
+  .lista_registro { flex: 1 1 0; min-height: 120px; max-height: none; }
+}
+
+/* Ventanas bajas (1080p con barras del navegador): un poco más compacto para que Vuelo quepa entero */
+@media (min-width: 1181px) and (max-height: 960px) {
+  .panel_contenido { padding-top: 16px; padding-bottom: 16px; }
+  .vista_control .tarjeta_panel { padding: 16px 20px; }
+  #panel_vuelo { gap: 12px; }
+  #panel_vuelo .tarjeta_panel { gap: 12px; }
+  .boton_armar, .boton_paro { padding-top: 11px; padding-bottom: 11px; }
+  .tarjeta_operacion .boton_mando { padding: 10px 8px; }
+  .palanca { width: min(100%, 124px); }
+  .lecturas_ejes { gap: 6px; }
+  .guia_teclas { padding-top: 10px; }
+}
+
 /* ===== Responsivo ===== */
 @media (max-width: 1180px) {
   .cuadricula_control { grid-template-columns: minmax(0, 1fr); }
@@ -471,7 +562,10 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
 }
 
 @media (max-width: 560px) {
-  .selector_maquina { min-width: 0; width: 100%; }
+  .tarjeta_operacion { grid-template-columns: minmax(0, 1fr); grid-template-areas: "cabecera" "armar" "mandos" "modo" "paro" "nota"; }
+  .tarjeta_operacion > .cuadricula_mandos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .selector_maquina { width: 100%; }
+  .selector_maquina .campo_selector { flex: 1; min-width: 0; }
   /* En pantallas chicas quedan altitud, batería y estado de armado */
   .hud_dato:nth-child(2), .hud_dato:nth-child(3) { display: none; }
   .hud_inferior { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.8fr); }

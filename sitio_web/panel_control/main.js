@@ -77,8 +77,13 @@ function iniciar_panel() {
   // estado_socket es socket.readyState (WebSocket.CONNECTING, OPEN, CLOSING o CLOSED) o null si no hay socket.
   // ultimo_mensaje_dron_ms es Date.now() del último mensaje del dron (0 si nunca llegó ninguno).
   function calcular_estado_enlace(estado_socket, ultimo_mensaje_dron_ms, ahora_ms) {
-    // TODO(human): decide el estado del enlace a partir del socket y del tiempo desde el último mensaje del dron
-    return 'desconectado';
+    if (estado_socket === WebSocket.CONNECTING) return 'conectando';
+    // null (sin socket), CLOSING o CLOSED: no hay camino hasta el dron
+    if (estado_socket !== WebSocket.OPEN) return 'desconectado';
+    // Socket abierto: la API responde, pero el dron solo cuenta si habló hace poco.
+    // El dron manda telemetría 10 veces por segundo, así que 5 s de silencio es un corte real
+    const dron_reciente = ultimo_mensaje_dron_ms > 0 && ahora_ms - ultimo_mensaje_dron_ms <= tiempo_max_sin_senal_ms;
+    return dron_reciente ? 'en_linea' : 'sin_senal';
   }
 
   function refrescar_estado_enlace() {
@@ -189,7 +194,9 @@ function iniciar_panel() {
     const celdas = [batery.c1, batery.c2, batery.c3, batery.c4, batery.c5, batery.c6];
     ultima_telemetria.textContent = formatear_hora(new Date());
     escribir_valor('bateria_voltaje', batery.voltage, 1);
-    escribir_valor('bateria_porcentaje', estimar_carga(celdas), 0);
+    const carga = estimar_carga(celdas);
+    escribir_valor('bateria_porcentaje', carga, 0);
+    // TODO(human): llenar el anillo de carga (#anillo_carga) con `carga` (0 a 100, o null si no hay celdas válidas)
     escribir_valor('bateria_corriente', batery.current, 1);
     escribir_valor('bateria_temperatura', batery.temperature, 1);
     escribir_valor('imu_cabeceo', acelerometer_gyroscope.pitch_angle, 1);
