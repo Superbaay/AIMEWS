@@ -5,3 +5,5 @@ pymongo==4.16.0
 python-jose==3.5.0
 bcrypt==5.0.0
 python-multipart==0.0.22
+aiofiles==25.1.0
+filetype==1.2.0

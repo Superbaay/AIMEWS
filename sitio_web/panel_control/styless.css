@@ -1,5 +1,13 @@
-/* ===== Estructura del panel ===== */
-.pagina_panel { --alto_barra_panel: 64px; min-height: 100vh; }
+/* ===== Estructura del panel =====
+   Cortes: los estándar del proyecto (480 / 768 / 1024 y 1440 / 1920, ver sitio_web/styless.css).
+   Los bloques "solo escritorio" usan el complemento exacto del corte: min-width 769px (= no max-width 768)
+   y min-width 1025px (= no max-width 1024). Los px que quedan son los de hasta 1600px;
+   con max(px, token) el valor no cambia en laptop y crece en monitores grandes. */
+.pagina_panel {
+  --alto_barra_panel: max(64px, 2.9vw);              /* 64px hasta ~2200px; 74px en 2560 */
+  --ancho_lateral: clamp(240px, 12.5vw, 300px);      /* 240px hasta 1920px; 300px en 2560 */
+  min-height: 100vh;
+}
 .barra_navegacion_panel .barra_navegacion_interior { min-height: var(--alto_barra_panel); padding-top: 0; padding-bottom: 0; }
 .barra_navegacion_panel .menu_navegacion { gap: 20px; flex-wrap: nowrap; }
 
@@ -7,16 +15,20 @@
 .usuario_avatar {
   width: 34px; height: 34px; border-radius: 50%; flex: none;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--fuente_titulos); font-weight: 600; font-size: 14px; text-transform: uppercase;
+  font-family: var(--fuente_titulos); font-weight: 600; font-size: var(--texto_md); text-transform: uppercase;
   color: var(--color_acento_claro); background: rgba(111, 180, 255, .14); border: 1px solid rgba(111, 180, 255, .5);
 }
 .usuario_datos { display: flex; flex-direction: column; gap: 3px; line-height: 1.2; }
-.usuario_nombre { font-size: 14px; font-weight: 500; color: var(--color_texto); }
+.usuario_nombre { font-size: var(--texto_md); font-weight: 500; color: var(--color_texto); }
 
 .panel_estructura {
-  display: grid; grid-template-columns: 240px minmax(0, 1fr);
+  display: grid; grid-template-columns: var(--ancho_lateral) minmax(0, 1fr);
   min-height: 100vh; padding-top: var(--alto_barra_panel);
 }
+
+/* "Cerrar sesión" nunca se parte en dos líneas */
+.barra_navegacion_panel .boton_acceso { white-space: nowrap; flex: none; }
+.barra_navegacion_panel .logo { flex: none; }
 
 /* ===== Barra lateral ===== */
 .barra_lateral {
@@ -30,13 +42,13 @@
 .enlace_lateral {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px; border-radius: 10px;
-  font-size: 14px; color: #9fb0cf; white-space: nowrap;
+  font-size: var(--texto_md); color: #9fb0cf; white-space: nowrap;
   transition: background .2s, color .2s;
 }
 .enlace_lateral:hover { color: var(--color_texto); background: rgba(111, 180, 255, .08); }
 .enlace_lateral_activo { color: var(--color_texto); background: rgba(111, 180, 255, .12); box-shadow: inset 2px 0 0 var(--color_acento); }
 .icono_lateral {
-  width: 18px; height: 18px; flex: none;
+  width: max(18px, 1.15em); height: max(18px, 1.15em); flex: none;
   fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
 }
 .enlace_lateral_activo .icono_lateral { color: var(--color_acento_claro); }
@@ -50,7 +62,7 @@
 .boton_retraer_lateral {
   position: relative; display: flex; align-items: center; gap: 12px; width: 100%;
   margin-bottom: 8px; padding: 9px 12px; border-radius: 10px;
-  font-family: var(--fuente_texto); font-size: 13px; color: var(--color_texto_tenue); white-space: nowrap;
+  font-family: var(--fuente_texto); font-size: var(--texto_sm); color: var(--color_texto_tenue); white-space: nowrap;
   background: transparent; border: 1px dashed rgba(140, 175, 235, .2); cursor: pointer;
   transition: color .2s, background .2s, border-color .2s;
 }
@@ -58,7 +70,7 @@
 .boton_retraer_lateral:focus-visible, .enlace_lateral:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(111, 180, 255, .4); }
 .flecha_retraer { transform-origin: 14.75px 12px; transition: transform .3s var(--curva_suave); }
 
-@media (min-width: 901px) {
+@media (min-width: 769px) {
   .panel_estructura { transition: grid-template-columns .3s var(--curva_suave); }
   .barra_lateral { z-index: 10; transition: padding .3s var(--curva_suave); }
   .enlace_lateral { position: relative; }
@@ -77,7 +89,7 @@
   .lateral_retraida .boton_retraer_lateral > span {
     position: absolute; left: calc(100% + 14px); top: 50%; z-index: 30;
     padding: 6px 11px; border-radius: 8px; white-space: nowrap; pointer-events: none;
-    font-size: 13px; color: var(--color_texto);
+    font-size: var(--texto_sm); color: var(--color_texto);
     background: var(--color_superficie); border: 1px solid rgba(111, 180, 255, .35);
     box-shadow: 0 10px 30px -12px rgba(0, 0, 0, .7);
     opacity: 0; transform: translate(-4px, -50%);
@@ -95,9 +107,13 @@
 }
 
 /* ===== Contenido ===== */
-.panel_contenido { padding: 40px 40px 64px; min-width: 0; }
-/* Centrado: con la barra retraída o en pantallas anchas no queda un hueco a la derecha */
-.vista_panel { display: flex; flex-direction: column; gap: 32px; max-width: 1320px; margin-inline: auto; }
+.panel_contenido { padding: max(40px, var(--espacio_5)) max(40px, var(--espacio_5)) max(64px, var(--espacio_6)); min-width: 0; }
+/* Centrado: con la barra retraída o en pantallas anchas no queda un hueco a la derecha.
+   1320px hasta 1920px; en monitores más grandes crece hasta --ancho_max_contenido */
+.vista_panel {
+  display: flex; flex-direction: column; gap: max(32px, var(--espacio_5));
+  max-width: clamp(1320px, 68.75vw, var(--ancho_max_contenido)); margin-inline: auto;
+}
 .encabezado_panel {
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px;
   padding-bottom: 28px; border-bottom: 1px solid var(--color_linea);
@@ -105,7 +121,7 @@
 .encabezado_panel_titulos { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .titulo_panel {
   margin: 0; font-family: var(--fuente_titulos); font-weight: 600;
-  font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; letter-spacing: -.02em;
+  font-size: clamp(28px, 3.2vw, max(40px, calc(var(--titulo_lg) - 4px))); line-height: 1.1; letter-spacing: -.02em;
 }
 .encabezado_panel_meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 
@@ -116,7 +132,7 @@
 /* Estado del enlace (verificado por WebSocket) */
 .estado_enlace {
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .12em; text-transform: uppercase;
   padding: 7px 14px; border-radius: 999px; border: 1px solid var(--color_linea);
   color: var(--color_texto_tenue);
   transition: color .3s, border-color .3s, background .3s;
@@ -136,16 +152,16 @@
 
 /* ===== Tarjetas del panel ===== */
 .cuadricula_panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
-.tarjeta_panel { padding: 28px; gap: 20px; }
-.tarjeta_panel .titulo_tarjeta { font-size: 20px; }
+.tarjeta_panel { padding: max(28px, var(--espacio_4)); gap: max(20px, var(--espacio_3)); }
+.tarjeta_panel .titulo_tarjeta { font-size: var(--titulo_xs); }
 .tarjeta_panel .boton_primario:disabled:not(.esta_cargando) { cursor: not-allowed; opacity: .45; }
 .tarjeta_panel .boton_primario { margin-top: auto; }
 .tarjeta_panel_ancha { grid-column: 1 / -1; }
 
 .cuadricula_datos_compacta { margin-top: 0; }
 .cuadricula_datos_compacta .dato { padding: 16px 18px; }
-.cuadricula_datos_compacta .dato_valor { font-size: 20px; overflow-wrap: anywhere; }
-.cuadricula_datos_compacta .dato_unidad { font-size: 13px; }
+.cuadricula_datos_compacta .dato_valor { font-size: var(--titulo_xs); overflow-wrap: anywhere; }
+.cuadricula_datos_compacta .dato_unidad { font-size: var(--texto_sm); }
 
 /* Telemetría: comparte tarjeta con la batería, así que va más compacta */
 .bloque_telemetria {
@@ -155,8 +171,8 @@
 .grupo_telemetria { display: flex; flex-direction: column; gap: 8px; }
 .cuadricula_datos_tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cuadricula_datos_tres .dato { padding: 10px 14px; gap: 4px; }
-.cuadricula_datos_tres .dato_valor { font-size: 17px; }
-.cuadricula_datos_tres .dato_unidad { font-size: 12px; }
+.cuadricula_datos_tres .dato_valor { font-size: calc(var(--texto_xl) - 1px); }   /* 17px hasta 1600 */
+.cuadricula_datos_tres .dato_unidad { font-size: var(--texto_xs); }
 
 /* Autoprueba */
 .informacion_prueba {
@@ -168,13 +184,16 @@
 .lista_prueba { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
 .lista_prueba_fila {
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  padding: 9px 0; font-size: 14px; color: #c3cfe5;
+  padding: 9px 0; font-size: var(--texto_md); color: #c3cfe5;
   border-top: 1px solid rgba(140, 175, 235, .08);
 }
 .lista_prueba_fila:first-child { border-top: none; }
+/* En tarjetas angostas la píldora de estado baja bajo el nombre en vez de salirse de la tarjeta */
+.lista_prueba_fila { flex-wrap: wrap; row-gap: 6px; }
+.lista_prueba_fila > span:first-child { flex: 1 1 0; }
 .estado_prueba {
   display: inline-flex; align-items: center; gap: 8px; flex: none;
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .08em; text-transform: uppercase;
   color: var(--color_texto_tenue); transition: color .3s;
 }
 .estado_prueba::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -196,7 +215,7 @@
   background: linear-gradient(to top, rgba(111, 180, 255, .6), rgba(140, 196, 255, .25));
   transition: height .6s var(--curva_suave), background .3s;
 }
-.celda_bateria_valor { font-size: 12px; color: #c3cfe5; }
+.celda_bateria_valor { font-size: var(--texto_xs); color: #c3cfe5; }
 .celda_bateria_baja .celda_bateria_relleno { background: linear-gradient(to top, rgba(255, 138, 120, .65), rgba(255, 138, 120, .25)); }
 .celda_bateria_baja .celda_bateria_valor { color: var(--color_error); }
 
@@ -211,7 +230,7 @@
 @property --carga { syntax: '<number>'; inherits: false; initial-value: 0; }
 .resumen_bateria { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 26px; align-items: center; }
 .anillo_carga {
-  --tam_anillo: 148px;
+  --tam_anillo: max(148px, 7.4vw);   /* 148px hasta 2000px; 189px en 2560 */
   position: relative; width: var(--tam_anillo); aspect-ratio: 1; border-radius: 50%; flex: none;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   background: conic-gradient(from -90deg, var(--color_acento) calc(var(--carga, 0) * 1%), rgba(140, 175, 235, .12) 0);
@@ -223,7 +242,7 @@
   background: var(--color_superficie); box-shadow: inset 0 0 0 1px rgba(140, 175, 235, .12);
 }
 .anillo_carga > * { position: relative; }
-.anillo_carga_valor { font-family: var(--fuente_titulos); font-size: 34px; font-weight: 600; line-height: 1; }
+.anillo_carga_valor { font-family: var(--fuente_titulos); font-size: calc(var(--titulo_md) + 8px); font-weight: 600; line-height: 1; }
 .anillo_carga.esta_baja { background: conic-gradient(from -90deg, var(--color_error) calc(var(--carga, 0) * 1%), rgba(255, 138, 120, .14) 0); }
 .anillo_carga.esta_baja .anillo_carga_valor { color: var(--color_error); }
 .lista_bateria { margin: 0; display: flex; flex-direction: column; }
@@ -232,7 +251,7 @@
   padding: 13px 0; border-bottom: 1px solid rgba(140, 175, 235, .1);
 }
 .fila_bateria:last-child { border-bottom: none; }
-.fila_bateria dd { margin: 0; font-family: var(--fuente_titulos); font-size: 20px; font-weight: 600; white-space: nowrap; }
+.fila_bateria dd { margin: 0; font-family: var(--fuente_titulos); font-size: var(--titulo_xs); font-weight: 600; white-space: nowrap; }
 
 /* Estados de la autoprueba como píldoras */
 .estado_prueba { padding: 4px 10px; border-radius: 999px; background: rgba(140, 175, 235, .07); }
@@ -240,57 +259,99 @@
 .estado_prueba_correcto { background: rgba(111, 180, 255, .14); }
 .estado_prueba_falla { background: rgba(255, 110, 90, .12); }
 
+/* ===== Home: áreas de la cuadrícula ===== */
+.tarjeta_prueba { grid-area: prueba; }
+.tarjeta_bateria { grid-area: bateria; }
+.tarjeta_telemetria { grid-area: telemetria; }
+.tarjeta_posicion { grid-area: posicion; }
+
+/* ===== Cabecera de las tarjetas de Home: título a la izquierda, etiqueta a la derecha en el mismo renglón =====
+   Si no cabe (teléfono), la etiqueta baja debajo del título */
+.cuadricula_inicio .tarjeta_componente_cabecera { flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.cuadricula_inicio .tarjeta_componente_cabecera .titulo_tarjeta { line-height: 1.2; }
+
 /* ===== Home en pantalla única (escritorio) =====
    autoprueba | batería | telemetría
-   posición y vuelo (a todo el ancho)
-   El contenido se reparte en el alto de cada tarjeta; si la ventana es baja, la tarjeta se desplaza por dentro */
-@media (min-width: 1181px) {
-  .pagina_inicio .panel_contenido { height: calc(100vh - var(--alto_barra_panel)); padding: 20px 24px; overflow: hidden; }
-  .vista_inicio { height: 100%; max-width: none; }
-  .cuadricula_inicio {
-    flex: 1; min-height: 0; gap: 20px;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas: "prueba bateria telemetria" "posicion posicion posicion";
+   posición y vuelo (a todo el ancho, una fila de 8 datos)
+   Nada se desplaza desde 1280x650: tamaños y espacios crecen con el alto de la ventana (vh)
+   y el alto sobrante se reparte con flex. overflow:auto queda solo como red para ventanas más bajas */
+@media (min-width: 1025px) {
+  .pagina_inicio .panel_contenido {
+    height: calc(100vh - var(--alto_barra_panel)); overflow: hidden;
+    padding: clamp(10px, 2vh, 32px) max(24px, var(--espacio_4));
   }
-  .tarjeta_prueba { grid-area: prueba; }
-  .tarjeta_bateria { grid-area: bateria; }
-  .tarjeta_telemetria { grid-area: telemetria; }
-  .tarjeta_posicion { grid-area: posicion; }
+  /* En monitores grandes el tablero se queda en --ancho_max_contenido, centrado */
+  .vista_inicio { height: 100%; max-width: var(--ancho_max_contenido); }
+  .cuadricula_inicio {
+    flex: 1; min-height: 0;
+    column-gap: max(16px, var(--espacio_3)); row-gap: clamp(10px, 1.7vh, 28px);
+    /* Telemetría más ancha: sus mosaicos llevan números de 4-6 cifras con unidad */
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, .9fr) minmax(0, 1.2fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    /* Autoprueba ocupa todo el alto (9 filas); posición queda bajo batería y telemetría en 4x2, menos alargada */
+    grid-template-areas: "prueba bateria telemetria" "prueba posicion posicion";
+  }
   .cuadricula_inicio .tarjeta_panel {
-    min-height: 0; overflow-y: auto; padding: 22px 24px; gap: 16px;
+    min-height: 0; overflow-y: auto;
+    padding: clamp(10px, 2vh, 36px) max(16px, var(--espacio_3)); gap: clamp(6px, 1.2vh, 24px);
     scrollbar-width: thin; scrollbar-color: rgba(140, 175, 235, .3) transparent;
   }
-  .cuadricula_inicio .titulo_tarjeta { font-size: 20px; }
+  /* La etiqueta no empuja al título: si es larga se parte en dos renglones alineada a la derecha */
+  .cuadricula_inicio .tarjeta_componente_cabecera { flex-wrap: nowrap; }
+  .cuadricula_inicio .tarjeta_componente_cabecera .titulo_tarjeta { flex: none; font-size: var(--titulo_xs); }
+  .cuadricula_inicio .tarjeta_componente_cabecera .etiqueta_pequena { min-width: 0; text-align: right; }
   .cuadricula_inicio .cuadricula_datos { margin-top: 0; }
+  .cuadricula_inicio .dato_nombre { letter-spacing: .05em; line-height: 1.25; }
 
   /* Autoprueba: las filas se reparten el alto, el botón queda al pie */
-  .tarjeta_prueba .informacion_prueba { flex: 1 1 auto; padding: 14px 18px; gap: 4px; }
-  .tarjeta_prueba .lista_prueba { flex: 1 1 auto; }
-  .tarjeta_prueba .lista_prueba_fila { flex: 1 1 auto; padding: 6px 0; }
+  /* Sin min-height: 0 en el interior: si algo no cabe, la tarjeta lo muestra (red de seguridad) en vez de encimarlo */
+  .tarjeta_prueba .informacion_prueba {
+    flex: 1 1 0;
+    padding: clamp(4px, 1vh, 20px) clamp(12px, 1vw, 20px); gap: clamp(2px, .5vh, 10px);
+  }
+  .tarjeta_prueba .informacion_prueba_cabecera { row-gap: 0; }
+  .tarjeta_prueba .lista_prueba { flex: 1 1 0; }
+  .tarjeta_prueba .lista_prueba_fila { flex: 1 1 auto; padding: clamp(1px, .3vh, 10px) 0; line-height: 1.25; row-gap: 2px; }
+  .tarjeta_prueba .estado_prueba { gap: 6px; padding: 2px 8px; letter-spacing: .03em; line-height: 1.3; }
+  .tarjeta_prueba .boton_primario { padding-block: clamp(6px, 1.3vh, 16px); }
 
-  /* Batería: las celdas crecen con el espacio libre */
-  .tarjeta_bateria .celdas_bateria { flex: 1 1 auto; min-height: 110px; }
-  .tarjeta_bateria .celda_bateria_barra { flex: 1 1 auto; height: auto; min-height: 50px; }
+  /* Batería: anillo y lista lado a lado; si la tarjeta es angosta la lista baja debajo del anillo */
+  .tarjeta_bateria .resumen_bateria {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+    gap: clamp(8px, 1.4vh, 26px) clamp(14px, 1.3vw, 26px);
+  }
+  .tarjeta_bateria .lista_bateria { flex: 1 1 110px; min-width: 0; }
+  .anillo_carga { --tam_anillo: clamp(92px, 15.5vh, 210px); }
+  .anillo_carga::before { inset: clamp(8px, 1.1vh, 12px); }
+  .anillo_carga_valor { font-size: clamp(20px, 3vh, var(--titulo_md)); line-height: 1.25; }
+  .anillo_carga .dato_nombre { font-size: var(--texto_xs); }
+  /* Si el valor no cabe junto a su nombre, baja al renglón siguiente alineado a la derecha */
+  .fila_bateria { padding: clamp(3px, 1vh, 14px) 0; flex-wrap: wrap; row-gap: 0; }
+  .fila_bateria dd { margin-left: auto; }
+  .fila_bateria dd { font-size: clamp(15px, 1.9vh, var(--titulo_xs)); }
+  /* Las celdas toman el alto que sobra */
+  .etiqueta_celdas { margin-bottom: 0; }
+  .tarjeta_bateria .celdas_bateria { flex: 1 1 0; gap: clamp(6px, .6vw, 12px); }
+  .tarjeta_bateria .celda_bateria { gap: clamp(3px, .6vh, 8px); }
+  .tarjeta_bateria .celda_bateria_barra { flex: 1 1 0; height: auto; min-height: 22px; }
 
-  /* Telemetría: grupos repartidos en el alto, valores grandes */
-  /* Los mosaicos crecen con el alto de la ventana (vh) en vez de abrir huecos entre grupos */
-  .tarjeta_telemetria .bloque_telemetria { flex: 1 1 auto; justify-content: space-between; gap: clamp(12px, 1.8vh, 20px); }
-  .tarjeta_telemetria .cuadricula_datos_tres .dato { padding: clamp(12px, 2.1vh, 24px) 16px; gap: 6px; }
-  .tarjeta_telemetria .cuadricula_datos_tres .dato_valor { font-size: clamp(19px, 2.3vh, 24px); }
+  /* Telemetría: los grupos se reparten el alto (IMU tiene dos filas) y los mosaicos se estiran */
+  .tarjeta_telemetria .bloque_telemetria { flex: 1 1 0; gap: clamp(6px, 1.2vh, 20px); }
+  .tarjeta_telemetria .grupo_telemetria { flex: 1 1 auto; gap: clamp(3px, .6vh, 10px); }
+  .tarjeta_telemetria .grupo_telemetria:first-child { flex-grow: 2; }
+  .tarjeta_telemetria .cuadricula_datos_tres { flex: 1 1 auto; grid-auto-rows: 1fr; }
+  .tarjeta_telemetria .cuadricula_datos_tres .dato {
+    justify-content: center; gap: clamp(2px, .4vh, 8px);
+    padding: clamp(4px, .9vh, 18px) clamp(8px, .8vw, 16px);
+  }
+  /* Valores medianos: legibles sin dominar la tarjeta */
+  .tarjeta_telemetria .cuadricula_datos_tres .dato_valor { font-size: clamp(15px, 1.9vh, var(--titulo_xs)); line-height: 1.2; }
 
-  /* Posición: una fila de cinco */
-  .tarjeta_posicion { gap: 14px; }
-  .tarjeta_posicion .cuadricula_datos { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .tarjeta_posicion .dato { padding: 14px 20px; }
-  .tarjeta_posicion .dato_valor { font-size: 22px; }
-}
-
-/* Ventanas bajas: anillo más chico */
-@media (min-width: 1181px) and (max-height: 960px) {
-  .anillo_carga { --tam_anillo: 128px; }
-  .anillo_carga_valor { font-size: 30px; }
-  .fila_bateria { padding: 10px 0; }
+  /* Posición: 4x2 bajo batería y telemetría */
+  .tarjeta_posicion { gap: clamp(6px, 1vh, 18px); }
+  .tarjeta_posicion .cuadricula_datos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tarjeta_posicion .dato { padding: clamp(5px, 1vh, 18px) clamp(10px, .9vw, 18px); gap: clamp(2px, .3vh, 6px); }
+  .tarjeta_posicion .dato_valor { font-size: clamp(15px, 1.9vh, var(--titulo_xs)); line-height: 1.2; }
 }
 
 /* Telemetría separada de la batería: sin la línea divisoria también en móvil */
@@ -301,44 +362,100 @@
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
   gap: 20px; align-items: start;
 }
-.estado_lista { margin: 0; font-size: 14px; color: var(--color_texto_tenue); }
+.estado_lista { margin: 0; font-size: var(--texto_md); color: var(--color_texto_tenue); }
 .campo_opcional { color: var(--color_texto_tenue); font-weight: 400; }
 .boton_eliminar { color: var(--color_error); }
 .boton_eliminar:hover { color: #ffc9c2; }
 
 /* ===== Responsivo ===== */
-@media (max-width: 900px) {
-  .panel_estructura { grid-template-columns: minmax(0, 1fr); }
-  .barra_lateral {
-    position: static; height: auto; flex-direction: row; align-items: center;
-    padding: 10px 22px; border-right: none; border-bottom: 1px solid var(--color_linea);
+/* Tablet y laptop chica: Home en dos columnas (autoprueba | batería; telemetría y posición a todo el ancho) */
+@media (max-width: 1024px) {
+  .cuadricula_inicio {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: "prueba bateria" "telemetria telemetria" "posicion posicion";
   }
-  .menu_lateral { flex-direction: row; min-width: 0; overflow-x: auto; }
-  .boton_retraer_lateral { display: none; }
-  .barra_lateral_pie { margin-top: 0; margin-left: auto; padding: 0; border-top: none; align-items: flex-end; }
-  .panel_contenido { padding: 28px 22px 56px; }
+  /* Media columna: el anillo arriba y la lista debajo, a todo el ancho */
+  .tarjeta_bateria .resumen_bateria { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .tarjeta_bateria .lista_bateria { width: 100%; }
 }
 
-@media (max-width: 560px) {
-  .barra_navegacion_panel .barra_navegacion_interior { padding-left: 16px; padding-right: 16px; }
+/* Tablet: la barra lateral pasa a ser una franja bajo el encabezado */
+@media (max-width: 768px) {
+  .panel_estructura { grid-template-columns: minmax(0, 1fr); }
+  .barra_lateral {
+    position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    padding: 8px var(--gutter_lateral); border-right: none; border-bottom: 1px solid var(--color_linea);
+  }
+  /* Los cinco enlaces se reparten el ancho y se encogen (texto con "…") en vez de salirse de la pantalla */
+  /* Base de 500px (lo que miden los cinco enlaces completos): si no queda sitio para el pie, el pie baja de línea */
+  .menu_lateral { flex: 1 1 500px; flex-direction: row; min-width: 0; gap: 4px; }
+  .enlace_lateral { flex: 1 1 auto; min-width: 0; justify-content: center; gap: 8px; padding: 10px 8px; }
+  .enlace_lateral > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .enlace_lateral_activo { box-shadow: inset 0 -2px 0 var(--color_acento); }
+  .boton_retraer_lateral { display: none; }
+  /* Si no cabe junto al menú, la vigencia de la sesión baja a su propia línea */
+  .barra_lateral_pie { margin: 0 0 0 auto; padding: 0; border-top: none; align-items: flex-end; }
+  .panel_contenido { padding: 28px var(--gutter_lateral) 56px; }
+
+  /* Encabezado: si el estado del enlace no cabe, se recorta con "…" en vez de empujar los botones */
+  .marca_panel .estado_enlace { min-width: 0; overflow: hidden; }
+  .marca_panel #estado_enlace_texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* Teléfono */
+@media (max-width: 480px) {
+  .barra_navegacion_panel .barra_navegacion_interior { gap: 12px; }
+  .barra_navegacion_panel .menu_navegacion { gap: 10px; }
+  .barra_navegacion_panel .boton_acceso { padding: 8px 14px; }
   .usuario_datos { display: none; }
   .barra_lateral_pie { display: none; }
   /* En móvil el estado queda solo como punto; el texto sigue disponible para lectores de pantalla */
   .marca_panel { gap: 12px; }
-  .marca_panel .estado_enlace { padding: 7px; }
+  .marca_panel .estado_enlace { flex: none; padding: 7px; }
   .marca_panel #estado_enlace_texto {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
   }
+
+  /* Barra de secciones tipo pestañas: ícono arriba y nombre abajo, las cinco siempre visibles */
+  .barra_lateral { padding: 6px 8px; }
+  .menu_lateral { flex-basis: 100%; gap: 2px; }
+  .enlace_lateral {
+    flex: 1 1 0; flex-direction: column; gap: 4px; padding: 7px 2px;
+    font-size: var(--texto_xs); line-height: 1.2;
+  }
+  .enlace_lateral > span { max-width: 100%; }
+
   .encabezado_panel_meta { align-items: flex-start; }
   .tarjeta_panel { padding: 22px; }
+
+  .cuadricula_inicio {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "prueba" "bateria" "telemetria" "posicion";
+  }
+  .tarjeta_bateria .resumen_bateria { grid-template-columns: auto minmax(0, 1fr); }
   .celdas_bateria { gap: 6px; }
   .resumen_bateria { gap: 18px; }
   .anillo_carga { --tam_anillo: 116px; }
-  .anillo_carga_valor { font-size: 26px; }
+  .anillo_carga_valor { font-size: var(--titulo_md); }
+}
+
+/* Táctil: objetivos de al menos --tam_toque */
+@media (pointer: coarse) {
+  .enlace_lateral, .boton_retraer_lateral, .barra_navegacion_panel .boton_acceso { min-height: var(--tam_toque); }
+  .barra_navegacion_panel .logo { min-height: var(--tam_toque); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .estado_enlace_punto::after { animation: none !important; }
   .celda_bateria_relleno { transition: none; }
 }
+
+/* ===== Formularios de las páginas de gestión (máquinas, usuarios y bitácora) ===== */
+/* Al final del archivo: así siguen ganando a .campo_entrada igual que cuando estaban en cada página */
+.fila_campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 16px; }
+.campo_area { resize: vertical; min-height: 68px; line-height: 1.5; }
+.campo_busqueda { padding: 10px 14px; font-size: var(--texto_md); }
+.nota_resultado { margin: 0; font-size: var(--texto_sm); color: var(--color_acento_claro); }
+.nota_resultado:empty { display: none; }
+.nota_resultado_error { color: var(--color_error); }

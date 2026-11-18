@@ -21,6 +21,9 @@ Panel   ->  ws://<api>/camera_rt/ws/view
 
 Si el primer mensaje no llega en auth_timeout_s segundos o el token no sirve,
 se cierra con 1008 (policy violation) sin aceptar nada mas.
+
+Lo comun con el WebSocket del dron/panel (token inicial, reject, machine_exists,
+cola de un solo escritor) vive en Library/ws_bm.py.
 """
 import asyncio
 import json
@@ -28,7 +31,7 @@ import time
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, status
 from fastapi.responses import Response
 from Library import segurity_bm
-from Library.base_model_bm import db
+from Library import ws_bm
 
 router = APIRouter(
     prefix="/camera_rt",
@@ -37,7 +40,7 @@ router = APIRouter(
 
 fps_target = 12                     # FPS_OBJETIVO del ejemplo
 fps_ceiling = fps_target + 3        # tolera el "recupero" de plazos absolutos del firmware
-auth_timeout_s = 5
+auth_timeout_s = ws_bm.auth_timeout_s
 max_frame_bytes = 256 * 1024        # TAM_COPIA_MAX del ejemplo; un UXGA q12 ronda 55 KB
 jpeg_soi = b"\xff\xd8"              # todo JPEG empieza con Start Of Image
 
@@ -50,35 +53,23 @@ camera_settings = {
 }
 
 
-class viewer_conn:
+class viewer_conn(ws_bm.single_writer):
     """Un visor. Un solo escritor por socket: todo lo que se le manda pasa por sender()."""
+    max_events = 50                         # un visor colgado no acumula memoria sin limite
 
     def __init__(self, websocket: WebSocket, name: str):
-        self.websocket = websocket
-        self.name = name
+        super().__init__(websocket, name)
         self.frame: bytes | None = None     # solo el MAS RECIENTE: si el visor va lento, se saltan frames
-        self.events: list[dict] = []
-        self.wakeup = asyncio.Event()
 
     def push_frame(self, frame: bytes):
         self.frame = frame
         self.wakeup.set()
 
-    def push_event(self, event: dict):
-        if len(self.events) < 50:           # un visor colgado no acumula memoria sin limite
-            self.events.append(event)
-        self.wakeup.set()
-
-    async def sender(self):
-        while True:
-            await self.wakeup.wait()
-            self.wakeup.clear()
-            events, self.events = self.events, []
-            for event in events:
-                await self.websocket.send_text(json.dumps(event))
-            frame, self.frame = self.frame, None
-            if frame is not None:
-                await self.websocket.send_bytes(frame)
+    async def flush(self, events: list[dict]):
+        await super().flush(events)
+        frame, self.frame = self.frame, None
+        if frame is not None:
+            await self.websocket.send_bytes(frame)
 
 
 class camera_channel:
@@ -144,32 +135,14 @@ def get_channel(name: str) -> camera_channel:
     return channels[name]
 
 
-def machine_exists(name: str) -> bool:
-    return db.machine_rt.user.find_one({"name": name}, {"_id": 1}) is not None
-
-
 async def receive_first_message(websocket: WebSocket) -> tuple[dict, dict] | None:
     """Verificacion inicial: primer mensaje con el token. Devuelve (token decodificado, mensaje) o None."""
-    try:
-        first = await asyncio.wait_for(websocket.receive_json(), auth_timeout_s)
-        if not isinstance(first, dict):
-            raise ValueError("first message must be a JSON object")
-        token = await segurity_bm.verify_token(first.get("token"))
-        return token, first
-    except WebSocketDisconnect:
-        return None
-    #TimeoutError: no mando nada; ValueError: no era JSON; KeyError: mando binario; HTTPException: token invalido
-    except (asyncio.TimeoutError, ValueError, KeyError, HTTPException):
-        await reject(websocket, "Unauthorized")
-        return None
+    return await ws_bm.receive_token(websocket, "type")
 
 
 async def reject(websocket: WebSocket, reason: str):
-    try:
-        await websocket.send_text(json.dumps({"type": "error", "message": reason}))
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason=reason)
-    except (WebSocketDisconnect, RuntimeError):
-        pass
+    """{"type": "error", "message": reason} y cierre 1008."""
+    await ws_bm.reject(websocket, reason, "type")
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +160,7 @@ async def camera_source(websocket: WebSocket):
         await reject(websocket, "Only machine tokens can stream")
         return
     #El token dura 24 h: si la maquina se borro en ese tiempo, ya no puede transmitir
-    if not machine_exists(name):
+    if not await asyncio.to_thread(ws_bm.machine_exists, name):
         await reject(websocket, "Machine not found")
         return
 
@@ -284,7 +257,7 @@ async def camera_viewer(websocket: WebSocket):
         await reject(websocket, "Role insuficiente")
         return
     machine = message.get("machine")
-    if not isinstance(machine, str) or not machine_exists(machine):
+    if not isinstance(machine, str) or not await asyncio.to_thread(ws_bm.machine_exists, machine):
         await reject(websocket, "Machine not found")
         return
 
@@ -299,18 +272,10 @@ async def camera_viewer(websocket: WebSocket):
     if channel.last_frame is not None and channel.source is not None:
         viewer.push_frame(channel.last_frame)
 
-    tasks = {
-        asyncio.create_task(viewer.sender()),
-        asyncio.create_task(viewer_receiver(websocket, channel, viewer)),
-    }
     try:
         #Cuando una de las dos termina (desconexion o error al enviar) se cancela la otra
-        done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-        for task in done:
-            task.exception()    # marca la excepcion como vista; la desconexion es el fin normal
+        await ws_bm.run_until_first_done(viewer.sender(), viewer_receiver(websocket, channel, viewer))
     finally:
-        for task in tasks:
-            task.cancel()
         channel.viewers.discard(viewer)
 
 

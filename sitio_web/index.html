@@ -6,7 +6,7 @@
   <title>SAMATI · Monitoreo y Alerta Temprana de Infraestructura</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styless.css">
+  <link rel="stylesheet" href="styless.css?v=3">
 </head>
 <body>
 
@@ -51,7 +51,7 @@
         <div class="inicio_texto">
           <div class="etiqueta_ubicacion revelar" style="--retraso:0ms">
             <span class="punto_estado"></span>
-            <span>Cancún, Quintana Roo · Infraestructura vial</span>
+            <span class="etiqueta_ubicacion_texto"><span class="sin_corte">Cancún, Quintana Roo ·</span> <span class="sin_corte">Infraestructura vial</span></span>
           </div>
           <h1 class="titulo_principal revelar" style="--retraso:100ms">Monitoreo autónomo y alerta temprana de la infraestructura crítica.</h1>
           <p class="texto_principal revelar" style="--retraso:200ms">Un dron autónomo recorre los puntos críticos de la ciudad, mide el estado de la carpeta asfáltica y detecta inundaciones. La información se actualiza a diario y llega a las autoridades sin depender de inspecciones rutinarias.</p>
@@ -120,9 +120,8 @@
         </div>
         <div class="cuadricula_componentes">
           <article class="tarjeta_componente revelar" style="--retraso:0ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">01</span><span class="etiqueta_pequena">Hardware</span></div>
             <div class="tarjeta_componente_texto">
-              <h3 class="titulo_tarjeta">Dron</h3>
+              <div class="tarjeta_componente_cabecera"><h3 class="titulo_tarjeta">Dron</h3><span class="etiqueta_pequena">Hardware</span></div>
               <p class="texto_secundario">Controla estabilidad, dirección y velocidad mediante PID. Recorre los waypoints de la misión y regresa a su origen.</p>
             </div>
             <ul class="lista_elementos">
@@ -134,9 +133,8 @@
             </ul>
           </article>
           <article class="tarjeta_componente revelar" style="--retraso:120ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">02</span><span class="etiqueta_pequena">Comunicación</span></div>
             <div class="tarjeta_componente_texto">
-              <h3 class="titulo_tarjeta">Infraestructura</h3>
+              <div class="tarjeta_componente_cabecera"><h3 class="titulo_tarjeta">Infraestructura</h3><span class="etiqueta_pequena">Comunicación</span></div>
               <p class="texto_secundario">La API almacena y procesa la información, autentica usuarios por rol y transmite comandos entre el sitio y el dron.</p>
             </div>
             <ul class="lista_elementos">
@@ -148,9 +146,8 @@
             </ul>
           </article>
           <article class="tarjeta_componente revelar" style="--retraso:240ms">
-            <div class="tarjeta_componente_cabecera"><span class="numero_mono">03</span><span class="etiqueta_pequena">Visualización</span></div>
             <div class="tarjeta_componente_texto">
-              <h3 class="titulo_tarjeta">Control y monitoreo</h3>
+              <div class="tarjeta_componente_cabecera"><h3 class="titulo_tarjeta">Control y monitoreo</h3><span class="etiqueta_pequena">Visualización</span></div>
               <p class="texto_secundario">Desde el sitio web se inician las misiones, se consulta el estado de los puntos críticos y se controla el dron.</p>
             </div>
             <ul class="lista_elementos">
@@ -175,22 +172,22 @@
         </div>
         <ol class="linea_pasos">
           <li class="paso revelar" style="--retraso:0ms">
-            <span class="numero_mono">01</span>
+            <span class="numero_mono paso_nodo" aria-hidden="true">01</span>
             <h3 class="titulo_paso">Misión de referencia</h3>
             <p class="texto_secundario">El dron recorre los puntos críticos y registra la distancia ideal al suelo en cada waypoint.</p>
           </li>
           <li class="paso revelar" style="--retraso:120ms">
-            <span class="numero_mono">02</span>
+            <span class="numero_mono paso_nodo" aria-hidden="true">02</span>
             <h3 class="titulo_paso">Evento climático</h3>
             <p class="texto_secundario">Después de lluvias torrenciales, tormentas o huracanes se programa una segunda misión.</p>
           </li>
           <li class="paso revelar" style="--retraso:240ms">
-            <span class="numero_mono">03</span>
+            <span class="numero_mono paso_nodo" aria-hidden="true">03</span>
             <h3 class="titulo_paso">Medición y fotografía</h3>
             <p class="texto_secundario">Dos servomotores mantienen el LiDAR perpendicular al suelo; la lectura se contrasta con el barómetro y se envía una fotografía del punto.</p>
           </li>
           <li class="paso revelar" style="--retraso:360ms">
-            <span class="numero_mono">04</span>
+            <span class="numero_mono paso_nodo" aria-hidden="true">04</span>
             <h3 class="titulo_paso">Alerta</h3>
             <p class="texto_secundario">La API compara ambas misiones y notifica a las autoridades correspondientes.</p>
           </li>

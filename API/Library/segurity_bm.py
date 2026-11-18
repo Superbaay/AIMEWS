@@ -1,3 +1,4 @@
+import os
 import secrets
 from pathlib import Path
 from jose import jwt
@@ -6,14 +7,22 @@ from fastapi import status,HTTPException,Depends
 from datetime import datetime,timedelta,timezone
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from Library import base_model_bm
-from Library import def_bm
 
 algoticmo = "HS256"
 # La clave que firma los JWT vive fuera de git, en API/secret_key.txt (está en .gitignore).
-# Si no existe se genera una aleatoria. Cambiarla cierra todas las sesiones abiertas
-ruta_secret_key = Path(__file__).resolve().parent.parent / 'secret_key.txt'
+# Si no existe se genera una aleatoria. Cambiarla cierra todas las sesiones abiertas.
+# Para pruebas, SAMATI_SECRET_KEY_FILE apunta a otro archivo y entonces API/secret_key.txt
+# ni se lee ni se crea (se crea, si falta, el archivo de la variable)
+ruta_secret_key = Path(os.environ.get('SAMATI_SECRET_KEY_FILE')
+                       or Path(__file__).resolve().parent.parent / 'secret_key.txt')
 if not ruta_secret_key.exists():
-    ruta_secret_key.write_text(secrets.token_urlsafe(48), encoding='utf-8')
+    if not ruta_secret_key.parent.is_dir():
+        raise RuntimeError(f"No existe la carpeta de la clave JWT: {ruta_secret_key.parent} "
+                           "(revisa SAMATI_SECRET_KEY_FILE)")
+    #0600: solo el dueño puede leer la clave (en Windows os.open ignora casi todo el modo)
+    descriptor = os.open(ruta_secret_key, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, 'w', encoding='utf-8') as archivo:
+        archivo.write(secrets.token_urlsafe(48))
 secret_key = ruta_secret_key.read_text(encoding='utf-8').strip()
 expire_time_hours = 24
 segurity = OAuth2PasswordBearer("token")
@@ -28,10 +37,6 @@ def verify_password(password:str,password_hashed):
     if check == False:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="It isnt Password")
     return check
-
-def veryfy_user( user : str, password : str ):
-    full_user = def_bm.search_username_exception(user)
-    verify_password(password,full_user.password)
 
 #Token
 #El type sale del modelo: base_model_bm.user da "user" y base_model_bm.machine da "machine"
@@ -66,6 +71,31 @@ async def verify_user_Depends(token:dict = Depends(verify_token_Depends)):
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Machine tokens cannot access user routes")
     return token
 
+#Jerarquia de roles: O5-1 > 4 > 3 > 2 > 1. Un rol desconocido (por ejemplo "admin") vale 0
+role_rank = {"1": 1, "2": 2, "3": 3, "4": 4, "O5-1": 5}
+top_rank = role_rank["O5-1"]
+
+def rank_of(role):
+    return role_rank.get(role, 0)
+
+#Fabrica de dependencias por rol minimo: deja pasar al rol pedido y a todos los superiores.
+#Va encima de verify_user_Depends, asi los tokens de maquina siguen bloqueados.
+#Un rol desconocido vale 0 y nunca llega al minimo, igual que antes con las cadenas de "or"
+def requiere_rol(rol_minimo: str):
+    rango_minimo = role_rank[rol_minimo]
+    async def verificar_rol(token:dict = Depends(verify_user_Depends)):
+        if rank_of(token.get("role")) < rango_minimo:
+            raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
+        return token
+    return verificar_rol
+
+#Alias con los nombres de siempre: los routers los importan por nombre
+verify_role_Depends_O5 = requiere_rol("O5-1")
+verify_role_Depends_4 = requiere_rol("4")
+verify_role_Depends_3 = requiere_rol("3")
+verify_role_Depends_2 = requiere_rol("2")
+verify_role_Depends_1 = requiere_rol("1")
+
 #Rutas que usan tanto el dron como los ingenieros desde el panel (telemetria, misiones)
 async def verify_machine_or_role_4(token:dict = Depends(verify_token_Depends)):
     if (token.get("type") == "machine" and token.get("role") == "4") or token.get("role") == "O5-1" \
@@ -73,43 +103,6 @@ async def verify_machine_or_role_4(token:dict = Depends(verify_token_Depends)):
         return token
     else:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Role insuficiente")
-
-async def verify_role_Depends_O5(token:base_model_bm.user = Depends(verify_user_Depends)):
-    if token.get("role") == "O5-1":
-        return token
-    else:
-        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
-    
-async def verify_role_Depends_4(token:base_model_bm.user = Depends(verify_user_Depends)):
-    if token.get("role") == "4" or token.get("role") == "O5-1":
-        return token
-    else:
-        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
-
-async def verify_role_Depends_3(token:base_model_bm.user = Depends(verify_user_Depends)):
-    if token.get("role") == "3" or token.get("role") == "O5-1" or token.get("role") == "4":
-        return token
-    else:
-        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
-
-async def verify_role_Depends_2(token:base_model_bm.user = Depends(verify_user_Depends)):
-    if token.get("role") == "2" or token.get("role") == "O5-1" or token.get("role") == "3" or token.get("role") == "4":
-        return token
-    else:
-        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
-
-async def verify_role_Depends_1(token:base_model_bm.user = Depends(verify_user_Depends)):
-    if token.get("role") == "1" or token.get("role") == "O5-1" or token.get("role") == "2" or token.get("role") == "3" or token.get("role") == "4":
-        return token
-    else:
-        raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
-
-#Jerarquia de roles: O5-1 > 4 > 3 > 2 > 1. Un rol desconocido (por ejemplo "admin") vale 0
-role_rank = {"1": 1, "2": 2, "3": 3, "4": 4, "O5-1": 5}
-top_rank = role_rank["O5-1"]
-
-def rank_of(role):
-    return role_rank.get(role, 0)
 
 #Un usuario solo ve a los de su nivel o inferior
 def can_see_user(token:dict, target_role):
@@ -126,8 +119,3 @@ def can_assign_role(token:dict, role):
         return False
     own_rank = rank_of(token.get("role"))
     return own_rank == top_rank or role_rank[role] < own_rank
-
-
-
-
-

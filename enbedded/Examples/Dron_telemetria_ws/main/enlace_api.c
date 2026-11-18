@@ -200,19 +200,29 @@ static int armar_telemetria(char *m, size_t tam)
                       e.baro.presion_hpa, e.baro.temp_c, e.baro.altura_m);
         coma = ",";
     }
-    if (e.gps.listo && e.gps.fix) {
+    // El bloque gps va siempre que el GPS responda: los satélites y el HDOP
+    // sirven justo cuando aún NO hay fix (para ver si está encontrando cielo).
+    // Sin fix la posición va en null, nunca 0,0 (eso es un punto real del mar).
+    if (e.gps.listo) {
+        if (e.gps.fix) {
+            n += snprintf(m + n, tam - n,
+                          "%s\"gps\":{\"latitude\":%.7f,\"longitude\":%.7f,\"altitude\":%.1f,\"speed\":%.2f,", coma,
+                          e.gps.latitud, e.gps.longitud, e.gps.altitud_m, e.gps.velocidad_ms);
+        } else {
+            n += snprintf(m + n, tam - n,
+                          "%s\"gps\":{\"latitude\":null,\"longitude\":null,\"altitude\":null,\"speed\":null,", coma);
+        }
         n += snprintf(m + n, tam - n,
-                      "%s\"gps\":{\"latitude\":%.7f,\"longitude\":%.7f,\"altitude\":%.1f,\"speed\":%.2f}", coma,
-                      e.gps.latitud, e.gps.longitud, e.gps.altitud_m, e.gps.velocidad_ms);
+                      "\"fix\":%s,\"fix_type\":%u,\"satellites\":%u,\"satellites_in_view\":%u,\"hdop\":%.1f}",
+                      e.gps.fix ? "true" : "false", e.gps.tipo_fix, e.gps.satelites_usados, e.gps.satelites_vista,
+                      e.gps.hdop);
     }
     // Extras que el panel no muestra hoy, útiles para diagnosticar.
     n += snprintf(m + n, tam - n,
                   "},\"frecuencias\":{\"imu_hz\":%.0f,\"barometro_hz\":%.1f,\"gps_hz\":%.1f},"
-                  "\"gps_estado\":{\"fix\":%s,\"tipo_fix\":%u,\"satelites\":%u,\"satelites_vista\":%u,\"hdop\":%.1f},"
                   "\"diagnostico\":{\"imu_perdidas\":%lu,\"imu_lectura_max_us\":%lu,\"imu_errores_i2c\":%lu,"
                   "\"barometro_errores_i2c\":%lu,\"gps_frases_malas\":%lu,\"rssi\":%d}}",
-                  e.imu.hz, e.baro.hz, e.gps.hz, e.gps.fix ? "true" : "false", e.gps.tipo_fix,
-                  e.gps.satelites_usados, e.gps.satelites_vista, e.gps.hdop, (unsigned long)e.imu.perdidas,
+                  e.imu.hz, e.baro.hz, e.gps.hz, (unsigned long)e.imu.perdidas,
                   (unsigned long)e.imu.lectura_max_us, (unsigned long)e.imu.errores_i2c,
                   (unsigned long)e.baro.errores_i2c, (unsigned long)e.gps.frases_malas, net_wifi_get_rssi());
     return n < (int)tam ? n : -1;

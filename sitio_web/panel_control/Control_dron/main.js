@@ -1,5 +1,6 @@
-// Control del dron. Depende de ../../main.js (api_url, clave_token y el observador de .revelar)
-// y de ../sesion_panel.js (leer_sesion, salir_del_panel, mostrar_datos_sesion y pedir_api).
+// Control del dron. Depende de ../../main.js (api_url, clave_token y el observador de .revelar),
+// de ../sesion_panel.js (leer_sesion, salir_del_panel, mostrar_datos_sesion, pedir_api, formatear_hora, es_numero,
+// leer_preferencia y guardar_preferencia) y de ../enlace_ws.js (crear_enlace_ws).
 //
 // Usa dos WebSockets independientes, así un corte del vídeo no tumba los mandos ni al revés:
 //   /camera_rt/ws/view (camera_rt.py): frames JPEG binarios y ajustes de la ESP32-CAM.
@@ -8,7 +9,8 @@
 //       {"tipo": "comando", "action": "armar"}                         acciones puntuales
 //       {"tipo": "control", "action": "movimiento", "ejes": {...}}      palancas a 10 Hz, valores de -1 a 1
 //       {"tipo": "comando", "action": "pid", "pid": {alabeo: {kp, ki, kd}, ...}}
-//   La API devuelve cada mensaje con api_response (api_bm.api_function); el dron responde con
+//   Los mensajes llevan "machine" con la máquina elegida; la API (drone_ws_rt) los reenvía a ese dron con
+//   manager.send_command y devuelve cada uno con api_response; el dron responde con
 //   "telemetria", "estado_dron" ({armado, modo}) y "pid" ({pid: {...}}).
 const ws_base_url = api_url.replace(/^http/, 'ws');
 const ws_api_url = `${ws_base_url}/ws`;
@@ -49,14 +51,6 @@ const textos_accion = {
   pid: 'PID',
   pid_leer: 'Solicitud de PID',
 };
-
-// localStorage puede fallar (modo privado o almacenamiento bloqueado): solo guarda preferencias
-function leer_preferencia(clave) {
-  try { return JSON.parse(localStorage.getItem(clave)); } catch (error) { return null; }
-}
-function guardar_preferencia(clave, valor) {
-  try { localStorage.setItem(clave, JSON.stringify(valor)); } catch (error) { /* sin almacenamiento */ }
-}
 
 // ===== Pestañas del panel: Vuelo · PID · Registro =====
 // Son solo de interfaz: se conectan siempre, aunque no haya sesión o falle algo en iniciar_control()
@@ -164,14 +158,6 @@ function iniciar_control() {
   }
 
   // ===== Utilidades =====
-  function formatear_hora(fecha) {
-    return fecha.toLocaleTimeString('es-MX', { hour12: false });
-  }
-
-  function es_numero(valor) {
-    return typeof valor === 'number' && Number.isFinite(valor);
-  }
-
   function limitar(valor, minimo, maximo) {
     return Math.min(maximo, Math.max(minimo, valor));
   }
@@ -518,17 +504,35 @@ function iniciar_control() {
     sin_senal: 'API conectada · Dron sin señal',
     en_linea: 'Dron en línea',
   };
-  let socket_api = null;
   let api_autenticada = false;
-  let sesion_rechazada = false;
-  let intentos_api = 0;
-  let temporizador_api = null;
   let ultimo_mensaje_dron_ms = 0;
   let estado_enlace_actual = '';
 
+  // enlace_ws.js manda el token en el primer mensaje, reconecta con espera creciente y sale del panel si la API rechaza la sesión
+  const enlace_api = crear_enlace_ws({
+    url: ws_api_url,
+    token: sesion.token,
+    al_conectar: () => {
+      api_autenticada = false;
+      refrescar_estado_enlace();
+    },
+    al_abrir: refrescar_estado_enlace,
+    al_mensaje: procesar_mensaje_api,
+    al_mensaje_invalido: () => registrar('API: mensaje con formato inválido.', 'error'),
+    al_cerrar: () => {
+      api_autenticada = false;
+      // Sin enlace no hay mandos: se sueltan las palancas para no reanudar con un valor viejo
+      soltar_mandos();
+      refrescar_estado_enlace();
+    },
+    al_rechazo: () => registrar('La API rechazó la sesión. Redirigiendo…', 'error'),
+    al_reintento: (espera_ms) => registrar(`Enlace de mandos cerrado. Reintento en ${Math.round(espera_ms / 1000)} s.`, 'error'),
+  });
+
   function calcular_estado_enlace() {
-    if (!socket_api || socket_api.readyState === WebSocket.CLOSED || socket_api.readyState === WebSocket.CLOSING) return 'desconectado';
-    if (socket_api.readyState === WebSocket.CONNECTING || !api_autenticada) return 'conectando';
+    const estado_socket = enlace_api.estado;
+    if (estado_socket === null || estado_socket === WebSocket.CLOSED || estado_socket === WebSocket.CLOSING) return 'desconectado';
+    if (estado_socket === WebSocket.CONNECTING || !api_autenticada) return 'conectando';
     return Date.now() - ultimo_mensaje_dron_ms <= tiempo_max_sin_senal_ms ? 'en_linea' : 'sin_senal';
   }
 
@@ -542,54 +546,13 @@ function iniciar_control() {
     refrescar_mandos();
   }
 
-  function conectar_api() {
-    clearTimeout(temporizador_api);
-    if (sesion_rechazada) return;
-    if (socket_api && socket_api.readyState <= WebSocket.OPEN) return;
-    api_autenticada = false;
-    socket_api = new WebSocket(ws_api_url);
-    refrescar_estado_enlace();
-
-    socket_api.addEventListener('open', () => {
-      intentos_api = 0;
-      socket_api.send(JSON.stringify({ token: sesion.token }));
-      refrescar_estado_enlace();
-    });
-
-    socket_api.addEventListener('message', (evento) => {
-      try {
-        procesar_mensaje_api(JSON.parse(evento.data));
-      } catch (error) {
-        registrar('API: mensaje con formato inválido.', 'error');
-      }
-    });
-
-    socket_api.addEventListener('close', (evento) => {
-      api_autenticada = false;
-      // Sin enlace no hay mandos: se sueltan las palancas para no reanudar con un valor viejo
-      soltar_mandos();
-      refrescar_estado_enlace();
-      if (sesion_rechazada || evento.code === 1008) {
-        sesion_rechazada = true;
-        registrar('La API rechazó la sesión. Redirigiendo…', 'error');
-        setTimeout(salir_del_panel, 1200);
-        return;
-      }
-      const espera_ms = Math.min(30000, 1000 * 2 ** intentos_api);
-      intentos_api += 1;
-      registrar(`Enlace de mandos cerrado. Reintento en ${Math.round(espera_ms / 1000)} s.`, 'error');
-      temporizador_api = setTimeout(conectar_api, espera_ms);
-    });
-  }
-
   function enviar_api(mensaje) {
-    if (!socket_api || socket_api.readyState !== WebSocket.OPEN || !api_autenticada) return false;
-    socket_api.send(JSON.stringify(mensaje));
-    return true;
+    if (!api_autenticada) return false;
+    return enlace_api.enviar(mensaje);
   }
 
   function enviar_comando(accion, datos = {}) {
-    const enviado = enviar_api({ tipo: 'comando', action: accion, maquina: maquina_actual, ...datos });
+    const enviado = enviar_api({ tipo: 'comando', action: accion, machine: maquina_actual, ...datos });
     if (enviado) registrar(`${textos_accion[accion] ?? accion} enviado.`, 'envio');
     else registrar(`${textos_accion[accion] ?? accion}: sin enlace con la API.`, 'error');
     return enviado;
@@ -600,7 +563,7 @@ function iniciar_control() {
     if (!mensaje.tipo && typeof mensaje.message === 'string') {
       const texto = mensaje.message;
       if (texto === 'Unauthorized' || texto.startsWith('WebSocket error')) {
-        sesion_rechazada = true;
+        enlace_api.marcar_rechazada();
         registrar(`La API rechazó la sesión: ${texto}`, 'error');
       } else if (texto === 'Password received') {
         api_autenticada = true;
@@ -649,6 +612,10 @@ function iniciar_control() {
     document.getElementById('hud_rumbo').textContent = es_numero(guinada) ? String(Math.round(((guinada % 360) + 360) % 360)).padStart(3, '0') : '—';
     escribir_numero('hud_altitud', gps.altitude, 1);
     escribir_numero('hud_velocidad', es_numero(gps.speed) ? gps.speed * metros_por_segundo_a_km_h : null, 1);
+    escribir_numero('hud_satelites', gps.satellites, 0);
+    // Debajo del número: si ya hay posición (3D / 2D) o todavía no
+    const tipo_fix = gps.fix ? (gps.fix_type === 3 ? '3D' : gps.fix_type === 2 ? '2D' : 'fix') : 'sin fix';
+    document.getElementById('hud_fix').textContent = typeof gps.fix === 'boolean' ? `Sat · ${tipo_fix}` : 'GPS · sat';
     escribir_numero('hud_lidar', lidar_distance.distance, 2);
     const celdas = [batery.c1, batery.c2, batery.c3, batery.c4, batery.c5, batery.c6].filter(es_numero);
     const promedio = celdas.length ? celdas.reduce((suma, voltaje) => suma + voltaje, 0) / celdas.length : null;
@@ -781,7 +748,7 @@ function iniciar_control() {
     pintar_ejes(ejes);
     const es_cero = Object.values(ejes).every((valor) => valor === 0);
     if (!armado || (es_cero && ultimo_envio_era_cero)) return;
-    if (enviar_api({ tipo: 'control', action: 'movimiento', maquina: maquina_actual, ejes })) {
+    if (enviar_api({ tipo: 'control', action: 'movimiento', machine: maquina_actual, ejes })) {
       ultimo_envio_era_cero = es_cero;
     }
   }
@@ -1032,7 +999,7 @@ function iniciar_control() {
   pintar_ejes(calcular_ejes());
   registrar(`Sesión iniciada como ${sesion.nombre || 'Usuario'}.`);
   cargar_maquinas();
-  conectar_api();
+  enlace_api.conectar();
   setInterval(ciclo_movimiento, periodo_movimiento_ms);
   setInterval(() => {
     refrescar_estado_enlace();

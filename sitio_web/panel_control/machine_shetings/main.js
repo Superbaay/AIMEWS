@@ -1,5 +1,5 @@
 // Gestión de máquinas. Depende de ../../main.js (api_url, clave_token y el observador de .revelar)
-// y de ../sesion_panel.js (sesión, pedir_api, enviar_json y fechas).
+// y de ../sesion_panel.js (sesión, pedir_api, enviar_json, fechas y utilidades de formulario).
 // Permisos de la API (machine_rt.py): ver y editar desde nivel 4; alta y baja solo O5-1.
 const rol_administrador = 'O5-1';
 const roles_con_acceso = ['4', rol_administrador];
@@ -72,10 +72,6 @@ function iniciar_maquinas() {
     return `#${String(numero).padStart(2, '0')}`;
   }
 
-  function texto_opcional(campo) {
-    return campo.value.trim() || null;
-  }
-
   function validar_nombre(campo, numero_propio = null) {
     const nombre = campo.value.trim();
     if (!patron_nombre_maquina.test(nombre)) {
@@ -98,29 +94,9 @@ function iniciar_maquinas() {
     return modelo;
   }
 
-  function mostrar_resultado(nota, texto, es_error = false) {
-    nota.textContent = texto;
-    nota.classList.toggle('nota_resultado_error', es_error);
-  }
-
   function mostrar_error_alta(texto) {
     mensaje_error_maquina_texto.textContent = texto;
     mensaje_error_maquina.hidden = false;
-  }
-
-  function limpiar_invalidos(formulario) {
-    formulario.querySelectorAll('.campo_entrada_invalido').forEach((campo) => campo.classList.remove('campo_entrada_invalido'));
-  }
-
-  async function con_boton_ocupado(boton, accion) {
-    boton.disabled = true;
-    boton.classList.add('esta_cargando');
-    try {
-      await accion();
-    } finally {
-      boton.disabled = false;
-      boton.classList.remove('esta_cargando');
-    }
   }
 
   // ===== Lista =====
