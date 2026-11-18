@@ -1,5 +1,5 @@
 // Bitácora de ingeniería. Depende de ../../main.js (api_url, clave_token y el observador de .revelar)
-// y de ../sesion_panel.js (sesión, pedir_api, enviar_json y fechas)
+// y de ../sesion_panel.js (sesión, pedir_api, enviar_json, fechas y utilidades de formulario)
 const rol_puede_eliminar = 'O5-1'; // DELETE /engineer_log/number exige verify_role_Depends_O5
 
 // Etiquetas de los campos del BaseModel engineer_log, en el orden en que se muestran
@@ -88,7 +88,7 @@ function iniciar_bitacora() {
 
   function ocultar_error() {
     mensaje_error_registro.hidden = true;
-    formulario_registro.querySelectorAll('.campo_entrada_invalido').forEach((campo) => campo.classList.remove('campo_entrada_invalido'));
+    limpiar_invalidos(formulario_registro);
   }
 
   function formatear_tamano(bytes) {
@@ -447,29 +447,25 @@ function iniciar_bitacora() {
     };
 
     ocultar_error();
-    boton_guardar_registro.disabled = true;
-    boton_guardar_registro.classList.add('esta_cargando');
     texto_boton_guardar.textContent = 'Guardando…';
-    try {
-      // Dos pasos: el registro va en JSON y la evidencia en multipart, cada archivo a POST /engineer_log/evidence
-      const { number } = await enviar_json('/engineer_log/new', 'POST', cuerpo);
-      const fallidos = await subir_adjuntos(number);
-      formulario_registro.reset();
-      limpiar_adjuntos();
-      await cargar_registros();
-      const creado = registros.find((registro) => registro.number === number) || registros[0];
-      if (creado) mostrar_registro(creado);
-      if (fallidos.length > 0) {
-        window.alert(`El registro ${formatear_numero(number)} se guardó, pero esta evidencia no se subió:\n\n${fallidos.join('\n')}`);
+    await con_boton_ocupado(boton_guardar_registro, async () => {
+      try {
+        // Dos pasos: el registro va en JSON y la evidencia en multipart, cada archivo a POST /engineer_log/evidence
+        const { number } = await enviar_json('/engineer_log/new', 'POST', cuerpo);
+        const fallidos = await subir_adjuntos(number);
+        formulario_registro.reset();
+        limpiar_adjuntos();
+        await cargar_registros();
+        const creado = registros.find((registro) => registro.number === number) || registros[0];
+        if (creado) mostrar_registro(creado);
+        if (fallidos.length > 0) {
+          window.alert(`El registro ${formatear_numero(number)} se guardó, pero esta evidencia no se subió:\n\n${fallidos.join('\n')}`);
+        }
+      } catch (error) {
+        if (error.message === 'sesion_invalida') return;
+        mostrar_error(error.message);
       }
-    } catch (error) {
-      if (error.message === 'sesion_invalida') return;
-      mostrar_error(error.message);
-    } finally {
-      boton_guardar_registro.disabled = false;
-      boton_guardar_registro.classList.remove('esta_cargando');
-      texto_boton_guardar.textContent = 'Guardar registro';
-    }
+    }, () => { texto_boton_guardar.textContent = 'Guardar registro'; });
   });
 
   boton_eliminar_registro.addEventListener('click', async () => {

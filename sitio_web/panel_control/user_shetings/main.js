@@ -1,5 +1,5 @@
 // Gestión de usuarios. Depende de ../../main.js (api_url, clave_token y el observador de .revelar)
-// y de ../sesion_panel.js (sesión, pedir_api, enviar_json y fechas).
+// y de ../sesion_panel.js (sesión, pedir_api, enviar_json, fechas y utilidades de formulario).
 // La jerarquía replica la de la API (segurity_bm.py): O5-1 > 4 > 3 > 2 > 1. La API es quien la hace cumplir;
 // aquí solo sirve para no mostrar opciones que la API rechazaría.
 const rol_administrador = 'O5-1';
@@ -124,10 +124,6 @@ function iniciar_usuarios() {
     selector.value = rol_actual || rol_por_defecto;
   }
 
-  function texto_opcional(campo) {
-    return campo.value.trim() || null;
-  }
-
   // phone_number es int en el BaseModel user: se quitan espacios, guiones y paréntesis
   function leer_telefono(campo) {
     const digitos = campo.value.replace(/[\s()-]/g, '');
@@ -141,11 +137,6 @@ function iniciar_usuarios() {
     if (!correo) return null;
     if (campo.validity.typeMismatch) throw new Error('El correo no tiene un formato válido.');
     return correo;
-  }
-
-  function mostrar_resultado(nota, texto, es_error = false) {
-    nota.textContent = texto;
-    nota.classList.toggle('nota_resultado_error', es_error);
   }
 
   function mostrar_error_alta(texto) {
@@ -173,18 +164,6 @@ function iniciar_usuarios() {
     formulario_contrasena.hidden = !gestionable;
     formulario_rol.hidden = !gestionable || propia;
     bloque_eliminar_usuario.hidden = !gestionable || propia;
-  }
-
-  async function con_boton_ocupado(boton, accion) {
-    boton.disabled = true;
-    boton.classList.add('esta_cargando');
-    try {
-      await accion();
-    } finally {
-      boton.disabled = false;
-      boton.classList.remove('esta_cargando');
-      aplicar_restricciones();
-    }
   }
 
   // ===== Lista =====
@@ -284,7 +263,7 @@ function iniciar_usuarios() {
   boton_volver.addEventListener('click', mostrar_alta);
   formulario_nuevo_usuario.addEventListener('input', () => {
     mensaje_error_usuario.hidden = true;
-    formulario_nuevo_usuario.querySelectorAll('.campo_entrada_invalido').forEach((campo) => campo.classList.remove('campo_entrada_invalido'));
+    limpiar_invalidos(formulario_nuevo_usuario);
   });
   formulario_perfil.addEventListener('input', () => mostrar_resultado(nota_perfil, ''));
   formulario_rol.addEventListener('input', () => mostrar_resultado(nota_rol, ''));
@@ -334,7 +313,7 @@ function iniciar_usuarios() {
         // 409 también ocurre si el nombre pertenece a alguien de nivel superior: el mensaje no lo distingue
         mostrar_error_alta(error.estado === 409 ? 'Ese nombre de usuario no está disponible.' : error.message);
       }
-    });
+    }, aplicar_restricciones);
   });
 
   // PATCH /user/update_user recibe user_not_password (exige date); la API solo cambia empresa, correo y teléfono
@@ -365,7 +344,7 @@ function iniciar_usuarios() {
         if (error.message === 'sesion_invalida') return;
         mostrar_resultado(nota_perfil, error.message, true);
       }
-    });
+    }, aplicar_restricciones);
   });
 
   formulario_rol.addEventListener('submit', async (evento) => {
@@ -389,7 +368,7 @@ function iniciar_usuarios() {
         if (error.message === 'sesion_invalida') return;
         mostrar_resultado(nota_rol, error.message, true);
       }
-    });
+    }, aplicar_restricciones);
   });
 
   // PATCH /user/update_user_password recibe el BaseModel name_password
@@ -411,7 +390,7 @@ function iniciar_usuarios() {
         if (error.message === 'sesion_invalida') return;
         mostrar_resultado(nota_contrasena, error.message, true);
       }
-    });
+    }, aplicar_restricciones);
   });
 
   boton_eliminar_usuario.addEventListener('click', async () => {
@@ -428,7 +407,7 @@ function iniciar_usuarios() {
         if (error.message === 'sesion_invalida') return;
         mostrar_resultado(nota_eliminar, error.message, true);
       }
-    });
+    }, aplicar_restricciones);
   });
 
   // ===== Arranque =====

@@ -1,62 +1,37 @@
-from Library.base_model_bm import db
+from Library.db_bm import db
 from fastapi import status,HTTPException
 from Library import base_model_bm
 from datetime import datetime, timedelta, timezone
 
 
+#Busca un documento y lo devuelve como modelo. Sin error_404 devuelve None si no existe;
+#con error_404 lanza 404 con ese texto. quitar_password borra el campo antes de crear el modelo
+def _buscar_uno(coleccion, filtro:dict, modelo, quitar_password:bool = False, error_404:str | None = None):
+    documento = coleccion.find_one(filtro)
+    if documento == None :
+        if error_404 == None :
+            return None
+        raise HTTPException(status.HTTP_404_NOT_FOUND,detail=error_404)
+    del documento["_id"]
+    if quitar_password :
+        del documento["password"]
+    return modelo(**documento)
+
 def search_username(username:str):
-    user = db.user.find_one({"name" : username})
-    if user == None :
-        return user
-    del user["_id"]
-    user_bm = base_model_bm.user(**user)
-    return user_bm
+    return _buscar_uno(db.user, {"name" : username}, base_model_bm.user)
 
 def search_username_exception(username:str):
-    user = db.user.find_one({"name" : username})
-    if user == None :
-        raise HTTPException(status.HTTP_404_NOT_FOUND,detail="User dont found")
-    del user["_id"]
-    user_bm = base_model_bm.user(**user)
-    return user_bm
+    return _buscar_uno(db.user, {"name" : username}, base_model_bm.user, error_404="User dont found")
 
 def search_username_not_password(username:str):
-    user = db.user.find_one({"name" : username})
-    if user == None :
-        raise HTTPException(status.HTTP_404_NOT_FOUND,detail="User dont found")
-    del user["_id"]
-    del user["password"]
-    user_bm = base_model_bm.user_not_password(**user)
-    return user_bm
+    return _buscar_uno(db.user, {"name" : username}, base_model_bm.user_not_password,
+                       quitar_password=True, error_404="User dont found")
 
-# Function to search for a machine by its name and number
-
-def search_machine_rt_exception(name:str, number:int):
-    machine = db.machine_rt.user.find_one({"name" : name})
-    if machine == None :
-        machine = db.machine_rt.user.find_one({ "number" : number})
-        if machine == None :
-            raise HTTPException(status.HTTP_404_NOT_FOUND,detail="Machine dont found")
-    del machine["_id"]
-    machine_bm = base_model_bm.machine(**machine)
-    return machine_bm
-
-def search_machine_rt(name:str, number:int):
-    machine = db.machine_rt.user.find_one({"name" : name})
-    if machine == None :
-        machine = db.machine_rt.user.find_one({ "number" : number})
-        if machine == None :
-            return None
-    del machine["_id"]
-    machine_bm = base_model_bm.machine(**machine)
-    return machine_bm
+# Busqueda de maquinas por numero
 
 def search_machine_rt_by_number(number:int):
-    machine = db.machine_rt.user.find_one({"number" : number})
-    if machine == None :
-        raise HTTPException(status.HTTP_404_NOT_FOUND,detail="Machine dont found")
-    del machine["_id"]
-    return base_model_bm.machine_not_password(**machine)
+    return _buscar_uno(db.machine_rt.user, {"number" : number}, base_model_bm.machine_not_password,
+                       error_404="Machine dont found")
 
 def new_machine_rt(machine_data: base_model_bm.machine_new):
     machine = db.machine_rt.user.find_one({"name" : machine_data.name})
@@ -65,7 +40,7 @@ def new_machine_rt(machine_data: base_model_bm.machine_new):
     machine = db.machine_rt.user.count_documents({})
     number = machine + 1
     new_machine = machine_data.model_dump()
-    #Import local para evitar el ciclo: segurity_bm ya importa def_bm
+    #Import local: evita un ciclo de imports si segurity_bm vuelve a importar def_bm
     from Library import segurity_bm
     new_machine["password"] = segurity_bm.encode_password(machine_data.password)
     new_machine["number"] = number
@@ -77,13 +52,8 @@ def new_machine_rt(machine_data: base_model_bm.machine_new):
     return machine_bm
 
 def search_machine_rt_not_password(name:str | None = None):
-    machine = db.machine_rt.user.find_one({"name" : name}) 
-    if machine == None :
-        raise HTTPException(status.HTTP_404_NOT_FOUND,detail="Machine dont found")
-    del machine["_id"]
-    del machine["password"]
-    machine_bm = base_model_bm.machine_not_password(**machine)
-    return machine_bm
+    return _buscar_uno(db.machine_rt.user, {"name" : name}, base_model_bm.machine_not_password,
+                       quitar_password=True, error_404="Machine dont found")
 
 def search_all_machine_rt_not():
     all_machines = db.machine_rt.user.find()

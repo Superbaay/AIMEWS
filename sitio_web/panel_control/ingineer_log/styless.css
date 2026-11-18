@@ -1,6 +1,5 @@
 /* ===== Bitácora de ingeniería ===== */
 .formulario_registro, .vista_registro { display: flex; flex-direction: column; gap: 20px; animation: animacion_entrada .4s ease both; }
-.campo_area { resize: vertical; min-height: 68px; line-height: 1.5; }
 
 /* ===== Zona de evidencia: clic/toque abre el selector, en PC también acepta arrastrar ===== */
 .zona_evidencia {
@@ -24,8 +23,8 @@
   border: 1.5px solid var(--color_acento); transition: background .2s;
 }
 .zona_evidencia.esta_arrastrando .zona_evidencia_marca { background: rgba(111, 180, 255, .35); }
-.zona_evidencia_titulo { font-family: var(--fuente_titulos); font-weight: 500; font-size: 15px; color: var(--color_texto); }
-.zona_evidencia_texto { font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .06em; color: var(--color_texto_tenue); }
+.zona_evidencia_titulo { font-family: var(--fuente_titulos); font-weight: 500; font-size: var(--texto_base); color: var(--color_texto); }
+.zona_evidencia_texto { font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .06em; color: var(--color_texto_tenue); }
 /* En pantallas táctiles no se puede arrastrar: se muestra el texto de la galería */
 .texto_tactil { display: none; }
 @media (hover: none) and (pointer: coarse) {
@@ -46,21 +45,21 @@
 .adjunto_vista {
   flex: none; width: 44px; height: 44px; border-radius: 8px; overflow: hidden;
   display: grid; place-items: center; background: rgba(111, 180, 255, .08);
-  font-family: var(--fuente_mono); font-size: 10px; letter-spacing: .08em; color: var(--color_acento_claro);
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .08em; color: var(--color_acento_claro);
 }
 .adjunto_vista img { width: 100%; height: 100%; object-fit: cover; }
 .adjunto_datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.adjunto_nombre { font-size: 14px; color: var(--color_texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.adjunto_meta { font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue); }
+.adjunto_nombre { font-size: var(--texto_md); color: var(--color_texto); overflow-wrap: anywhere; }
+.adjunto_meta { font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto_tenue); }
 .adjunto_invalido .adjunto_meta { color: var(--color_error); }
-.adjunto_quitar { flex: none; font-size: 13px; }
-.evidencia_cargando { font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue); }
+.adjunto_quitar { flex: none; font-size: var(--texto_sm); justify-content: center; }
+.evidencia_cargando { font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto_tenue); }
 
 /* ===== Lista de registros ===== */
 .lista_registros {
   margin: 0; padding: 0 4px 0 0; list-style: none;
   display: flex; flex-direction: column; gap: 12px;
-  max-height: 760px; overflow-y: auto;
+  max-height: max(760px, 70vh); overflow-y: auto;
 }
 .tarjeta_registro {
   display: flex; flex-direction: column; gap: 8px;
@@ -72,12 +71,13 @@
 .tarjeta_registro_cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tarjeta_registro_titulo { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .titulo_registro {
-  margin: 0; font-family: var(--fuente_titulos); font-weight: 600; font-size: 16px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin: 0; font-family: var(--fuente_titulos); font-weight: 600; font-size: var(--texto_lg);
+  /* El nombre completo se parte en varias líneas en vez de cortarse con … */
+  overflow-wrap: anywhere;
 }
-.tarjeta_registro_boton { flex: none; padding: 6px 14px; font-size: 13px; }
+.tarjeta_registro_boton { flex: none; padding: 6px 14px; font-size: var(--texto_sm); }
 .tarjeta_registro_resumen {
-  margin: 0; font-size: 14px; line-height: 1.5; color: var(--color_texto_secundario);
+  margin: 0; font-size: var(--texto_md); line-height: 1.5; color: var(--color_texto_secundario);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
@@ -86,10 +86,10 @@
 .detalle_registro { margin: 0; display: flex; flex-direction: column; gap: 14px; }
 .detalle_registro dt {
   margin-bottom: 4px;
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #7d8fb2;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .1em; text-transform: uppercase; color: #7d8fb2;
 }
 .detalle_registro dd {
-  margin: 0; font-size: 15px; line-height: 1.6; color: var(--color_texto_secundario);
+  margin: 0; font-size: var(--texto_base); line-height: 1.6; color: var(--color_texto_secundario);
   white-space: pre-wrap; overflow-wrap: anywhere;
 }
 
@@ -97,7 +97,7 @@
 .evidencia { padding-top: 14px; border-top: 1px solid var(--color_linea); }
 .evidencia_resumen {
   display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .1em; text-transform: uppercase;
   color: var(--color_acento_claro); padding: 6px 10px; border-radius: 6px;
   border: 1px solid rgba(111, 180, 255, .3); transition: background .2s;
 }
@@ -151,7 +151,7 @@ body:has(.visor_evidencia[open]) { overflow: hidden; }
 .visor_evidencia::backdrop { background: rgba(6, 12, 26, .7); }
 .visor_evidencia_barra { display: flex; align-items: center; gap: 16px; min-height: 40px; }
 .visor_evidencia_nombre {
-  flex: 1; min-width: 0; font-family: var(--fuente_mono); font-size: 13px; color: var(--color_texto_secundario);
+  flex: 1; min-width: 0; font-family: var(--fuente_mono); font-size: var(--texto_sm); color: var(--color_texto_secundario);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .visor_evidencia_marco { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
@@ -175,17 +175,42 @@ body:has(.visor_evidencia[open]) { overflow: hidden; }
 .visor_evidencia_flecha_siguiente { right: 16px; }
 .visor_evidencia_flecha_siguiente::before { transform: translate(-70%, -50%) rotate(-135deg); }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .visor_evidencia { padding: 12px 12px 20px; }
+  /* El nombre del archivo se lee completo (hasta 2 líneas) en vez de cortarse */
+  .visor_evidencia_barra { align-items: flex-start; }
+  .visor_evidencia_nombre { padding-top: 2px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   /* En el teléfono las flechas quedan abajo para no tapar la imagen */
   .visor_evidencia_flecha { top: auto; bottom: 20px; transform: none; }
-  .visor_evidencia_marco { padding-bottom: 60px; }
+  .visor_evidencia_marco { padding-bottom: 76px; }
+}
+@media (max-width: 480px) {
+  .tarjeta_registro { padding: 14px; }
+  /* Dos miniaturas por fila aunque la tarjeta mida menos de 296px */
+  .evidencia_galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Táctil: resumen de evidencia, Quitar y controles del visor con área de toque de 44px o más */
+@media (pointer: coarse) {
+  .evidencia_resumen { min-height: var(--tam_toque); padding: 10px 14px; }
+  .adjunto_quitar { min-width: var(--tam_toque); padding-inline: 8px; }
+  .visor_evidencia_barra { min-height: var(--tam_toque); }
+  .visor_evidencia_flecha { width: 56px; height: 56px; }
+  .visor_evidencia_flecha::before { width: 12px; height: 12px; }
+}
+/* Monitores grandes: el formulario y el detalle no pasan de ~880px de ancho */
+@media (min-width: 1920px) {
+  .formulario_registro, .vista_registro { width: 100%; max-width: 880px; margin-inline: auto; }
+  .evidencia_galeria { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .visor_evidencia { padding-inline: 96px; }
+  .visor_evidencia_flecha { width: 56px; height: 56px; }
+  .visor_evidencia_flecha_anterior { left: 24px; }
+  .visor_evidencia_flecha_siguiente { right: 24px; }
 }
 .evidencia_archivo figcaption {
-  font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto_tenue);
+  overflow-wrap: anywhere;
 }
-.evidencia_vacia { margin: 0; font-size: 13px; color: var(--color_texto_tenue); }
+.evidencia_vacia { margin: 0; font-size: var(--texto_sm); color: var(--color_texto_tenue); }
 
 @media (prefers-reduced-motion: reduce) {
   .formulario_registro, .vista_registro, .adjunto { animation: none; }

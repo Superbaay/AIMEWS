@@ -8,7 +8,7 @@
 .selector_maquina .campo_selector { width: auto; min-width: 200px; max-width: 100%; padding-top: 8px; padding-bottom: 8px; }
 .campo_selector {
   appearance: none; -webkit-appearance: none; cursor: pointer;
-  padding: 11px 40px 11px 14px; font-size: 14px;
+  padding: 11px 40px 11px 14px; font-size: var(--texto_md);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color_acento_claro) 50%),
     linear-gradient(135deg, var(--color_acento_claro) 50%, transparent 50%);
@@ -36,7 +36,7 @@
 }
 .pestana_control {
   position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: var(--fuente_texto); font-size: 14px; font-weight: 500; color: var(--color_texto_secundario);
+  font-family: var(--fuente_texto); font-size: var(--texto_md); font-weight: 500; color: var(--color_texto_secundario);
   background: transparent; border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer;
   transition: background .25s, color .25s;
 }
@@ -59,13 +59,13 @@
 .tarjeta_operacion > .nota_control { grid-area: nota; }
 .cabecera_titulo { display: flex; flex-direction: column; gap: 6px; }
 .tarjeta_componente_cabecera { gap: 12px; flex-wrap: wrap; }
-.nota_control { margin: 0; font-size: 13px; line-height: 1.5; color: var(--color_texto_tenue); }
-.texto_ayuda { font-size: 12px; color: var(--color_texto_tenue); line-height: 1.4; }
+.nota_control { margin: 0; font-size: var(--texto_sm); line-height: 1.5; color: var(--color_texto_tenue); }
+.texto_ayuda { font-size: var(--texto_xs); color: var(--color_texto_tenue); line-height: 1.4; }
 
 /* ===== Estado de la cámara ===== */
 .estado_camara {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .12em; text-transform: uppercase;
   padding: 6px 12px; border-radius: 999px; border: 1px solid var(--color_linea);
   color: var(--color_texto_tenue); transition: color .3s, border-color .3s, background .3s;
 }
@@ -77,7 +77,7 @@
 .estado_camara_error { color: var(--color_error); border-color: rgba(255, 130, 110, .3); background: rgba(255, 110, 90, .06); }
 
 /* ===== Vídeo ===== */
-.tarjeta_video { gap: 16px; }
+.tarjeta_video { gap: 16px; container: tarjeta_video / inline-size; } /* el HUD se adapta al ancho real del vídeo */
 .marco_video {
   position: relative; aspect-ratio: 4 / 3; width: 100%;
   border-radius: 14px; overflow: hidden;
@@ -96,7 +96,7 @@
 .boton_salir_pantalla {
   position: absolute; top: 14px; right: 14px; z-index: 3;
   display: none; align-items: center; gap: 8px;
-  font-family: var(--fuente_texto); font-size: 13px; font-weight: 500; color: var(--color_texto);
+  font-family: var(--fuente_texto); font-size: var(--texto_sm); font-weight: 500; color: var(--color_texto);
   background: rgba(5, 11, 24, .7); border: 1px solid rgba(140, 175, 235, .35); border-radius: 999px;
   padding: 8px 12px 8px 14px; cursor: pointer;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -119,7 +119,7 @@
   background: rgba(5, 11, 24, .6);
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
 }
-.video_espera p { margin: 0; max-width: 340px; font-size: 14px; line-height: 1.5; color: var(--color_texto_secundario); }
+.video_espera p { margin: 0; max-width: 340px; font-size: var(--texto_md); line-height: 1.5; color: var(--color_texto_secundario); }
 .video_espera_marca { width: 22px; height: 22px; opacity: .8; animation: animacion_giro_lento 6s linear infinite; }
 
 /* HUD sobre el vídeo */
@@ -143,7 +143,7 @@
   display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
 }
 .hud_etiqueta {
-  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: var(--texto_xs); letter-spacing: .12em; text-transform: uppercase;
   padding: 5px 10px; border-radius: 999px;
   background: rgba(5, 11, 24, .55); border: 1px solid rgba(140, 175, 235, .25);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -178,19 +178,22 @@
 
 .hud_inferior {
   position: absolute; left: 20px; right: 20px; bottom: 20px;
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;
+  /* Vídeo angosto: 3 × 2. La columna del modo nunca baja del ancho de su palabra más larga (sin "…") */
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(min-content, 1fr); gap: 8px;
+}
+/* Vídeo ancho (≥ 640 px de tarjeta): los seis datos en una fila */
+@container tarjeta_video (min-width: 640px) {
+  .hud_inferior { grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(min-content, 1.2fr); }
 }
 .hud_dato {
-  display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 10px;
+  display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 10px; min-width: 0;
   background: rgba(5, 11, 24, .55); border: 1px solid rgba(140, 175, 235, .2);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
-.hud_dato_valor { font-family: var(--fuente_titulos); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.hud_dato_nombre { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--color_texto_secundario); }
-.hud_dato { min-width: 0; }
+.hud_dato_valor { font-family: var(--fuente_titulos); font-size: var(--texto_xl); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hud_dato_nombre { font-size: var(--texto_xs); letter-spacing: .06em; line-height: 1.3; text-transform: uppercase; color: var(--color_texto_secundario); }
 .hud_dato_modo .hud_dato_valor {
-  font-size: 13px; text-transform: uppercase; letter-spacing: .06em; padding-top: 4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--texto_sm); text-transform: uppercase; letter-spacing: .04em; padding-top: 4px;
 }
 .hud_dato_modo.esta_armado { border-color: rgba(255, 138, 120, .55); }
 .hud_dato_modo.esta_armado .hud_dato_nombre { color: var(--color_error); }
@@ -198,10 +201,10 @@
 /* Barra bajo el vídeo */
 .barra_video { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .barra_video_botones { display: flex; gap: 8px; flex-wrap: wrap; }
-.barra_video_resolucion { color: var(--color_texto_tenue); font-size: 12px; }
+.barra_video_resolucion { color: var(--color_texto_tenue); font-size: var(--texto_xs); }
 .boton_icono {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--fuente_texto); font-size: 13px; font-weight: 500; color: var(--color_texto_secundario);
+  font-family: var(--fuente_texto); font-size: var(--texto_sm); font-weight: 500; color: var(--color_texto_secundario);
   background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea); border-radius: 10px;
   padding: 8px 12px; cursor: pointer;
   transition: color .2s, border-color .2s, background .2s, translate .2s;
@@ -263,8 +266,9 @@
 .deslizador:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(111, 180, 255, .2); }
 .deslizador:disabled { opacity: .45; cursor: not-allowed; }
 
-.interruptor { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-.interruptor input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.interruptor { position: relative; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+/* La casilla invisible cubre todo el interruptor (área de toque completa); el clic lo recibe la etiqueta */
+.interruptor input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 .interruptor_pista {
   position: relative; width: 36px; height: 20px; border-radius: 999px; flex: none;
   background: rgba(6, 14, 30, .6); border: 1px solid rgba(140, 175, 235, .3);
@@ -281,7 +285,7 @@
 
 /* ===== Mandos de vuelo ===== */
 .insignia_armado {
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .12em; text-transform: uppercase;
   padding: 6px 12px; border-radius: 999px;
   color: var(--color_texto_tenue); border: 1px solid var(--color_linea);
   transition: color .3s, border-color .3s, background .3s;
@@ -290,7 +294,7 @@
 
 .boton_armar {
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-family: var(--fuente_texto); font-size: 15px; font-weight: 500;
+  font-family: var(--fuente_texto); font-size: var(--texto_base); font-weight: 500;
   color: var(--color_acento_claro); background: rgba(111, 180, 255, .1);
   border: 1px solid rgba(111, 180, 255, .45); border-radius: 12px; padding: 15px 18px; cursor: pointer;
   transition: background .25s, color .25s, border-color .25s, translate .25s, box-shadow .25s;
@@ -304,7 +308,7 @@
 .cuadricula_mandos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .boton_mando {
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-  font-family: var(--fuente_texto); font-size: 14px; font-weight: 500; color: var(--color_texto);
+  font-family: var(--fuente_texto); font-size: var(--texto_md); font-weight: 500; color: var(--color_texto);
   text-align: left; background: rgba(6, 14, 30, .45);
   border: 1px solid var(--color_linea); border-radius: 12px; padding: 14px; cursor: pointer;
   transition: background .25s, border-color .25s, translate .25s;
@@ -328,7 +332,7 @@
 .segmento input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .segmento span {
   display: block; text-align: center; padding: 9px 6px; border-radius: 9px;
-  font-size: 13px; font-weight: 500; color: var(--color_texto_secundario);
+  font-size: var(--texto_sm); font-weight: 500; color: var(--color_texto_secundario);
   transition: background .25s, color .25s;
 }
 .segmento input:checked + span { background: var(--color_acento); color: #071226; }
@@ -341,7 +345,7 @@
   --tiempo_paro: 600ms;
   position: relative; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--fuente_texto); font-size: 15px; font-weight: 600; letter-spacing: .01em;
+  font-family: var(--fuente_texto); font-size: var(--texto_base); font-weight: 600; letter-spacing: .01em;
   color: var(--color_error); background: rgba(255, 110, 90, .08);
   border: 1px solid rgba(255, 130, 110, .5); border-radius: 12px; padding: 16px 18px;
   cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none;
@@ -390,7 +394,7 @@
 
 .lecturas_ejes { margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .lectura_eje { display: flex; flex-direction: column; gap: 6px; }
-.lectura_eje dt { font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--color_texto_tenue); }
+.lectura_eje dt { font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .1em; text-transform: uppercase; color: var(--color_texto_tenue); }
 .lectura_eje dd { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) 40px; align-items: center; gap: 10px; }
 .lectura_eje .numero_mono { text-align: right; font-variant-numeric: tabular-nums; }
 /* Barra centrada: se llena a la izquierda o a la derecha según el signo */
@@ -402,10 +406,10 @@
 }
 
 .guia_teclas { margin: 0; padding: 14px 0 0; list-style: none; display: flex; flex-wrap: wrap; gap: 10px 20px; border-top: 1px solid var(--color_linea); }
-.guia_teclas li { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color_texto_secundario); }
+.guia_teclas li { display: flex; align-items: center; gap: 6px; font-size: var(--texto_sm); color: var(--color_texto_secundario); }
 .guia_teclas span { margin-left: 4px; }
 kbd {
-  font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto);
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto);
   min-width: 24px; text-align: center; padding: 3px 7px; border-radius: 6px;
   background: rgba(6, 14, 30, .6); border: 1px solid rgba(140, 175, 235, .3);
   box-shadow: inset 0 -2px 0 rgba(140, 175, 235, .15);
@@ -420,20 +424,20 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
   max-height: 260px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(140, 175, 235, .3) transparent;
 }
 .lista_registro li {
-  display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px;
-  padding: 7px 8px; border-radius: 8px; font-size: 13px; line-height: 1.4; color: #c3cfe5;
+  display: grid; grid-template-columns: 4.9em minmax(0, 1fr); gap: 10px;
+  padding: 7px 8px; border-radius: 8px; font-size: var(--texto_sm); line-height: 1.4; color: #c3cfe5;
   animation: animacion_entrada .3s ease both;
 }
 .lista_registro li:nth-child(odd) { background: rgba(6, 14, 30, .35); }
-.lista_registro time { font-family: var(--fuente_mono); font-size: 11px; color: var(--color_texto_tenue); padding-top: 2px; }
+.lista_registro time { font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto_tenue); padding-top: 2px; }
 .lista_registro span { overflow-wrap: anywhere; }
 .registro_envio span { color: var(--color_acento_claro); }
 .registro_error span { color: var(--color_error); }
-.registro_vacio { color: var(--color_texto_tenue); font-size: 13px; padding: 4px 8px; }
+.registro_vacio { color: var(--color_texto_tenue); font-size: var(--texto_sm); padding: 4px 8px; }
 
 /* ===== PID ===== */
 .estado_pid {
-  font-family: var(--fuente_mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .12em; text-transform: uppercase;
   padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(242, 196, 107, .4); color: var(--color_alerta);
 }
 .estado_pid.esta_sincronizado { color: var(--color_acento_claro); border-color: rgba(111, 180, 255, .45); }
@@ -443,7 +447,7 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
   border-radius: 12px; background: rgba(6, 14, 30, .55); border: 1px solid var(--color_linea);
 }
 .pestana_pid {
-  position: relative; font-family: var(--fuente_texto); font-size: 14px; font-weight: 500;
+  position: relative; font-family: var(--fuente_texto); font-size: var(--texto_md); font-weight: 500;
   color: var(--color_texto_secundario); background: transparent; border: none; border-radius: 9px;
   padding: 9px 18px; cursor: pointer; white-space: nowrap; transition: background .25s, color .25s;
 }
@@ -461,7 +465,7 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
   gap: 20px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(140, 175, 235, .08);
 }
 .fila_pid_textos { display: flex; flex-direction: column; gap: 4px; }
-.campo_numero { padding: 9px 10px; font-family: var(--fuente_mono); font-size: 14px; text-align: right; }
+.campo_numero { padding: 9px 10px; font-family: var(--fuente_mono); font-size: var(--texto_md); text-align: right; }
 .acciones_pid { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; padding-top: 16px; }
 .acciones_pid .boton_primario { margin-top: 0; padding: 12px 20px; }
 .acciones_pid .boton_texto { align-self: center; }
@@ -473,9 +477,9 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
   display: flex; flex-direction: column; gap: 12px;
   padding: 18px 20px; border-radius: 14px; background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
 }
-.tabla_pid { width: 100%; border-collapse: collapse; font-family: var(--fuente_mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.tabla_pid { width: 100%; border-collapse: collapse; font-family: var(--fuente_mono); font-size: var(--texto_sm); font-variant-numeric: tabular-nums; }
 .tabla_pid th {
-  text-align: right; font-weight: 500; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  text-align: right; font-weight: 500; font-size: var(--texto_xs); letter-spacing: .1em; text-transform: uppercase;
   color: var(--color_texto_tenue); padding: 0 0 8px;
 }
 .tabla_pid th:first-child, .tabla_pid td:first-child { text-align: left; }
@@ -487,72 +491,199 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
 @keyframes animacion_parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 @keyframes animacion_giro_lento { from { transform: rotate(45deg); } to { transform: rotate(405deg); } }
 
-/* ===== Pantalla única (escritorio): todo cabe en el alto de la ventana, sin scroll de página =====
-   Si la ventana es baja, solo el panel derecho se desplaza por dentro */
-@media (min-width: 1181px) {
-  .panel_contenido { height: calc(100vh - var(--alto_barra_panel)); padding: 20px 24px; overflow: hidden; }
-  .vista_control { height: 100%; gap: 16px; }
-  .cuadricula_control { flex: 1; min-height: 0; align-items: stretch; }
+/* ===== Cortes del proyecto: max-width 480 / 768 / 1024 · min-width 1440 / 1920 · (pointer: coarse) =====
+   "width > 1024px" es el complemento exacto de max-width: 1024px (escritorio con barra lateral). */
+
+/* ===== Pantalla única (escritorio): todo cabe en el alto de la ventana, sin scroll de página ni de columnas =====
+   Las medidas verticales escalan con el alto disponible (vh): palancas, rellenos y separaciones.
+   El desplazamiento interno de las columnas queda solo como red de seguridad para ventanas de menos de 650 px de alto;
+   lo único que desplaza por diseño es la lista de líneas del registro cuando hay muchas. */
+@media (width > 1024px) {
+  .vista_control {
+    --hueco_columna: clamp(8px, 1.3vh, 16px);          /* entre pestañas y tarjetas */
+    --relleno_tarjeta: clamp(10px, 1.7vh, 22px);       /* relleno vertical de cada tarjeta */
+    --hueco_tarjeta: clamp(7px, 1.15vh, 16px);         /* entre bloques dentro de una tarjeta */
+    height: 100%; gap: var(--hueco_columna);
+  }
+  .panel_contenido {
+    height: calc(100vh - var(--alto_barra_panel)); overflow: hidden;
+    padding: clamp(10px, 1.8vh, 24px) max(24px, var(--espacio_4));
+  }
+  /* La columna del vídeo mide lo que pide un 4:3 que llene el alto (alto libre × 4/3); el panel se queda el resto */
+  .cuadricula_control {
+    flex: 1; min-height: 0; align-items: stretch; gap: max(20px, var(--espacio_3));
+    grid-template-columns: minmax(0, calc((87.4vh - var(--alto_barra_panel) - 84px) * 4 / 3 + 2 * clamp(16px, 1.4vw, 26px) + 2px)) minmax(440px, 1fr);
+  }
 
   .columna_control {
-    min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    min-height: 0; gap: var(--hueco_columna); overflow-y: auto; overscroll-behavior: contain;
     scrollbar-width: thin; scrollbar-color: rgba(140, 175, 235, .3) transparent;
   }
-  .panel_pestana { flex: 1 1 auto; }
+  /* Sin desplazamiento vertical en la animación: el translateY(10px) de animacion_entrada asomaba 10 px de scroll */
+  .panel_pestana { flex: 1 1 0; gap: var(--hueco_columna); animation-name: animacion_aparicion; }
+  .lista_registro li { animation-name: animacion_aparicion; }
 
-  .vista_control .tarjeta_panel { padding: 20px 22px; gap: 16px; }
-  .vista_control .tarjeta_panel .titulo_tarjeta { font-size: 18px; }
+  .vista_control .tarjeta_panel { padding: var(--relleno_tarjeta) clamp(16px, 1.4vw, 26px); gap: var(--hueco_tarjeta); }
+  .vista_control .tarjeta_panel .titulo_tarjeta { font-size: var(--texto_xl); }
   .cabecera_titulo { gap: 4px; }
+  .pestana_control { padding-block: clamp(6px, 1vh, 11px); }
 
-  /* Vídeo: el marco ocupa todo el alto libre de la columna */
-  .tarjeta_video { flex: 1 1 auto; min-height: 0; }
-  .marco_video { flex: 1 1 0; min-height: 260px; aspect-ratio: auto; }
-  .ajustes_camara_cuerpo { padding-top: 14px; }
+  /* Vídeo: el marco mide 4:3 por el ancho de la tarjeta; si la columna es baja, encoge y el cuadro 4:3 se centra dentro */
+  .tarjeta_video { flex: 0 1 auto; min-height: 0; }
+  .ajustes_camara { padding-top: clamp(8px, 1.3vh, 14px); }
+  .ajustes_camara_cuerpo { padding-top: clamp(10px, 1.5vh, 16px); gap: clamp(10px, 1.5vh, 16px) 20px; }
 
-  /* Vuelo: las palancas se llevan el espacio que sobra */
-  #panel_vuelo .tarjeta_panel { gap: 14px; }
+  /* ----- Vuelo ----- */
+  .tarjeta_operacion { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); container: tarjeta_operacion / inline-size; }
   .tarjeta_operacion > .cuadricula_mandos { gap: 8px; }
-  .tarjeta_operacion .boton_mando { flex-direction: row; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; }
-  .tarjeta_operacion .boton_mando svg { width: 19px; height: 19px; flex: none; }
-  .selector_segmentos legend { margin-bottom: 8px; }
-  .tarjeta_movimiento { flex: 1 1 auto; }
-  .tarjeta_movimiento .zona_palancas { flex: 1 1 auto; }
-  .palanca { width: min(100%, 144px); }
-  .guia_teclas { gap: 8px 14px; padding-top: 12px; }
-  .guia_teclas li { font-size: 12px; }
-  .nota_control { font-size: 12px; }
-  /* El botón ya lo dice; el texto completo queda en su title */
+  .boton_armar { padding: clamp(8px, 1.3vh, 15px) 10px; }
+  /* El paro: el más ancho de la fila, nunca por debajo de --tam_toque de alto */
+  .boton_paro { min-height: var(--tam_toque); padding: clamp(8px, 1.3vh, 16px) 10px; }
+  .tarjeta_operacion .boton_mando {
+    flex-direction: row; align-items: center; justify-content: center; gap: 7px;
+    padding: clamp(6px, 1.1vh, 12px) 8px; font-size: var(--texto_sm); line-height: 1.25;
+  }
+  .tarjeta_operacion .boton_mando svg { width: 18px; height: 18px; flex: none; }
+  /* Modo de vuelo: la etiqueta a la izquierda de los segmentos (legend flotante = hijo normal del flex) */
+  .selector_segmentos { flex-direction: row; align-items: center; gap: 12px; }
+  .selector_segmentos legend { float: left; margin: 0; flex: none; }
+  .selector_segmentos_opciones { flex: 1; min-width: 0; }
+  .segmento span { padding-block: clamp(5px, .9vh, 9px); }
+  .nota_control { font-size: var(--texto_xs); line-height: 1.4; }
+
+  /* Movimiento: la zona de palancas reparte el alto que sobra; las palancas miden lo que ese alto permite */
+  .tarjeta_movimiento { flex: 1 1 0; min-height: 0; }
+  .tarjeta_movimiento .zona_palancas {
+    flex: 1 1 0; min-height: 104px; container: zona_palancas / size;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1fr);
+    gap: clamp(12px, 1.2vw, 24px); align-content: center;
+  }
+  .palanca_envoltura { gap: 6px; }
+  /* 100cqh = alto de la zona; se descuenta la etiqueta de debajo (hasta dos líneas) */
+  .palanca { width: min(100%, calc(100cqh - 40px), 300px); }
+  .palanca_envoltura .etiqueta_pequena { line-height: 1.3; text-wrap: balance; }
+  /* Lecturas: nombre y número en una línea, la barra debajo */
+  .lecturas_ejes { gap: clamp(5px, 1vh, 14px); }
+  .lectura_eje { position: relative; gap: 4px; }
+  .lectura_eje dd { grid-template-columns: minmax(0, 1fr); }
+  .lectura_eje .numero_mono { position: absolute; top: 0; right: 0; line-height: 1.2; }
+  .lectura_eje dt { line-height: 1.25; }
+  /* Límite de mando en una sola fila: etiqueta · deslizador · valor */
+  .tarjeta_movimiento .control_rango { display: grid; grid-template-columns: auto minmax(0, 1fr) 3.4em; align-items: center; gap: 14px; }
+  .tarjeta_movimiento .control_rango_cabecera { display: contents; }
+  .tarjeta_movimiento .control_rango .deslizador { grid-column: 2; grid-row: 1; }
+  .tarjeta_movimiento .control_rango output { grid-column: 3; grid-row: 1; text-align: right; }
+  /* Atajos compactos */
+  .guia_teclas { gap: 3px 12px; padding-top: clamp(6px, 1vh, 12px); }
+  .guia_teclas li { gap: 4px; font-size: var(--texto_xs); line-height: 1.4; }
+  .guia_teclas span { margin-left: 2px; }
+  .guia_teclas kbd { min-width: 20px; padding: 0 5px; line-height: 1.45; }
+
+  /* ----- PID ----- */
+  /* La tarjeta mide su contenido (sin caja vacía en monitores altos); filas y tabla ganan aire con el alto */
+  .tarjeta_pid { flex: 0 1 auto; min-height: 0; container: tarjeta_pid / inline-size; }
+  .tarjeta_pid > * { flex-shrink: 0; }
+  .pestana_pid { padding-block: clamp(5px, 1vh - 1px, 9px); }
+  .cuerpo_pid { grid-template-columns: minmax(0, 1fr); gap: var(--hueco_tarjeta); }
+  .fila_pid { grid-template-columns: minmax(0, 1.25fr) minmax(90px, .8fr) 72px; gap: 14px; padding: clamp(3px, 1.6vh - 6.5px, 16px) 0; }
+  .texto_ayuda { line-height: 1.3; }
+  .campo_numero { padding: 7px 8px; }
+  .acciones_pid { padding-top: clamp(6px, 1.1vh, 14px); gap: 10px 16px; }
+  .acciones_pid .boton_primario { padding: clamp(8px, 1.2vh, 12px) 18px; }
+  .acciones_pid .boton_acceso { padding-block: clamp(8px, 1.2vh, 12px); }
+  /* Resumen: tabla y nota lado a lado */
+  .resumen_pid {
+    display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start;
+    gap: 6px 18px; padding: clamp(8px, 1.4vh, 18px) 16px;
+  }
+  .resumen_pid > .etiqueta_pequena { grid-column: 1 / -1; }
+  .tabla_pid th { padding-bottom: 4px; }
+  .tabla_pid td { padding: clamp(2px, 1.1vh - 5px, 12px) 0; }
+
+  /* ----- Registro ----- */
+  .tarjeta_registro { flex: 1 1 0; min-height: 0; }
+  .lista_registro { flex: 1 1 0; min-height: 0; max-height: none; }
+}
+
+/* Cuadro 4:3 exacto del vídeo (escritorio, salvo pantalla completa y tarjeta angosta, que tienen su propio diseño):
+   el marco es un contenedor de tamaño y la imagen, el aviso, el HUD y el fondo ocupan el mayor 4:3 que cabe, centrado */
+@media (width > 1024px) {
+  @container tarjeta_video (width > 440px) {
+    .marco_video:not(:fullscreen) {
+      flex: 1 1 auto; height: calc(100cqw * 3 / 4); min-height: 160px; aspect-ratio: auto;
+      container: marco_video / size;
+      background: none; border: none; border-radius: 0; overflow: visible;
+    }
+    .marco_video:not(:fullscreen)::before,
+    .marco_video:not(:fullscreen)::after,
+    .marco_video:not(:fullscreen) > :is(.imagen_video, .video_espera, .hud) {
+      --ancho_cuadro: min(100cqw, 100cqh * 4 / 3);
+      position: absolute; inset: auto; left: 50%; top: 50%; translate: -50% -50%;
+      width: var(--ancho_cuadro); height: calc(var(--ancho_cuadro) * 3 / 4);
+      border-radius: 14px;
+    }
+    .marco_video:not(:fullscreen)::before {
+      content: ''; z-index: -1;
+      background-color: #050b18;
+      background-image:
+        linear-gradient(rgba(140, 175, 235, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(140, 175, 235, .05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .marco_video:not(:fullscreen)::after { content: ''; z-index: 3; border: 1px solid var(--color_linea); pointer-events: none; }
+  }
+}
+
+/* Tarjeta de operación angosta (panel de 440-560 px): el paro cabe en una línea y los cuatro mandos también
+   (sin el icono, que es decorativo; "Regresar a casa" toma la columna más ancha) */
+@media (width > 1024px) {
+  @container tarjeta_operacion (max-width: 520px) {
+    .boton_armar, .boton_paro { font-size: var(--texto_md); }
+    .tarjeta_operacion > .cuadricula_mandos { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.5fr); }
+    .tarjeta_operacion .boton_mando svg { display: none; }
+  }
+  /* Tarjeta de vídeo angosta (1025-1200 px): botones de la barra solo con icono; el texto queda para lectores de pantalla */
+  @container tarjeta_video (max-width: 440px) {
+    .boton_icono { padding: 8px 10px; }
+    .boton_icono span {
+      position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+      clip-path: inset(50%); white-space: nowrap; border: 0;
+    }
+  }
+}
+
+/* Cabeceras de tarjeta en una línea (etiqueta + título) cuando la ventana es baja */
+@media (width > 1024px) and (max-height: 960px) {
+  .cabecera_titulo { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; }
+}
+/* La nota del paro se ve cuando hay alto; en ventanas bajas queda en el title del botón (el botón ya dice qué hace) */
+@media (width > 1024px) and (max-height: 780px) {
   .tarjeta_operacion > .nota_control { display: none; }
-
-  /* PID y registro llenan el alto de su pestaña */
-  .tarjeta_registro { flex: 1 1 auto; }
-  .tarjeta_registro { min-height: 0; }
-  .lista_registro { flex: 1 1 0; min-height: 120px; max-height: none; }
 }
 
-/* Ventanas bajas (1080p con barras del navegador): un poco más compacto para que Vuelo quepa entero */
-@media (min-width: 1181px) and (max-height: 960px) {
-  .panel_contenido { padding-top: 16px; padding-bottom: 16px; }
-  .vista_control .tarjeta_panel { padding: 16px 20px; }
-  #panel_vuelo { gap: 12px; }
-  #panel_vuelo .tarjeta_panel { gap: 12px; }
-  .boton_armar, .boton_paro { padding-top: 11px; padding-bottom: 11px; }
-  .tarjeta_operacion .boton_mando { padding: 10px 8px; }
-  .palanca { width: min(100%, 124px); }
-  .lecturas_ejes { gap: 6px; }
-  .guia_teclas { padding-top: 10px; }
+/* PID en una tarjeta ancha (monitores grandes): ganancias y resumen lado a lado */
+@container tarjeta_pid (min-width: 760px) {
+  .cuerpo_pid { grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr); gap: 28px; align-items: start; }
+  .resumen_pid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Monitor grande: datos del HUD más grandes (el ancho del vídeo ya sale de la fórmula 4:3 de .cuadricula_control) */
+@media (min-width: 1920px) {
+  .hud_dato_valor { font-size: var(--titulo_xs); }
+}
+
+@keyframes animacion_aparicion { from { opacity: 0; } to { opacity: 1; } }
 
 /* ===== Responsivo ===== */
-@media (max-width: 1180px) {
+@media (max-width: 1024px) {
   .cuadricula_control { grid-template-columns: minmax(0, 1fr); }
   .cuerpo_pid { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 720px) {
-  .hud_inferior { grid-template-columns: repeat(3, minmax(0, 1fr)); left: 12px; right: 12px; bottom: 12px; gap: 6px; }
+@media (max-width: 768px) {
+  .hud_inferior { left: 12px; right: 12px; bottom: 12px; gap: 6px; }
   .hud_dato { padding: 6px 8px; }
-  .hud_dato_valor { font-size: 15px; }
+  .hud_dato_valor { font-size: var(--texto_base); }
   .hud_superior { top: 12px; left: 40px; right: 40px; }
   .hud_rumbo { display: none; }
   .zona_palancas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -561,21 +692,59 @@ kbd.esta_pulsada { color: #071226; background: var(--color_acento); border-color
   .fila_pid .deslizador { grid-column: 1 / -1; grid-row: 2; }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 480px) {
   .tarjeta_operacion { grid-template-columns: minmax(0, 1fr); grid-template-areas: "cabecera" "armar" "mandos" "modo" "paro" "nota"; }
   .tarjeta_operacion > .cuadricula_mandos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .selector_maquina { width: 100%; }
   .selector_maquina .campo_selector { flex: 1; min-width: 0; }
-  /* En pantallas chicas quedan altitud, batería y estado de armado */
-  .hud_dato:nth-child(2), .hud_dato:nth-child(3) { display: none; }
-  .hud_inferior { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.8fr); }
-  .hud_dato_modo .hud_dato_valor { font-size: 11px; letter-spacing: 0; }
-  .hud_esquina { display: none; }
-  .hud_superior { left: 12px; right: 12px; }
   .boton_icono span { display: none; }
   .boton_salir_pantalla kbd { display: none; }
   .marco_video:fullscreen .hud_superior { right: 110px; }
   .zona_palancas { gap: 14px; }
+  /* Ejes del PID: los cuatro visibles a todo el ancho, sin desplazamiento lateral */
+  .pestanas_pid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-self: stretch; overflow: visible; }
+  .pestana_pid { padding-inline: 4px; }
+}
+
+@container tarjeta_video (max-width: 440px) {
+  .hud_esquina { display: none; }
+  .hud_superior { left: 12px; right: 12px; }
+  /* Vídeo angosto (teléfono, o tarjeta de < 440 px entre 1025 y ~1200 px): los seis datos del HUD pasan
+     DEBAJO del vídeo (2 columnas × 3 filas) para no tapar el aviso del centro. Solo CSS: el marco es una
+     cuadrícula; la fila 1 es el área 4:3 del vídeo (imagen, aviso, horizonte y etiquetas superiores) y la
+     fila 2 los datos; el marco mide lo que su contenido (no se estira ni recorta los datos). En pantalla completa vuelve a superponerse. */
+  .marco_video:not(:fullscreen) { display: grid; grid-template-columns: minmax(0, 1fr); aspect-ratio: auto; flex: none; min-height: 0; max-height: none; }
+  .marco_video:not(:fullscreen)::before { content: ''; grid-area: 1 / 1; aspect-ratio: 4 / 3; }
+  .marco_video:not(:fullscreen) > :is(.imagen_video, .video_espera) { grid-area: 1 / 1 / 2 / 2; } /* abs.: con "auto" llegaría al borde */
+  .marco_video:not(:fullscreen) .hud { display: contents; }
+  .marco_video:not(:fullscreen) :is(.hud_superior, .hud_horizonte, .hud_reticula) { grid-area: 1 / 1 / 2 / 2; z-index: 2; transition: opacity .3s; }
+  .marco_video:not(:fullscreen) .hud_inferior {
+    position: static; grid-area: 2 / 1; z-index: 2;
+    grid-template-columns: repeat(2, minmax(min-content, 1fr)); gap: 6px; padding: 8px;
+    border-top: 1px solid var(--color_linea); background: rgba(5, 11, 24, .85);
+  }
+  .marco_video:not(:fullscreen) .hud_dato { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .marco_video:not(:fullscreen) .hud_dato_modo { flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 2px; }
+  .marco_video:not(:fullscreen) .hud_dato_modo .hud_dato_valor { padding-top: 0; }
+  .marco_video.hud_oculto:not(:fullscreen) :is(.hud_superior, .hud_horizonte, .hud_reticula) { opacity: 0; }
+  .marco_video.hud_oculto:not(:fullscreen) .hud_inferior { display: none; }
+}
+
+/* Táctil: todo lo que se pulsa mide al menos --tam_toque; los mandos de vuelo, más */
+@media (pointer: coarse) {
+  .boton_icono { min-height: var(--tam_toque); min-width: var(--tam_toque); justify-content: center; }
+  .boton_salir_pantalla { min-height: var(--tam_toque); }
+  .ajustes_camara_titulo { min-height: var(--tam_toque); }
+  .interruptor { min-height: var(--tam_toque); }
+  .pestana_control, .pestana_pid { min-height: var(--tam_toque); }
+  .segmento span { display: flex; align-items: center; justify-content: center; min-height: var(--tam_toque); }
+  .deslizador { height: var(--tam_toque); }
+  .boton_mando { min-height: calc(var(--tam_toque) + 12px); }
+  .boton_armar { min-height: calc(var(--tam_toque) + 12px); }
+  /* El paro nunca queda chico ni pegado: más alto que el resto y con aire alrededor */
+  .boton_paro { min-height: calc(var(--tam_toque) + 20px); }
+  .tarjeta_operacion > .boton_paro { margin-block: 6px; }
+  kbd { min-width: 28px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

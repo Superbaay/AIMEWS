@@ -1,5 +1,6 @@
-// Panel de control. Depende de ../main.js (api_url, clave_token y el observador de .revelar)
-// y de sesion_panel.js (leer_sesion, salir_del_panel y mostrar_datos_sesion)
+// Panel de control. Depende de ../main.js (api_url, clave_token y el observador de .revelar),
+// de sesion_panel.js (leer_sesion, salir_del_panel, mostrar_datos_sesion, formatear_hora y es_numero)
+// y de enlace_ws.js (crear_enlace_ws)
 // La API expone /ws y espera el token en el primer mensaje: {"token": "..."} (main.py)
 const ws_url = `${api_url.replace(/^http/, 'ws')}/ws`;
 const metros_por_segundo_a_km_h = 3.6;
@@ -42,10 +43,6 @@ function iniciar_panel() {
     sin_respuesta: 'Sin respuesta',
   };
 
-  let socket = null;
-  let sesion_rechazada = false;
-  let intentos_reconexion = 0;
-  let temporizador_reconexion = null;
   let ultimo_mensaje_dron_ms = 0;
   let estado_enlace_actual = '';
   let temporizador_autoprueba = null;
@@ -55,14 +52,8 @@ function iniciar_panel() {
   mostrar_datos_sesion(sesion);
 
   // ===== Utilidades =====
-  function formatear_hora(fecha) {
-    return fecha.toLocaleTimeString('es-MX', { hour12: false });
-  }
-
   function escribir_valor(id, valor, decimales) {
-    const elemento = document.getElementById(id);
-    const es_numero = typeof valor === 'number' && Number.isFinite(valor);
-    elemento.textContent = es_numero ? valor.toFixed(decimales) : '—';
+    document.getElementById(id).textContent = es_numero(valor) ? valor.toFixed(decimales) : '—';
   }
 
   // El panel ya no tiene tarjeta de registro: los eventos del enlace van a la consola del navegador
@@ -87,8 +78,7 @@ function iniciar_panel() {
   }
 
   function refrescar_estado_enlace() {
-    const estado_socket = socket ? socket.readyState : null;
-    const estado = calcular_estado_enlace(estado_socket, ultimo_mensaje_dron_ms, Date.now());
+    const estado = calcular_estado_enlace(enlace.estado, ultimo_mensaje_dron_ms, Date.now());
     if (estado === estado_enlace_actual) return;
     estado_enlace_actual = estado;
     estado_enlace.className = `estado_enlace estado_enlace_${estado}`;
@@ -98,58 +88,31 @@ function iniciar_panel() {
   }
 
   // ===== WebSocket =====
-  // El navegador no permite cabeceras en WebSocket: el JWT va en el primer mensaje, no en la URL,
-  // así no queda escrito en los registros del servidor ni en el historial
-  function conectar_socket() {
-    clearTimeout(temporizador_reconexion);
-    if (sesion_rechazada) return;
-    if (socket && socket.readyState <= WebSocket.OPEN) return;
-
-    socket = new WebSocket(ws_url);
-    refrescar_estado_enlace();
-
-    socket.addEventListener('open', () => {
-      intentos_reconexion = 0;
-      socket.send(JSON.stringify({ token: sesion.token }));
+  // enlace_ws.js manda el token en el primer mensaje, reconecta con espera creciente y sale del panel si la API rechaza la sesión
+  const enlace = crear_enlace_ws({
+    url: ws_url,
+    token: sesion.token,
+    al_conectar: refrescar_estado_enlace,
+    al_abrir: () => {
       registrar_evento('Conectado a la API. Enviando sesión…');
       refrescar_estado_enlace();
-    });
+    },
+    al_mensaje: procesar_mensaje,
+    al_mensaje_invalido: () => registrar_evento('Se recibió un mensaje con formato inválido.', true),
+    al_cerrar: refrescar_estado_enlace,
+    al_rechazo: () => registrar_evento('La API rechazó la sesión. Redirigiendo…', true),
+    al_reintento: (espera_ms) => registrar_evento(`Conexión cerrada. Reintento en ${Math.round(espera_ms / 1000)} s.`, true),
+  });
 
-    socket.addEventListener('message', (evento) => {
-      try {
-        procesar_mensaje(JSON.parse(evento.data));
-      } catch (error) {
-        registrar_evento('Se recibió un mensaje con formato inválido.', true);
-      }
-    });
-
-    socket.addEventListener('close', (evento) => {
-      refrescar_estado_enlace();
-      // 1008 (policy violation) o un "Unauthorized" previo: la API rechazó el token, reconectar no sirve
-      if (sesion_rechazada || evento.code === 1008) {
-        sesion_rechazada = true;
-        registrar_evento('La API rechazó la sesión. Redirigiendo…', true);
-        setTimeout(salir_del_panel, 1200);
-        return;
-      }
-      const espera_ms = Math.min(30000, 1000 * 2 ** intentos_reconexion);
-      intentos_reconexion += 1;
-      registrar_evento(`Conexión cerrada. Reintento en ${Math.round(espera_ms / 1000)} s.`, true);
-      temporizador_reconexion = setTimeout(conectar_socket, espera_ms);
-    });
-  }
-
-  // La API lee info.get("action") (api_bm.api_function) y devuelve el mismo mensaje con api_response
+  // La API (drone_ws_rt) reenvía el comando al dron con manager.send_command y devuelve el mismo mensaje con api_response
   function enviar_comando(accion) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) return false;
-    socket.send(JSON.stringify({ tipo: 'comando', action: accion }));
-    return true;
+    return enlace.enviar({ tipo: 'comando', action: accion });
   }
 
   // Mensajes del saludo inicial de la API: {"message": "..."} sin campo tipo
   function procesar_mensaje_api(texto) {
     if (texto === 'Unauthorized' || texto.startsWith('WebSocket error')) {
-      sesion_rechazada = true;
+      enlace.marcar_rechazada();
       registrar_evento(`La API rechazó la sesión: ${texto}`, true);
       return;
     }
@@ -217,14 +180,25 @@ function iniciar_panel() {
     // La API manda gps.speed en m/s y el panel lo muestra en km/h
     const velocidad = typeof gps.speed === 'number' ? gps.speed * metros_por_segundo_a_km_h : null;
     escribir_valor('telemetria_velocidad', velocidad, 1);
+    escribir_valor('gps_satelites', gps.satellites, 0);
+    escribir_valor('gps_satelites_vista', gps.satellites_in_view, 0);
+    escribir_valor('gps_hdop', gps.hdop, 1);
+    document.getElementById('gps_fix').textContent = texto_fix_gps(gps);
     escribir_valor('lidar_distancia', lidar_distance.distance, 2);
     pintar_celdas(celdas);
+  }
+
+  // fix_type del GPS (NMEA GSA): 1 sin fix, 2 = 2D (sin altitud fiable), 3 = 3D
+  function texto_fix_gps(gps) {
+    if (typeof gps.fix !== 'boolean') return '—';
+    if (!gps.fix) return 'Sin fix';
+    return gps.fix_type === 3 ? '3D' : gps.fix_type === 2 ? '2D' : 'Fix';
   }
 
   // batery_6s no trae porcentaje: se estima con el promedio de las celdas entre el mínimo y el máximo de una LiPo.
   // Es lineal, así que es aproximado (la curva real de descarga es plana en el centro)
   function estimar_carga(voltajes) {
-    const validos = voltajes.filter((voltaje) => typeof voltaje === 'number' && Number.isFinite(voltaje));
+    const validos = voltajes.filter(es_numero);
     if (validos.length === 0) return null;
     const promedio = validos.reduce((suma, voltaje) => suma + voltaje, 0) / validos.length;
     const nivel = (promedio - voltaje_celda_minimo) / (voltaje_celda_maximo - voltaje_celda_minimo);
@@ -234,7 +208,7 @@ function iniciar_panel() {
   function pintar_celdas(voltajes) {
     celdas_bateria.forEach((celda, indice) => {
       const voltaje = voltajes[indice];
-      const es_valido = typeof voltaje === 'number' && Number.isFinite(voltaje);
+      const es_valido = es_numero(voltaje);
       const rango = voltaje_celda_maximo - voltaje_celda_minimo;
       const nivel = es_valido ? Math.min(1, Math.max(0, (voltaje - voltaje_celda_minimo) / rango)) : 0;
       celda.style.setProperty('--nivel', nivel);
@@ -302,6 +276,6 @@ function iniciar_panel() {
 
   // ===== Arranque =====
   registrar_evento(`Sesión iniciada como ${nombre_usuario}.`);
-  conectar_socket();
+  enlace.conectar();
   setInterval(refrescar_estado_enlace, 1000);
 }

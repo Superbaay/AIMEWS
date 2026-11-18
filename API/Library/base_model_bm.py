@@ -1,9 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Literal
-from pymongo import MongoClient
-
-db = MongoClient().SAMATI
+#db se re-exporta: varios routers hacen "from Library.base_model_bm import db"
+from Library.db_bm import db
 
 #-------------------------------------------------
 #user model for the database
@@ -26,9 +25,6 @@ class user_not_password(BaseModel):
     date : datetime
     phone_number : int | None = None
     role : str | None = None
-class order(BaseModel):
-    code : str
-    date : str
 
 class name(BaseModel):
     name : str
@@ -136,10 +132,17 @@ class barometer_data(BaseModel):
     date : datetime | None = None
 
 class gps_data(BaseModel):
-    latitude : float
-    longitude : float
-    altitude : float
-    speed : float #m/s
+    #Sin fix el GPS no tiene posición: estos cuatro llegan en null (nunca 0,0 falso)
+    latitude : float | None = None
+    longitude : float | None = None
+    altitude : float | None = None #m sobre el nivel del mar
+    speed : float | None = None #m/s
+    #Calidad de la señal: llegan siempre que el GPS responda, aunque no haya fix
+    fix : bool = False
+    fix_type : int | None = None #1 sin fix, 2 = 2D, 3 = 3D
+    satellites : int | None = None #satélites usados en la solución
+    satellites_in_view : int | None = None #satélites que el GPS ve en el cielo
+    hdop : float | None = None #dilución horizontal: < 2 buena, > 5 mala
     date : datetime | None = None
 class lidar_distance_data(BaseModel):
     distance : float #m

@@ -6,9 +6,9 @@
   <title>Control del dron · SAMATI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../styless.css">
-  <link rel="stylesheet" href="../styless.css?v=4">
-  <link rel="stylesheet" href="styless.css?v=4">
+  <link rel="stylesheet" href="../../styless.css?v=3">
+  <link rel="stylesheet" href="../styless.css?v=8">
+  <link rel="stylesheet" href="styless.css?v=7">
 </head>
 <body class="pagina_panel">
 
@@ -38,65 +38,7 @@
   </header>
 
   <div class="panel_estructura">
-    <aside class="barra_lateral">
-      <!-- Retrae la barra a solo íconos; la preferencia la guarda sesion_panel.js para todas las páginas -->
-      <button type="button" class="boton_retraer_lateral" id="boton_retraer_lateral" aria-expanded="true">
-        <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
-          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect>
-          <path d="M9.5 4.5v15"></path>
-          <path class="flecha_retraer" d="M16 9.5 13.5 12l2.5 2.5"></path>
-        </svg>
-        <span id="texto_retraer_lateral">Retraer menú</span>
-      </button>
-      <nav class="menu_lateral" aria-label="Secciones del panel">
-        <a href="../index.html" class="enlace_lateral">
-          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3.5 11 12 4l8.5 7"></path>
-            <path d="M6 9.5V20h12V9.5"></path>
-            <path d="M10 20v-5.5h4V20"></path>
-          </svg>
-          <span>Home</span>
-        </a>
-        <a href="index.html" class="enlace_lateral enlace_lateral_activo" aria-current="page">
-          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="6" cy="6" r="2.5"></circle>
-            <circle cx="18" cy="6" r="2.5"></circle>
-            <circle cx="6" cy="18" r="2.5"></circle>
-            <circle cx="18" cy="18" r="2.5"></circle>
-            <path d="M8 8l2.2 2.2M16 8l-2.2 2.2M8 16l2.2-2.2M16 16l-2.2-2.2"></path>
-            <rect x="10" y="10" width="4" height="4" rx="1"></rect>
-          </svg>
-          <span>Dron</span>
-        </a>
-        <a href="../ingineer_log/index.html" class="enlace_lateral">
-          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M2 9h20"></path>
-            <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path>
-            <path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>
-          </svg>
-          <span>Logbook</span>
-        </a>
-        <a href="../user_shetings/index.html" class="enlace_lateral">
-          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="8" r="3.5"></circle>
-            <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>
-          </svg>
-          <span>Users</span>
-        </a>
-        <a href="../machine_shetings/index.html" class="enlace_lateral">
-          <svg class="icono_lateral" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="3"></circle>
-            <circle cx="12" cy="12" r="6.5"></circle>
-            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>
-          </svg>
-          <span>Machines</span>
-        </a>
-      </nav>
-      <div class="barra_lateral_pie">
-        <span class="etiqueta_pequena">Sesión válida hasta</span>
-        <span class="numero_mono" id="sesion_expira">—</span>
-      </div>
-    </aside>
+    <aside class="barra_lateral"><!-- El menú lo construye sesion_panel.js (construir_barra_lateral) --></aside>
 
     <main class="panel_contenido">
       <section class="vista_panel vista_control" aria-label="Control del dron">
@@ -152,6 +94,7 @@
                   <div class="hud_inferior">
                     <div class="hud_dato"><span class="hud_dato_valor" id="hud_altitud">—</span><span class="hud_dato_nombre">Alt · m</span></div>
                     <div class="hud_dato"><span class="hud_dato_valor" id="hud_velocidad">—</span><span class="hud_dato_nombre">Vel · km/h</span></div>
+                    <div class="hud_dato"><span class="hud_dato_valor" id="hud_satelites">—</span><span class="hud_dato_nombre" id="hud_fix">GPS · sat</span></div>
                     <div class="hud_dato"><span class="hud_dato_valor" id="hud_lidar">—</span><span class="hud_dato_nombre">LiDAR · m</span></div>
                     <div class="hud_dato"><span class="hud_dato_valor" id="hud_bateria">—</span><span class="hud_dato_nombre">Batería · %</span></div>
                     <div class="hud_dato hud_dato_modo"><span class="hud_dato_valor" id="hud_modo">—</span><span class="hud_dato_nombre" id="hud_armado">Desarmado</span></div>
@@ -446,7 +389,8 @@
   </div>
 
   <script src="../../main.js?v=7"></script>
-  <script src="../sesion_panel.js?v=5"></script>
-  <script src="main.js?v=3"></script>
+  <script src="../sesion_panel.js?v=7"></script>
+  <script src="../enlace_ws.js?v=1"></script>
+  <script src="main.js?v=4"></script>
 </body>
 </html>

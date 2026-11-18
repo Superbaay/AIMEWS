@@ -1,0 +1,5 @@
+# Datos PRIVADOS de este equipo (está en .gitignore). Se aplica sobre sdkconfig.defaults.
+CONFIG_DRON_WIFI_SSID="INFINITUM0D17"
+CONFIG_DRON_WIFI_PASSWORD="Sq8Ff6Ee5g"
+CONFIG_DRON_MACHINE_NAME="kanan_01"
+CONFIG_DRON_MACHINE_PASSWORD="Nyjy2RRYIIJr"
