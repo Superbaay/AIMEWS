@@ -48,9 +48,22 @@ typedef struct {
 } estado_gps_t;
 
 typedef struct {
+    bool listo;                 // el sensor respondió y llegan tramas
+    bool valido;                // hay medida filtrada reciente (fuerza suficiente, en rango)
+    float distancia_m;          // mediana de las últimas medidas válidas, sin el offset de montaje
+    uint16_t cruda_cm;          // última medida tal cual
+    uint16_t fuerza;            // fuerza de la señal: <100 poco fiable
+    float temp_c;               // temperatura interna del sensor
+    float hz;                   // tramas/s reales
+    uint32_t invalidas;         // medidas descartadas en el último segundo
+    uint32_t tramas_malas;      // checksum incorrecto (acumulado)
+} estado_lidar_t;
+
+typedef struct {
     estado_imu_t imu;
     estado_barometro_t baro;
     estado_gps_t gps;
+    estado_lidar_t lidar;
 } estado_dron_t;
 
 /* Copia atómica de todo el estado. */
@@ -60,6 +73,7 @@ void estado_leer(estado_dron_t *copia);
 void estado_escribir_imu(const estado_imu_t *imu);
 void estado_escribir_baro(const estado_barometro_t *baro);
 void estado_escribir_gps(const estado_gps_t *gps);
+void estado_escribir_lidar(const estado_lidar_t *lidar);
 
 /* Pide al barómetro que tome la presión actual como nueva altura 0
  * (comando "cero_altura" del panel). */

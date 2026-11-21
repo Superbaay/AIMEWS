@@ -17,8 +17,10 @@
 // y su FIFO se desbordaría (medido durante los handshakes TLS). Con 19 nadie de
 // la red lo frena; casi no usa CPU (~0.3 ms de cada 10, el resto duerme).
 #define PRIORIDAD_BAROMETRO 19
+#define PRIORIDAD_LIDAR     5  // su driver lee el UART2 con prioridad 6
 #define PRIORIDAD_ENLACE    2                            // telemetría: la más baja
 
 void tarea_imu(void *mpu_handle);         // arg: mpu_handle_t
 void tarea_barometro(void *ms5611_handle); // arg: ms5611_handle_t
 void tarea_gps(void *arg);                // arg: NULL (el GPS se inicia dentro)
+void tarea_lidar(void *arg);              // arg: NULL (el LiDAR se inicia dentro, UART2 GPIO7/6)

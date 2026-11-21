@@ -28,7 +28,13 @@ CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
 # El handshake de mbedTLS necesita más pila que los 3.5 KB por defecto.
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 
-# WiFi + TLS + bundle de certificados ocupan ~1.05 MB: la partición de app
-# por defecto (1 MB) no alcanza. "Single app large" da 1.5 MB (flash >= 4 MB).
-CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
-CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+# Flash real de la N16R8: 16 MB. Tabla propia con dos ranuras OTA de 4 MB
+# (partitions.csv): la app ocupa ~1.1 MB con WiFi + TLS + bundle de certificados.
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Rollback: una versión que llega por OTA arranca "pendiente de verificar" y,
+# si no se confirma (ota_dron.c, al conectarse a la API), el bootloader vuelve
+# a la anterior. Cambia el bootloader: el primer flasheo tras esto va por USB.
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y

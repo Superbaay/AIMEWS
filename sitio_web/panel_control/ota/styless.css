@@ -1,0 +1,102 @@
+/* ===== Firmware OTA ===== */
+.columna_ota { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.bloque_ota { display: flex; flex-direction: column; gap: 18px; animation: animacion_entrada .4s ease both; }
+
+/* Selector (mismo estilo que en Control_dron y Usuarios) */
+.campo_selector {
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+  padding: 11px 40px 11px 14px; font-size: var(--texto_md);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color_acento_claro) 50%),
+    linear-gradient(135deg, var(--color_acento_claro) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+  background-color: rgba(6, 14, 30, .6);
+}
+.campo_selector option { background: var(--color_superficie); color: var(--color_texto); }
+
+/* ===== Zona del archivo (misma idea que la evidencia de la bitácora) ===== */
+.zona_archivo {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 24px 18px; border-radius: 14px; text-align: center; cursor: pointer;
+  border: 1.5px dashed rgba(111, 180, 255, .32); background: rgba(6, 14, 30, .45);
+  transition: border-color .2s, background .2s, transform .2s var(--curva_suave);
+}
+.zona_archivo:hover, .zona_archivo:has(.entrada_oculta:focus-visible) {
+  border-color: var(--color_acento); background: rgba(111, 180, 255, .06);
+}
+.zona_archivo:has(.entrada_oculta:focus-visible) { box-shadow: 0 0 0 4px rgba(111, 180, 255, .18); }
+.zona_archivo.esta_arrastrando {
+  border-style: solid; border-color: var(--color_acento_claro);
+  background: rgba(111, 180, 255, .12); transform: translateY(-2px);
+}
+.zona_archivo.tiene_archivo { border-style: solid; border-color: rgba(111, 180, 255, .5); }
+.entrada_oculta { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.zona_archivo_marca {
+  width: 14px; height: 14px; margin-bottom: 4px; transform: rotate(45deg);
+  border: 1.5px solid var(--color_acento); transition: background .2s;
+}
+.zona_archivo.tiene_archivo .zona_archivo_marca { background: rgba(111, 180, 255, .35); }
+.zona_archivo_titulo { font-family: var(--fuente_titulos); font-weight: 500; font-size: var(--texto_base); color: var(--color_texto); overflow-wrap: anywhere; }
+.zona_archivo_texto { font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .06em; color: var(--color_texto_tenue); }
+
+.aviso_ota {
+  margin: 0; padding: 10px 14px; border-radius: 10px; font-size: var(--texto_sm); line-height: 1.5;
+  color: var(--color_texto_secundario); background: rgba(242, 196, 107, .07); border: 1px solid rgba(242, 196, 107, .28);
+}
+
+/* ===== Progreso ===== */
+.progreso_ota { display: flex; flex-direction: column; gap: 8px; }
+.progreso_ota_cabecera { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.progreso_ota_barra {
+  height: 8px; border-radius: 999px; overflow: hidden;
+  background: rgba(6, 14, 30, .6); border: 1px solid var(--color_linea);
+}
+.progreso_ota_relleno {
+  display: block; height: 100%; width: 0; border-radius: inherit;
+  background: var(--color_acento); transition: width .4s var(--curva_suave), background .3s;
+}
+.progreso_ota.esta_error .progreso_ota_relleno { background: var(--color_error); }
+
+.registro_ota {
+  margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px;
+  max-height: 220px; overflow-y: auto;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto_tenue);
+}
+.registro_ota:empty { display: none; }
+.registro_ota_error { color: var(--color_error); }
+
+/* ===== Lista de firmwares ===== */
+.lista_firmware {
+  margin: 0; padding: 0 4px 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: max(760px, 70vh); overflow-y: auto;
+}
+.tarjeta_firmware {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 12px;
+  padding: 12px 14px; border-radius: 14px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+  transition: border-color .2s, background .2s;
+}
+.tarjeta_firmware_activa { border-color: rgba(111, 180, 255, .5); background: rgba(111, 180, 255, .06); }
+.insignia_version {
+  padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .06em;
+  color: var(--color_acento_claro); border: 1px solid rgba(111, 180, 255, .45); background: rgba(111, 180, 255, .1);
+}
+.tarjeta_firmware_datos { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tarjeta_firmware_nombre { font-size: var(--texto_base); font-weight: 500; overflow-wrap: anywhere; }
+.tarjeta_firmware_detalle { font-family: var(--fuente_mono); font-size: var(--texto_xs); color: var(--color_texto_tenue); overflow-wrap: anywhere; }
+.tarjeta_firmware_notas { font-size: var(--texto_sm); color: var(--color_texto_secundario); overflow-wrap: anywhere; }
+.tarjeta_firmware_notas:empty { display: none; }
+.tarjeta_firmware_borrar { padding: 4px 0; font-size: var(--texto_sm); }
+
+@media (max-width: 480px) {
+  .tarjeta_firmware { grid-template-columns: minmax(0, 1fr) auto; }
+  .insignia_version { grid-column: 1 / -1; justify-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloque_ota { animation: none; }
+  .progreso_ota_relleno { transition: none; }
+}

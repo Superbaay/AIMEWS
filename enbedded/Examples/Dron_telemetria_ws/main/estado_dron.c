@@ -34,6 +34,13 @@ void estado_escribir_gps(const estado_gps_t *gps)
     taskEXIT_CRITICAL(&candado);
 }
 
+void estado_escribir_lidar(const estado_lidar_t *lidar)
+{
+    taskENTER_CRITICAL(&candado);
+    estado.lidar = *lidar;
+    taskEXIT_CRITICAL(&candado);
+}
+
 void estado_pedir_cero_altura(void)
 {
     peticion_cero_altura = true;

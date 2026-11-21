@@ -16,3 +16,6 @@ enbedded/**/sdkconfig.old
 
 # Clave que firma los JWT de la API (se genera sola si falta)
 API/secret_key.txt
+
+# Clave para subir y desplegar firmware OTA desde esta PC sin usuario (enbedded/tools/ota_subir.py)
+API/ota_deploy_key.txt

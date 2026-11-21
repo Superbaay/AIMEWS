@@ -20,6 +20,8 @@ from types import SimpleNamespace
 ruta_clave = Path(os.environ.setdefault(
     "SAMATI_SECRET_KEY_FILE", str(Path(tempfile.gettempdir()) / "samati_api_pruebas" / "clave.txt")))
 ruta_clave.parent.mkdir(parents=True, exist_ok=True)
+#Clave X-OTA-Key de Routers_BM/ota_rt.py: tampoco se toca API/ota_deploy_key.txt
+os.environ.setdefault("SAMATI_OTA_KEY_FILE", str(ruta_clave.parent / "clave_ota.txt"))
 nombre_base = os.environ.setdefault("SAMATI_DB_NOMBRE", "SAMATI_sim_api")
 if nombre_base == "SAMATI":
     raise RuntimeError("Las pruebas nunca usan la base SAMATI: usa SAMATI_DB_NOMBRE=SAMATI_sim_api")
