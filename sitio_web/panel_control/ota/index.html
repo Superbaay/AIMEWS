@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firmware OTA · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styless.css?v=3">
+  <link rel="stylesheet" href="../styless.css?v=8">
+  <link rel="stylesheet" href="styless.css?v=1">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="../index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral"><!-- El menú lo construye sesion_panel.js (construir_barra_lateral) --></aside>
+
+    <main class="panel_contenido">
+      <section class="vista_panel">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <h1 class="titulo_panel">Firmware OTA</h1>
+          </div>
+          <div class="encabezado_panel_meta">
+            <span class="etiqueta_pequena">Drones con OTA</span>
+            <span class="numero_mono" id="total_drones">—</span>
+          </div>
+        </div>
+
+        <!-- Toda la API de OTA (ota_rt.py) es solo para O5-1 -->
+        <article class="tarjeta_componente tarjeta_panel" id="aviso_permisos" hidden>
+          <span class="etiqueta_mono">Acceso restringido</span>
+          <h2 class="titulo_tarjeta">Solo el rol O5-1 puede actualizar el firmware.</h2>
+        </article>
+
+        <div class="cuadricula_gestion" id="gestion_ota" hidden>
+          <div class="columna_ota">
+            <!-- Subir un .bin nuevo -->
+            <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
+              <form id="formulario_subir" class="bloque_ota" novalidate>
+                <div class="tarjeta_componente_cabecera"><span class="etiqueta_mono">Subir firmware</span></div>
+                <h2 class="titulo_tarjeta">Nuevo binario</h2>
+                <div class="campo">
+                  <span class="campo_etiqueta">Archivo .bin</span>
+                  <label for="campo_archivo" class="zona_archivo" id="zona_archivo">
+                    <input id="campo_archivo" type="file" class="entrada_oculta" accept=".bin,application/octet-stream">
+                    <span class="zona_archivo_marca" aria-hidden="true"></span>
+                    <span class="zona_archivo_titulo" id="zona_archivo_titulo">Arrastra el .bin aquí o haz clic para elegirlo</span>
+                    <span class="zona_archivo_texto">build/Dron_telemetria_ws.bin · máx. 4 MB · la versión se lee del archivo</span>
+                  </label>
+                </div>
+                <label for="campo_notas" class="campo">
+                  <span class="campo_etiqueta">Notas <span class="campo_opcional">(opcional)</span></span>
+                  <textarea id="campo_notas" class="campo_entrada campo_area" rows="2" maxlength="500" placeholder="Qué cambia en esta versión"></textarea>
+                </label>
+                <div id="mensaje_error_subir" class="mensaje_error" role="alert" hidden>
+                  <span class="mensaje_error_punto"></span>
+                  <span id="mensaje_error_subir_texto"></span>
+                </div>
+                <button type="submit" id="boton_subir" class="boton_primario">
+                  <span class="indicador_carga"></span>
+                  <span>Subir firmware</span>
+                </button>
+                <p class="nota_resultado" id="nota_subir" role="status"></p>
+              </form>
+            </article>
+
+            <!-- Mandar un firmware a un dron conectado -->
+            <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+              <form id="formulario_desplegar" class="bloque_ota" novalidate>
+                <div class="tarjeta_componente_cabecera"><span class="etiqueta_mono">Actualizar dron</span></div>
+                <div class="fila_campos">
+                  <label for="campo_firmware" class="campo">
+                    <span class="campo_etiqueta">Firmware</span>
+                    <select id="campo_firmware" class="campo_entrada campo_selector"></select>
+                  </label>
+                  <label for="campo_dron" class="campo">
+                    <span class="campo_etiqueta">Dron conectado</span>
+                    <select id="campo_dron" class="campo_entrada campo_selector"></select>
+                  </label>
+                </div>
+                <p class="aviso_ota">El dron debe estar en tierra y con batería. Si la versión nueva no logra conectarse a la API en 2 minutos, vuelve sola a la anterior.</p>
+                <button type="submit" id="boton_desplegar" class="boton_primario">
+                  <span class="indicador_carga"></span>
+                  <span>Enviar actualización</span>
+                </button>
+                <p class="nota_resultado" id="nota_desplegar" role="status"></p>
+
+                <div class="progreso_ota" id="progreso_ota" hidden>
+                  <div class="progreso_ota_cabecera">
+                    <span class="etiqueta_pequena" id="progreso_ota_estado">—</span>
+                    <span class="numero_mono" id="progreso_ota_porcentaje">0 %</span>
+                  </div>
+                  <div class="progreso_ota_barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progreso_ota_barra">
+                    <span class="progreso_ota_relleno" id="progreso_ota_relleno"></span>
+                  </div>
+                </div>
+                <ul class="registro_ota" id="registro_ota" aria-live="polite"></ul>
+              </form>
+            </article>
+          </div>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:180ms">
+            <div class="tarjeta_componente_cabecera">
+              <span class="etiqueta_mono">Firmwares subidos</span>
+              <span class="etiqueta_pequena">Más reciente primero</span>
+            </div>
+            <p class="estado_lista" id="estado_lista">Cargando firmwares…</p>
+            <ul class="lista_firmware" id="lista_firmware"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="plantilla_firmware">
+    <li class="tarjeta_firmware">
+      <span class="insignia_version"></span>
+      <div class="tarjeta_firmware_datos">
+        <span class="tarjeta_firmware_nombre"></span>
+        <span class="tarjeta_firmware_detalle"></span>
+        <span class="tarjeta_firmware_notas"></span>
+      </div>
+      <button type="button" class="boton_texto boton_eliminar tarjeta_firmware_borrar">Eliminar</button>
+    </li>
+  </template>
+
+  <script src="../../main.js?v=7"></script>
+  <script src="../sesion_panel.js?v=8"></script>
+  <script src="../enlace_ws.js?v=2"></script>
+  <script src="main.js?v=2"></script>
+</body>
+</html>

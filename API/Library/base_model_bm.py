@@ -145,7 +145,8 @@ class gps_data(BaseModel):
     hdop : float | None = None #dilución horizontal: < 2 buena, > 5 mala
     date : datetime | None = None
 class lidar_distance_data(BaseModel):
-    distance : float #m
+    distance : float #m, mediana de las últimas 5 medidas válidas
+    strength : int | None = None #fuerza de la señal del TF Mini Plus: < 100 poco fiable
     date : datetime | None = None
 
 class batery_6s(BaseModel):

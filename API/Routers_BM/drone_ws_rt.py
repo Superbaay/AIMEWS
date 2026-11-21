@@ -20,6 +20,8 @@ Protocolo del dron
         {"tipo": "autoprueba", "resultado": {<forma de auto_test_machine>}}
         {"tipo": "pid", "pid": {"alabeo": {"kp", "ki", "kd"}, ...}}   tras "pid" o "pid_leer"
         {"tipo": "mision", "evento": ..., ...}                  eventos de la misión
+        {"tipo": "ota", "estado": "descargando|instalado|error|confirmado", "porcentaje"?, ...}
+           avance de una actualización (la manda POST /ota/deploy, ver ota_rt.py)
        Todo se reenvía a los paneles con "machine" añadido. Otro "tipo" se descarta.
        El firmware real (enlace_api.c) solo manda estado_dron, telemetria y autoprueba.
     4. La API le reenvía lo que manda el panel ("from" = usuario del panel):
@@ -79,7 +81,7 @@ router = APIRouter(
 
 auth_timeout_s = ws_bm.auth_timeout_s
 max_message_bytes = 8 * 1024                # una telemetría ronda 700 bytes
-drone_types = {"estado_dron", "telemetria", "autoprueba", "pid", "mision"}
+drone_types = {"estado_dron", "telemetria", "autoprueba", "pid", "mision", "ota"}
 #Acciones del panel (copia de ACCIONES_PANEL de simulador/contratos.py + abortar_mision; la API
 #no importa del simulador). Cualquier otra se rechaza en el panel. El firmware real solo
 #atiende iniciar_autoprueba y cero_altura e ignora en silencio el resto
@@ -237,6 +239,7 @@ class drone_conn:
         self.state: dict | None = None      # último estado_dron
         self.actions: frozenset = firmware_actions     # lo que declaró en estado_dron.acciones
         self.last_telemetry: dict | None = None
+        self.last_ota: dict | None = None   # último {"tipo": "ota"} (lo consulta GET /ota/status)
         self.messages = 0
         self.window_start = time.monotonic()
         self.rate_hz = 0.0
@@ -288,6 +291,8 @@ class connection_manager:
             for panel in self.panels:
                 panel.push_telemetry(drone.name, message)
             return
+        if message["tipo"] == "ota":
+            drone.last_ota = message
         if message["tipo"] == "estado_dron":
             drone.state = message
             drone.actions = declared_actions(message.get("acciones"))
@@ -313,7 +318,8 @@ class connection_manager:
     def status(self) -> list[dict]:
         return [
             {"machine": d.name, "version": (d.state or {}).get("version"),
-             "telemetry_hz": d.rate_hz, "panels": len(self.panels)}
+             "telemetry_hz": d.rate_hz, "panels": len(self.panels),
+             "acciones": sorted(d.actions)}
             for d in self.drones.values()
         ]
 

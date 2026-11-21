@@ -12,6 +12,7 @@ from Routers_BM.enginer_log_rt import engineer
 from Routers_BM.machine_telemetry_rt import router as machine_telemetry_rt
 from Routers_BM.camera_rt import router as camera_rt
 from Routers_BM import drone_ws_rt as drone_ws
+from Routers_BM.ota_rt import router as ota_rt
 app = FastAPI()
 app.include_router(user)
 app.include_router(machine_rt)
@@ -19,6 +20,7 @@ app.include_router(engineer)
 app.include_router(machine_telemetry_rt)
 app.include_router(camera_rt)
 app.include_router(drone_ws.router)
+app.include_router(ota_rt)
 
 
 

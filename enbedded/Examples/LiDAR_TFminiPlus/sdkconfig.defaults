@@ -1,0 +1,13 @@
+# Valores base del ejemplo. "sdkconfig" se genera a partir de este archivo
+# (y está en .gitignore); si cambias algo aquí, borra sdkconfig y recompila.
+CONFIG_IDF_TARGET="esp32s3"
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# Consola y logs por el USB nativo (COM8, el mismo puerto de flasheo).
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# Tick de FreeRTOS de 1 ms (por defecto 10 ms). El LiDAR manda una medida
+# cada 10 ms (100 Hz): con tick de 10 ms los tiempos de espera serían
+# demasiado gruesos para seguirle el ritmo.
+CONFIG_FREERTOS_HZ=1000

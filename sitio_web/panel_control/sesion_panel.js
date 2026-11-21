@@ -34,6 +34,8 @@ const secciones_panel = [
   { ruta: 'ingineer_log/index.html', texto: 'Logbook', icono: '<path d="M2 9h20"></path><path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path><path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>' },
   { ruta: 'user_shetings/index.html', texto: 'Users', icono: '<circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>' },
   { ruta: 'machine_shetings/index.html', texto: 'Machines', icono: '<circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="6.5"></circle><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>' },
+  // rol: la sección solo aparece para ese rol (la API también lo exige: ota_rt.py es solo O5-1)
+  { ruta: 'ota/index.html', texto: 'OTA', rol: 'O5-1', icono: '<path d="M12 15V4"></path><path d="M7.5 8.5 12 4l4.5 4.5"></path><path d="M4 14v4.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V14"></path>' },
 ];
 
 // "carpeta/" y "carpeta/index.html" son la misma página
@@ -45,7 +47,8 @@ function construir_barra_lateral() {
   const barra = document.querySelector('.barra_lateral');
   if (!barra || barra.children.length) return;
   const pagina_actual = normalizar_ruta(location.pathname);
-  const enlaces = secciones_panel.map(({ ruta, texto, icono }) => {
+  const rol_sesion = leer_sesion()?.rol;
+  const enlaces = secciones_panel.filter(({ rol }) => !rol || rol === rol_sesion).map(({ ruta, texto, icono }) => {
     const destino = new URL(ruta, document.currentScript.src);
     const es_activa = normalizar_ruta(destino.pathname) === pagina_actual;
     const clases = es_activa ? 'enlace_lateral enlace_lateral_activo' : 'enlace_lateral';

@@ -12,11 +12,11 @@
 #include "freertos/task.h"
 #include "estado_dron.h"
 #include "net_wifi.h"
+#include "ota_dron.h"
 #include "sensores.h"
 
 static const char *TAG = "enlace";
 
-#define VERSION_DRON      "V0.2"
 // Un envío que no termina a tiempo hace que el cliente dé la conexión por rota y
 // reconecte (~7 s sin datos). Por internet (WiFi -72 dBm + TLS + Cloudflare) 1 s
 // no alcanzaba a veces: con 5 s el envío lento se completa y la conexión sigue.
@@ -62,6 +62,12 @@ static const char *json_valor(const char *json, const char *clave)
     p += strlen(patron);
     while (*p == ' ' || *p == ':') p++;
     return p;
+}
+
+static int json_entero(const char *json, const char *clave, int defecto)
+{
+    const char *p = json_valor(json, clave);
+    return (p && (*p == '-' || (*p >= '0' && *p <= '9'))) ? atoi(p) : defecto;
 }
 
 static bool json_texto(const char *json, const char *clave, char *salida, size_t tam)
@@ -141,13 +147,33 @@ static void enviar(const char *texto, int largo)
     }
 }
 
+void enlace_api_enviar(const char *texto, int largo)
+{
+    enviar(texto, largo);
+}
+
+const char *enlace_api_token(void)
+{
+    return token;
+}
+
+int enlace_api_url(char *salida, size_t tam, const char *ruta)
+{
+    int n = snprintf(salida, tam, ESQUEMA_HTTP "://%s:%d%s", CONFIG_DRON_API_HOST, CONFIG_DRON_API_PORT, ruta);
+    return n < (int)tam ? n : -1;
+}
+
 static void enviar_estado_dron(void)
 {
-    char m[256];
+    // "acciones": lo que este firmware entiende. La API solo le reenvía eso
+    // (drone_ws_rt.py) y solo le ofrece OTA si aparece "ota".
+    // La versión sale del PROJECT_VER del CMakeLists: es la misma que lee la API del .bin.
+    char m[320];
     int n = snprintf(m, sizeof(m),
                      "{\"tipo\":\"estado_dron\",\"version\":\"%s\",\"maquina\":\"%s\","
-                     "\"sensores\":[\"acelerometer_gyroscope\",\"barometer\",\"gps\"]}",
-                     VERSION_DRON, CONFIG_DRON_MACHINE_NAME);
+                     "\"sensores\":[\"acelerometer_gyroscope\",\"barometer\",\"gps\",\"lidar_distance\"],"
+                     "\"acciones\":[\"iniciar_autoprueba\",\"cero_altura\",\"ota\"]}",
+                     ota_version_actual(), CONFIG_DRON_MACHINE_NAME);
     enviar(m, n);
 }
 
@@ -158,22 +184,33 @@ static void enviar_autoprueba(void)
 {
     estado_dron_t e;
     estado_leer(&e);
-    bool imu_ok = e.imu.listo && e.imu.hz > 950.0f && e.imu.perdidas == 0;
+    // IMU: antes se exigía "0 pérdidas" en el último segundo y fallaba al azar.
+    // El comando llega por WebSocket justo cuando hay tráfico de red/TLS, y
+    // un solo reinicio del FIFO (desalineado o desbordado) suma 36 "pérdidas"
+    // de golpe aunque el sensor esté perfecto. Se tolera hasta el 5 %.
+    bool imu_ok = e.imu.listo && e.imu.hz > 900.0f && e.imu.perdidas < 50;
     bool baro_ok = e.baro.listo && e.baro.hz > 50.0f && e.baro.presion_hpa > 300.0f && e.baro.presion_hpa < 1100.0f;
     // El GPS "funciona" si entrega medidas (5 Hz normal, 1 Hz en modo solo
     // lectura); el fix depende del cielo (en interiores no hay): va aparte.
     bool gps_ok = e.gps.listo && e.gps.hz > 0.5f;
+    // El LiDAR pasa si llegan tramas a su ritmo (100 Hz pedidos). Que la medida sea válida depende de a qué apunte (cielo o más de
+    // 12 m = sin medida): va aparte, como el fix del GPS.
+    bool lidar_ok = e.lidar.listo && e.lidar.hz > 80.0f;
 
     char m[512];
     int n = snprintf(m, sizeof(m),
                      "{\"tipo\":\"autoprueba\",\"resultado\":{\"microcontroller\":true,"
                      "\"acelerometer_gyroscope\":%s,\"magnetometer\":false,\"barometer\":%s,\"gps\":%s,"
-                     "\"lidar_distance\":false,\"servo_motor\":false,\"camera\":false,\"esc_motor\":false},"
-                     "\"detalle\":{\"imu_hz\":%.0f,\"barometro_hz\":%.1f,\"gps_hz\":%.1f,\"gps_fix\":%s}}",
-                     imu_ok ? "true" : "false", baro_ok ? "true" : "false", gps_ok ? "true" : "false", e.imu.hz,
-                     e.baro.hz, e.gps.hz, e.gps.fix ? "true" : "false");
-    ESP_LOGI(TAG, "autoprueba: IMU %s, barómetro %s, GPS %s", imu_ok ? "OK" : "FALLA", baro_ok ? "OK" : "FALLA",
-             gps_ok ? "OK" : "FALLA");
+                     "\"lidar_distance\":%s,\"servo_motor\":false,\"camera\":false,\"esc_motor\":false},"
+                     "\"detalle\":{\"imu_hz\":%.0f,\"imu_perdidas\":%lu,\"barometro_hz\":%.1f,\"gps_hz\":%.1f,"
+                     "\"gps_fix\":%s,\"lidar_hz\":%.0f,\"lidar_valido\":%s}}",
+                     imu_ok ? "true" : "false", baro_ok ? "true" : "false", gps_ok ? "true" : "false",
+                     lidar_ok ? "true" : "false", e.imu.hz, (unsigned long)e.imu.perdidas, e.baro.hz, e.gps.hz,
+                     e.gps.fix ? "true" : "false",
+                     e.lidar.hz, e.lidar.valido ? "true" : "false");
+    ESP_LOGI(TAG, "autoprueba: IMU %s (%.0f Hz, %lu perdidas), barómetro %s, GPS %s, LiDAR %s",
+             imu_ok ? "OK" : "FALLA", e.imu.hz, (unsigned long)e.imu.perdidas,
+             baro_ok ? "OK" : "FALLA", gps_ok ? "OK" : "FALLA", lidar_ok ? "OK" : "FALLA");
     enviar(m, n);
 }
 
@@ -216,13 +253,19 @@ static int armar_telemetria(char *m, size_t tam)
                       "\"fix\":%s,\"fix_type\":%u,\"satellites\":%u,\"satellites_in_view\":%u,\"hdop\":%.1f}",
                       e.gps.fix ? "true" : "false", e.gps.tipo_fix, e.gps.satelites_usados, e.gps.satelites_vista,
                       e.gps.hdop);
+        coma = ",";
+    }
+    // Sin medida válida no se manda distancia: el panel pinta "—" (mejor que un 0 falso).
+    if (e.lidar.listo && e.lidar.valido) {
+        n += snprintf(m + n, tam - n, "%s\"lidar_distance\":{\"distance\":%.2f,\"strength\":%u}", coma,
+                      e.lidar.distancia_m, e.lidar.fuerza);
     }
     // Extras que el panel no muestra hoy, útiles para diagnosticar.
     n += snprintf(m + n, tam - n,
-                  "},\"frecuencias\":{\"imu_hz\":%.0f,\"barometro_hz\":%.1f,\"gps_hz\":%.1f},"
+                  "},\"frecuencias\":{\"imu_hz\":%.0f,\"barometro_hz\":%.1f,\"gps_hz\":%.1f,\"lidar_hz\":%.0f},"
                   "\"diagnostico\":{\"imu_perdidas\":%lu,\"imu_lectura_max_us\":%lu,\"imu_errores_i2c\":%lu,"
                   "\"barometro_errores_i2c\":%lu,\"gps_frases_malas\":%lu,\"rssi\":%d}}",
-                  e.imu.hz, e.baro.hz, e.gps.hz, (unsigned long)e.imu.perdidas,
+                  e.imu.hz, e.baro.hz, e.gps.hz, e.lidar.hz, (unsigned long)e.imu.perdidas,
                   (unsigned long)e.imu.lectura_max_us, (unsigned long)e.imu.errores_i2c,
                   (unsigned long)e.baro.errores_i2c, (unsigned long)e.gps.frases_malas, net_wifi_get_rssi());
     return n < (int)tam ? n : -1;
@@ -241,12 +284,19 @@ static void atender_texto(const char *json)
         ESP_LOGI(TAG, "token aceptado: empieza la telemetría");
         xEventGroupSetBits(eventos, BIT_AUTORIZADO);
         enviar_estado_dron();
+        ota_confirmar();  // si veníamos de una OTA: la versión nueva sí llega a la API
     } else if (strcmp(tipo, "comando") == 0 && json_texto(json, "action", accion, sizeof(accion))) {
         ESP_LOGI(TAG, "comando del panel: %s", accion);
         if (strcmp(accion, "iniciar_autoprueba") == 0) {
             enviar_autoprueba();
         } else if (strcmp(accion, "cero_altura") == 0) {
             estado_pedir_cero_altura();
+        } else if (strcmp(accion, "ota") == 0) {
+            // TODO cuando haya motores: rechazar la OTA si el dron está armado o volando.
+            char ruta[96], version[32];
+            if (json_texto(json, "url", ruta, sizeof(ruta)) && json_texto(json, "version", version, sizeof(version))) {
+                ota_iniciar(ruta, version, json_entero(json, "size", 0));
+            }
         }
     } else if (strcmp(tipo, "error") == 0) {
         ESP_LOGW(TAG, "la API respondió: %s", json);
