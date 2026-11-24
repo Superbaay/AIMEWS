@@ -30,7 +30,7 @@ menu "Camara 12 fps por WebSocket"
 
     config CAM_MACHINE_NAME
         string "Nombre de la máquina registrada en la API"
-        default "kanan_01"
+        default "dron_camera_01"
 
     config CAM_MACHINE_PASSWORD
         string "Contraseña de la máquina"

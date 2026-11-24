@@ -1,3 +1,26 @@
+# Estado al 23-nov-2026
+
+Resuelto (ver el plan "SAMATI: plan de mejoras de la API y el sitio"):
+- Clave JWT: fuera del código, en API/secret_key.txt (gitignored). La del archivo es nueva (64 caracteres generados por secrets), así que la clave vieja que quedó en el historial de git ya no sirve.
+- Contraseñas de máquinas con bcrypt, 403 en rol insuficiente, Depends de machine_rt, bitácora registrada, WebSocket panel/dron con ConnectionManager (drone_ws_rt.py), CORS restringido, un solo MongoClient (db_bm.py), base SAMATI.
+- pymongo ya no frena el WebSocket: las rutas que solo consultan Mongo son def (FastAPI las corre en otro hilo); en las async, Mongo va con asyncio.to_thread; lo que guardan los WebSockets pasa por Library/escritor_bm.py.
+- Números que nunca se repiten (db_bm.siguiente_numero) en máquinas, bitácora, OTA, misiones y alertas. Ya no se renumera al borrar.
+- Índices únicos (user.name, nombre y número de máquina, números de bitácora, OTA, misiones y alertas). Revisar duplicados: python -m Library.revisar_duplicados
+- Telemetría del WebSocket guardada (hasta 5 Hz por dron) en machine_telemetry_data (time series si Mongo >= 5.0).
+- Misiones, lecturas por waypoint y alertas con foto: Library/misiones_bm.py, Routers_BM/mission_rt.py, página panel_control/misiones/.
+- El rol se vuelve a leer en la base en cada ruta con rol y en el WebSocket del panel (bajar de rol tiene efecto inmediato).
+- response_model en rutas de usuarios y máquinas. 79 pruebas en API/tests.
+
+Pendiente:
+- Renombrar campos mal escritos (onwer, hipothesis, segurity, shetings): después del 26-feb, porque requiere migrar documentos.
+- Enviar las alertas a Protección Civil fuera del panel (correo o mensajería).
+- Ruff.
+- phone_number debería ser str.
+
+---
+
+# Notas originales
+
 1. Seguridad (urgente)
 La secret_key del JWT está escrita en segurity_bm.py:10 y subida a GitHub. Con ella, cualquiera puede firmar un token con rol O5-1 y tener acceso total. Hay que pasarla a una variable de entorno (un archivo .env que esté en .gitignore) y generar una clave nueva, porque la actual ya hay que darla por expuesta.
 Las contraseñas de las máquinas se guardan en texto plano. new_machine_rt en def_bm.py:61 hace model_dump() sin pasar por encode_password.
@@ -30,4 +53,4 @@ Agrega la configuración de Ruff que te comenté, para quitar los falsos positiv
 ✶ Insight ─────────────────────────────────────
 
 El cuello de botella de SAMATI va a ser el tiempo real, no el CRUD. Un dron enviando telemetría varias veces por segundo a través de un servidor que se bloquea en cada consulta a MongoDB (punto 4) va a meter retraso justo en el canal que controla el vuelo. Por eso separar el WebSocket de las consultas bloqueantes importa más que los demás detalles.
-El error de Depends se repite en cada router porque se copió el mismo patrón. Vale la pena entender la regla de fondo: un parámetro con = Depends(f) recibe lo que devuelve f, no el cuerpo de la petición. El cuerpo va en un parámetro tipado sin valor por defecto.
+El error de Depends se repite en cada router porque se copió el mismo patrón. Vale la pena entender la regla de fondo: un parámetro con = Depends(f) recibe lo que devuelve f, no el cuerpo de la petición. El cuerpo va en un parámetro tipado sin valor por defecto.

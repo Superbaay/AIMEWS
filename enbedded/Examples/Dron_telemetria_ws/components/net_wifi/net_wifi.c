@@ -8,9 +8,18 @@
  *   WIFI_EVENT_STA_DISCONNECTED -> marcar desconectado y programar un
  *                                  reintento con un temporizador (no se
  *                                  bloquea nunca el bucle de eventos)
+ *
+ * Con DOS redes (p. ej. casa y hotspot del teléfono) cada intento empieza con
+ * un escaneo:
+ *   esp_wifi_scan_start (no bloquea) -> WIFI_EVENT_SCAN_DONE -> se busca en los
+ *   resultados cuál de las dos redes está al alcance, se elige la de mejor
+ *   señal, se carga su SSID/contraseña y se llama esp_wifi_connect().
+ * Si ninguna aparece, se reintenta con la misma espera exponencial. Así, si el
+ * dron sale de casa, al perder la red vuelve a escanear y entra al teléfono.
  */
 #include "net_wifi.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "esp_event.h"
 #include "esp_log.h"
@@ -37,13 +46,82 @@ static uint32_t s_backoff_max_ms = BACKOFF_DEFAULT_MAX_MS;
 static volatile uint32_t s_disconnected_since_ms;
 static bool s_started;
 
+typedef struct {
+    char ssid[33];
+    char password[65];
+} red_t;
+static red_t s_redes[2];
+static int s_num_redes;
+
+static void schedule_retry(void);
+
 /** Tiempo actual en milisegundos desde el arranque. */
 static inline uint32_t now_ms(void) { return (uint32_t)(esp_timer_get_time() / 1000); }
+
+/** Carga en el driver el SSID y la contraseña de una de las redes. */
+static esp_err_t cargar_red(const red_t *red)
+{
+    wifi_config_t wifi_cfg = { 0 };
+    strlcpy((char *)wifi_cfg.sta.ssid, red->ssid, sizeof(wifi_cfg.sta.ssid));
+    strlcpy((char *)wifi_cfg.sta.password, red->password, sizeof(wifi_cfg.sta.password));
+    // Sin contraseña aceptamos red abierta; con contraseña exigimos al menos WPA2.
+    wifi_cfg.sta.threshold.authmode = (red->password[0] == '\0') ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
+    wifi_cfg.sta.sae_pwe_h2e = WPA3_SAE_PWE_BOTH;          // Soporta WPA3 si el router lo usa.
+    wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;      // Busca en todos los canales...
+    wifi_cfg.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;  // ...y elige el AP con mejor señal.
+    return esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+}
+
+/** Con una red se conecta directo; con dos, primero escanea (sigue en on_event). */
+static void intentar(void)
+{
+    esp_err_t err = (s_num_redes > 1) ? esp_wifi_scan_start(NULL, false) : esp_wifi_connect();
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "%s falló: %s", s_num_redes > 1 ? "escaneo" : "esp_wifi_connect", esp_err_to_name(err));
+        // Un escaneo fallido no genera DISCONNECTED: hay que reprogramarlo a mano.
+        if (s_num_redes > 1) schedule_retry();
+    }
+}
+
+/** Escaneo terminado: elige la red conocida con mejor señal y se conecta. */
+static void al_terminar_escaneo(void)
+{
+    uint16_t n = 0;
+    esp_wifi_scan_get_ap_num(&n);
+    int mejor = -1;
+    int8_t mejor_rssi = -127;
+    wifi_ap_record_t *aps = n ? calloc(n, sizeof(wifi_ap_record_t)) : NULL;
+    if (aps && esp_wifi_scan_get_ap_records(&n, aps) == ESP_OK) {
+        for (int i = 0; i < n; i++) {
+            for (int r = 0; r < s_num_redes; r++) {
+                if (strcmp((const char *)aps[i].ssid, s_redes[r].ssid) == 0 && aps[i].rssi > mejor_rssi) {
+                    mejor = r;
+                    mejor_rssi = aps[i].rssi;
+                }
+            }
+        }
+    } else {
+        esp_wifi_clear_ap_list();  // libera la lista del driver aunque no se haya leído
+    }
+    free(aps);
+    if (mejor < 0) {
+        ESP_LOGW(TAG, "Ninguna red conocida al alcance (\"%s\" / \"%s\")", s_redes[0].ssid, s_redes[1].ssid);
+        schedule_retry();
+        return;
+    }
+    ESP_LOGI(TAG, "Red elegida: \"%s\" (%d dBm)", s_redes[mejor].ssid, mejor_rssi);
+    cargar_red(&s_redes[mejor]);
+    esp_wifi_connect();
+}
 
 /** Callback del temporizador: intenta conectar de nuevo. */
 static void retry_timer_cb(void *arg)
 {
     (void)arg;
+    if (s_num_redes > 1) {
+        intentar();
+        return;
+    }
     esp_err_t err = esp_wifi_connect();
     if (err != ESP_OK) {
         // No es grave: llegará otro evento DISCONNECTED y se reprogramará.
@@ -70,7 +148,10 @@ static void on_event(void *arg, esp_event_base_t base, int32_t id, void *data)
     (void)arg;
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
         ESP_LOGI(TAG, "WiFi iniciado, conectando...");
-        esp_wifi_connect();
+        intentar();
+
+    } else if (base == WIFI_EVENT && id == WIFI_EVENT_SCAN_DONE) {
+        if (s_num_redes > 1) al_terminar_escaneo();
 
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
         const wifi_event_sta_disconnected_t *ev = data;
@@ -166,23 +247,27 @@ esp_err_t net_wifi_start(const net_wifi_config_t *config)
     esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, on_event, NULL, NULL);
     esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_LOST_IP, on_event, NULL, NULL);
 
-    wifi_config_t wifi_cfg = { 0 };
-    strlcpy((char *)wifi_cfg.sta.ssid, config->ssid, sizeof(wifi_cfg.sta.ssid));
-    if (config->password != NULL) {
-        strlcpy((char *)wifi_cfg.sta.password, config->password, sizeof(wifi_cfg.sta.password));
+    strlcpy(s_redes[0].ssid, config->ssid, sizeof(s_redes[0].ssid));
+    strlcpy(s_redes[0].password, config->password ? config->password : "", sizeof(s_redes[0].password));
+    s_num_redes = 1;
+    if (config->ssid2 != NULL && config->ssid2[0] != '\0') {
+        strlcpy(s_redes[1].ssid, config->ssid2, sizeof(s_redes[1].ssid));
+        strlcpy(s_redes[1].password, config->password2 ? config->password2 : "", sizeof(s_redes[1].password));
+        s_num_redes = 2;
     }
-    // Sin contraseña aceptamos red abierta; con contraseña exigimos al menos WPA2.
-    wifi_cfg.sta.threshold.authmode =
-        (wifi_cfg.sta.password[0] == '\0') ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
-    wifi_cfg.sta.sae_pwe_h2e = WPA3_SAE_PWE_BOTH;          // Soporta WPA3 si el router lo usa.
-    wifi_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;      // Busca en todos los canales...
-    wifi_cfg.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;  // ...y elige el AP con mejor señal.
 
     // El almacenamiento en RAM evita escribir la flash en cada arranque.
     esp_wifi_set_storage(WIFI_STORAGE_RAM);
     err = esp_wifi_set_mode(WIFI_MODE_STA);
     if (err == ESP_OK) {
-        err = esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+        err = cargar_red(&s_redes[0]);
+    }
+    // Canales 1-13: en México se usan los 13 y muchos hotspots de teléfono eligen
+    // el 12 o el 13. Con la región por defecto el ESP solo buscaba del 1 al 11 y
+    // no veía el hotspot (pasó con el POCO en el canal 13).
+    if (err == ESP_OK) {
+        const wifi_country_t pais = { .cc = "MX", .schan = 1, .nchan = 13, .policy = WIFI_COUNTRY_POLICY_MANUAL };
+        esp_wifi_set_country(&pais);
     }
     if (err == ESP_OK) {
         err = esp_wifi_start();
@@ -196,7 +281,11 @@ esp_err_t net_wifi_start(const net_wifi_config_t *config)
     esp_wifi_set_ps(WIFI_PS_NONE);
 
     s_started = true;
-    ESP_LOGI(TAG, "Conectando a \"%s\"", config->ssid);
+    if (s_num_redes > 1) {
+        ESP_LOGI(TAG, "Buscando \"%s\" o \"%s\"", s_redes[0].ssid, s_redes[1].ssid);
+    } else {
+        ESP_LOGI(TAG, "Conectando a \"%s\"", config->ssid);
+    }
     return ESP_OK;
 }
 

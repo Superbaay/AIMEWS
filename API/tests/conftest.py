@@ -22,6 +22,8 @@ ruta_clave = Path(os.environ.setdefault(
 ruta_clave.parent.mkdir(parents=True, exist_ok=True)
 #Clave X-OTA-Key de Routers_BM/ota_rt.py: tampoco se toca API/ota_deploy_key.txt
 os.environ.setdefault("SAMATI_OTA_KEY_FILE", str(ruta_clave.parent / "clave_ota.txt"))
+#Fotos de las alertas (Library/misiones_bm.py): tampoco se escriben en API/uploads
+os.environ.setdefault("SAMATI_ALERTAS_DIR", str(ruta_clave.parent / "alertas"))
 nombre_base = os.environ.setdefault("SAMATI_DB_NOMBRE", "SAMATI_sim_api")
 if nombre_base == "SAMATI":
     raise RuntimeError("Las pruebas nunca usan la base SAMATI: usa SAMATI_DB_NOMBRE=SAMATI_sim_api")
@@ -59,6 +61,11 @@ def db():
             "password": segurity_bm.encode_password(clave_maquina),
             "date_creation": "2026-11-17T00:00:00Z", "type": "machine",
         })
+    #Las rutas con rol vuelven a leer el rol en la base (segurity_bm.rol_efectivo): el usuario
+    #de los tokens de prueba tiene que existir. Con O5-1 en la base, el rol que manda es el del token
+    base.user.insert_one({"name": nombre_panel, "role": "O5-1", "type": "user",
+                          "password": segurity_bm.encode_password("clave-panel-123"),
+                          "date": "2026-11-17T00:00:00Z"})
     yield base
     base.client.drop_database(nombre_base)
 

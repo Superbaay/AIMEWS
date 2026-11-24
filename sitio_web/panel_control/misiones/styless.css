@@ -1,0 +1,48 @@
+/* ===== Misiones y alertas ===== */
+.filtro_compacto { width: auto; padding: 6px 12px; font-size: var(--texto_sm); }
+
+.lista_misiones {
+  margin: 0; padding: 0 4px 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: max(560px, 60vh); overflow-y: auto;
+}
+.tarjeta_mision {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px; border-radius: 14px;
+  background: rgba(6, 14, 30, .45); border: 1px solid var(--color_linea);
+}
+.tarjeta_mision_fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tarjeta_mision_titulo { font-size: var(--texto_base); font-weight: 500; overflow-wrap: anywhere; }
+.tarjeta_mision_detalle { font-size: var(--texto_sm); color: var(--color_texto_tenue); overflow-wrap: anywhere; }
+.tarjeta_mision_acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.tarjeta_mision_acciones .boton_acceso { padding: 6px 12px; font-size: var(--texto_sm); }
+
+/* Alerta pendiente: borde en el color de error para que se note entre las demás */
+.tarjeta_alerta_pendiente { border-color: rgba(255, 130, 110, .45); background: rgba(255, 110, 90, .05); }
+.profundidad_alerta { font-family: var(--fuente_mono); font-size: var(--texto_md); color: var(--color_error); }
+
+.insignia_estado {
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color_texto_secundario); border: 1px solid var(--color_linea);
+}
+.insignia_estado_pendiente, .insignia_estado_abortada, .insignia_estado_rechazada { color: var(--color_error); border-color: rgba(255, 130, 110, .4); }
+.insignia_estado_en_curso, .insignia_estado_enviada { color: var(--color_acento_claro); border-color: rgba(111, 180, 255, .45); }
+
+/* ===== Detalle: tabla de lecturas por waypoint ===== */
+#detalle_mision { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+.tabla_envoltura { overflow-x: auto; }
+.tabla_lecturas { width: 100%; border-collapse: collapse; font-size: var(--texto_sm); }
+.tabla_lecturas th, .tabla_lecturas td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--color_linea); white-space: nowrap; }
+.tabla_lecturas th:first-child, .tabla_lecturas td:first-child { text-align: left; }
+.tabla_lecturas th { font-family: var(--fuente_mono); font-size: var(--texto_xs); letter-spacing: .08em; text-transform: uppercase; color: #7d8fb2; font-weight: 500; }
+.tabla_lecturas td { font-family: var(--fuente_mono); color: var(--color_texto_secundario); }
+.fila_alerta td { color: var(--color_error); }
+
+/* ===== Foto de la alerta ===== */
+.dialogo_foto {
+  max-width: min(92vw, 900px); padding: 16px; border-radius: 14px;
+  background: var(--color_superficie); border: 1px solid var(--color_linea); color: var(--color_texto);
+}
+.dialogo_foto::backdrop { background: rgba(2, 6, 16, .7); }
+.dialogo_foto img { display: block; max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 12px; }

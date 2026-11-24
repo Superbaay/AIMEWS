@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misiones · SAMATI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styless.css?v=3">
+  <link rel="stylesheet" href="../styless.css?v=8">
+  <link rel="stylesheet" href="styless.css?v=1">
+</head>
+<body class="pagina_panel">
+
+  <header class="barra_navegacion barra_navegacion_panel">
+    <div class="barra_navegacion_interior">
+      <a href="../index.html" class="logo">
+        <span class="logo_marca"></span>
+        <span class="logo_texto">SAMATI</span>
+      </a>
+      <div class="menu_navegacion">
+        <div class="usuario_sesion">
+          <span class="usuario_avatar" id="usuario_avatar" aria-hidden="true"></span>
+          <span class="usuario_datos">
+            <span class="usuario_nombre" id="usuario_nombre"></span>
+            <span class="etiqueta_pequena" id="usuario_rol"></span>
+          </span>
+        </div>
+        <button type="button" class="boton_acceso" id="boton_cerrar_sesion_panel">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="panel_estructura">
+    <aside class="barra_lateral"><!-- El menú lo construye sesion_panel.js (construir_barra_lateral) --></aside>
+
+    <main class="panel_contenido">
+      <section class="vista_panel">
+        <div class="encabezado_panel revelar" style="--retraso:0ms">
+          <div class="encabezado_panel_titulos">
+            <h1 class="titulo_panel">Misiones y alertas</h1>
+          </div>
+          <div class="encabezado_panel_meta">
+            <span class="etiqueta_pequena">Alertas pendientes</span>
+            <span class="numero_mono" id="total_pendientes">—</span>
+          </div>
+        </div>
+
+        <!-- La API (mission_rt.py) pide nivel 3 para consultar y nivel 4 para atender alertas -->
+        <article class="tarjeta_componente tarjeta_panel" id="aviso_permisos" hidden>
+          <span class="etiqueta_mono">Acceso restringido</span>
+          <h2 class="titulo_tarjeta">Tu rol no permite ver misiones ni alertas.</h2>
+        </article>
+
+        <div class="cuadricula_gestion" id="contenido_misiones">
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:60ms">
+            <div class="tarjeta_componente_cabecera">
+              <span class="etiqueta_mono">Alertas</span>
+              <select id="filtro_alertas" class="campo_entrada filtro_compacto" aria-label="Filtrar alertas">
+                <option value="pendiente">Pendientes</option>
+                <option value="">Todas</option>
+                <option value="atendida">Atendidas</option>
+                <option value="descartada">Descartadas</option>
+              </select>
+            </div>
+            <p class="estado_lista" id="estado_alertas">Cargando alertas…</p>
+            <ul class="lista_misiones" id="lista_alertas"></ul>
+          </article>
+
+          <article class="tarjeta_componente tarjeta_panel revelar" style="--retraso:120ms">
+            <div class="tarjeta_componente_cabecera">
+              <span class="etiqueta_mono">Misiones</span>
+              <span class="etiqueta_pequena">Más recientes primero</span>
+            </div>
+            <p class="estado_lista" id="estado_misiones">Cargando misiones…</p>
+            <ul class="lista_misiones" id="lista_misiones"></ul>
+          </article>
+        </div>
+
+        <article class="tarjeta_componente tarjeta_panel" id="detalle_mision" hidden>
+          <div class="tarjeta_componente_cabecera">
+            <span class="etiqueta_mono" id="detalle_titulo">Misión</span>
+            <button type="button" class="boton_acceso" id="boton_cerrar_detalle">Cerrar</button>
+          </div>
+          <p class="tarjeta_mision_detalle" id="detalle_meta"></p>
+          <div class="tabla_envoltura">
+            <table class="tabla_lecturas">
+              <thead id="detalle_cabecera"></thead>
+              <tbody id="detalle_cuerpo"></tbody>
+            </table>
+          </div>
+          <p class="nota_resultado" id="detalle_nota"></p>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="dialogo_foto" class="dialogo_foto">
+    <img id="imagen_alerta" alt="Foto de la ESP32-CAM al registrarse la alerta">
+    <button type="button" class="boton_acceso" id="boton_cerrar_foto">Cerrar</button>
+  </dialog>
+
+  <script src="../../main.js?v=7"></script>
+  <script src="../sesion_panel.js?v=9"></script>
+  <script src="main.js?v=1"></script>
+</body>
+</html>

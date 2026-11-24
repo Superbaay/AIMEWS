@@ -12,14 +12,14 @@ router = APIRouter(
 )
 
 @router.post("/test")
-async def get_machine_telemetry_rt(test: base_model_bm.auto_test_machine , token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def get_machine_telemetry_rt(test: base_model_bm.auto_test_machine , token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     test.date = datetime.now(timezone.utc)
     test.name = token.get("name")
     db.machine_telemetry_init.insert_one(test.model_dump())
     return {"message": "Machine telemetry data inserted"}
 
 @router.get("/tests")
-async def get_machine_telemetry_rt(token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def get_machine_telemetry_rt(token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     data = list(db.machine_telemetry_init.find({}))
     if not data:
         raise HTTPException(status_code=404, detail="No machine telemetry data found")
@@ -29,7 +29,7 @@ async def get_machine_telemetry_rt(token: dict = Depends(segurity_bm.verify_mach
     return {"data": test_data}
 
 @router.get("/sensor_data")
-async def get_machine_telemetry_sensor_data(machine_name: str | None = None, limit: int = 100,token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def get_machine_telemetry_sensor_data(machine_name: str | None = None, limit: int = 100,token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     filtro = {}
     if token.get("type") == "machine":
         filtro["machine_name"] = token.get("name")      # un dron solo ve lo suyo
@@ -41,14 +41,14 @@ async def get_machine_telemetry_sensor_data(machine_name: str | None = None, lim
 
 
 @router.post("/sensor_data")
-async def post_machine_telemetry_rt(data: base_model_bm.sensor_data, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def post_machine_telemetry_rt(data: base_model_bm.sensor_data, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     data.date = datetime.now(timezone.utc)
     data.machine_name = token.get("name")
     db.machine_telemetry_data.insert_one(data.model_dump())
     return {"message": f"Machine telemetry data inserted "}
 
 @router.post("/mision")
-async def post_machine_mision_data(data: base_model_bm.machine_mision_data, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def post_machine_mision_data(data: base_model_bm.machine_mision_data, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     name = db.machine_mision.find_one({"name": data.name})
     if name is not None:
         raise HTTPException(status_code=400, detail="Mission with this name already exists")
@@ -58,7 +58,7 @@ async def post_machine_mision_data(data: base_model_bm.machine_mision_data, toke
     return {"message": f"Machine mision data inserted "}
 
 @router.post("/mision_new_cordenates")
-async def post_mision_new_cordenates(number: base_model_bm.coordinates,name:str, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def post_mision_new_cordenates(number: base_model_bm.coordinates,name:str, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     mision = db.machine_mision.find_one({"name": name})
     if not mision:
         raise HTTPException(status_code=404, detail="Mission not found")
@@ -67,7 +67,7 @@ async def post_mision_new_cordenates(number: base_model_bm.coordinates,name:str,
     return {"coordinates": mision.get("coordinates_list", [])}
 
 @router.get("/mision_coordinates")
-async def get_mision_coordinates(name: str, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def get_mision_coordinates(name: str, token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     mision = db.machine_mision.find_one({"name": name})
     if not mision:
         raise HTTPException(status_code=404, detail="Mission not found")
@@ -75,7 +75,7 @@ async def get_mision_coordinates(name: str, token: dict = Depends(segurity_bm.ve
     return {"coordinates": mision.get("coordinates_list", [])}
 
 @router.get("/mision_list")
-async def get_mision_list(token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
+def get_mision_list(token: dict = Depends(segurity_bm.verify_machine_or_role_4)):
     mision_list = list(db.machine_mision.find({}))
     for m in mision_list:
         del m["_id"]

@@ -365,6 +365,8 @@ static void tarea_enlace(void *arg)
     const net_wifi_config_t wifi = {
         .ssid = CONFIG_DRON_WIFI_SSID,
         .password = CONFIG_DRON_WIFI_PASSWORD,
+        .ssid2 = CONFIG_DRON_WIFI_SSID_2,          // "" = solo la primera
+        .password2 = CONFIG_DRON_WIFI_PASSWORD_2,
         .hostname = CONFIG_DRON_MACHINE_NAME,
     };
     ESP_ERROR_CHECK(net_wifi_start(&wifi));

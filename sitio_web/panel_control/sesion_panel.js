@@ -31,6 +31,7 @@ function leer_sesion() {
 const secciones_panel = [
   { ruta: 'index.html', texto: 'Home', icono: '<path d="M3.5 11 12 4l8.5 7"></path><path d="M6 9.5V20h12V9.5"></path><path d="M10 20v-5.5h4V20"></path>' },
   { ruta: 'Control_dron/index.html', texto: 'Dron', icono: '<circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="6" cy="18" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="M8 8l2.2 2.2M16 8l-2.2 2.2M8 16l2.2-2.2M16 16l-2.2-2.2"></path><rect x="10" y="10" width="4" height="4" rx="1"></rect>' },
+  { ruta: 'misiones/index.html', texto: 'Missions', icono: '<path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11z"></path><circle cx="12" cy="10" r="2.5"></circle>' },
   { ruta: 'ingineer_log/index.html', texto: 'Logbook', icono: '<path d="M2 9h20"></path><path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L10.2 9"></path><path d="M13.8 9l.3 4.2a2.5 2.5 0 0 0 2.5 2.3h.8a2.5 2.5 0 0 0 2.5-2.3L20.5 9"></path>' },
   { ruta: 'user_shetings/index.html', texto: 'Users', icono: '<circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path>' },
   { ruta: 'machine_shetings/index.html', texto: 'Machines', icono: '<circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="6.5"></circle><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"></path>' },

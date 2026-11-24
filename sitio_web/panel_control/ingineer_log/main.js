@@ -470,8 +470,8 @@ function iniciar_bitacora() {
 
   boton_eliminar_registro.addEventListener('click', async () => {
     const numero = numero_seleccionado;
-    // La API renumera los registros al borrar, así que los posteriores cambian de número
-    const confirmado = window.confirm(`¿Eliminar ${formatear_numero(numero)}? Los registros posteriores cambiarán de número.`);
+    // El número es fijo: la API ya no renumera al borrar y el número borrado no se vuelve a usar
+    const confirmado = window.confirm(`¿Eliminar ${formatear_numero(numero)}? Su número no se volverá a usar.`);
     if (!confirmado) return;
     boton_eliminar_registro.disabled = true;
     try {

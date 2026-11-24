@@ -62,6 +62,21 @@ Protocolo del panel (sitio_web/panel_control/main.js y Control_dron/main.js)
     Un mensaje de más de 8 KB (bytes UTF-8) recibe {"tipo": "comando", "action": null,
     "api_response": {"message": "Message too large"}}.
 
+Lo que se guarda en Mongo (sin frenar el WebSocket: todo pasa por Library/escritor_bm.py)
+------------------------------------------------------------------------------------------
+    - "telemetria": hasta escritor_bm.max_guardar_hz mensajes por segundo y dron, en
+      machine_telemetry_data (la misma que lee GET /machine_telemetry_rt/sensor_data).
+    - "iniciar_mision" que llegó al dron: crea la misión en "missions".
+    - "mision" del dron (waypoint, medicion, alerta, fin, abortada, rechazada): actualiza la
+      misión, guarda la medición en "readings" y la alerta en "alerts" con la foto de la
+      ESP32-CAM. Cuando la alerta queda guardada, los paneles reciben
+      {"tipo": "alerta_registrada", "machine", "number", "mission_number", "foto": bool}.
+      Ver Library/misiones_bm.py y Routers_BM/mission_rt.py.
+
+Roles: el rol del panel se vuelve a leer en la base al conectarse, en cada comando y cada
+role_check_s en las palancas (segurity_bm.rol_efectivo). Bajar de rol o borrar a un usuario
+le quita el control del dron sin esperar a que venza su token de 24 h.
+
 El prefijo /ws ya lo deja pasar el túnel de Cloudflare (samati_web.yml), por
 eso la ruta del dron es /ws/machine y no hace falta tocar el túnel.
 """
@@ -71,8 +86,10 @@ import math
 import time
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 from jose import JWTError
+from Library import misiones_bm
 from Library import segurity_bm
 from Library import ws_bm
+from Library.escritor_bm import escritor_global
 
 router = APIRouter(
     prefix="/ws",
@@ -101,6 +118,7 @@ pid_gains = ("kp", "ki", "kd")
 max_pid_axes = 8
 max_name_len = 32                           # modo y nombres de eje del PID
 mision_types = {"seco", "inundado"}
+role_check_s = 10                           # cada cuánto se revisa el rol de un panel que solo mueve palancas
 
 
 def is_number(value) -> bool:
@@ -211,6 +229,7 @@ class panel_conn(ws_bm.single_writer):
         #Cubeta de fichas para los paquetes control: hasta max_control_hz por segundo
         self.control_tokens = float(max_control_hz)
         self.control_time = time.monotonic()
+        self.role_checked = time.monotonic()    # última vez que se leyó el rol en la base
 
     def allow_control(self) -> bool:
         now = time.monotonic()
@@ -290,13 +309,30 @@ class connection_manager:
             drone.last_telemetry = message
             for panel in self.panels:
                 panel.push_telemetry(drone.name, message)
+            if isinstance(message.get("datos"), dict):
+                escritor_global.telemetria_recibida(drone.name, message["datos"])
             return
+        if message["tipo"] == "mision":
+            self.save_mission_event(drone.name, message)
         if message["tipo"] == "ota":
             drone.last_ota = message
         if message["tipo"] == "estado_dron":
             drone.state = message
             drone.actions = declared_actions(message.get("acciones"))
         self.broadcast_event(message)
+
+    def save_mission_event(self, machine: str, message: dict):
+        """Guarda el evento de misión en segundo plano. El reenvío a los paneles no espera esto."""
+        #La foto se toma AHORA (es solo copiar la referencia al último frame en memoria); guardarla
+        #en disco y en Mongo lo hace el escritor
+        foto = alert_photo(machine) if message.get("evento") == "alerta" else None
+
+        def avisar(alerta):
+            if alerta:
+                self.broadcast_event({"tipo": "alerta_registrada", "machine": machine,
+                                      "number": alerta["number"], "mission_number": alerta["mission_number"],
+                                      "profundidad_m": alerta.get("profundidad_m"), "foto": bool(alerta.get("foto"))})
+        escritor_global.encolar(misiones_bm.registrar_evento, machine, dict(message), foto, al_terminar=avisar)
 
     async def send_command(self, action: str, sender: str, machine: str | None = None,
                            fields: dict | None = None) -> int:
@@ -325,6 +361,18 @@ class connection_manager:
 
 
 manager = connection_manager()
+
+
+def alert_photo(machine: str) -> bytes | None:
+    """Último frame JPEG de la ESP32-CAM del dron: la de su mismo nombre, la "<nombre>_cam", o
+    la única cámara en línea si hay solo una. None si no hay cámara transmitiendo."""
+    from Routers_BM.camera_rt import channels   # import local: camera_rt no debe depender de este archivo
+    for name in (machine, f"{machine}_cam"):
+        channel = channels.get(name)
+        if channel is not None and channel.source is not None and channel.last_frame:
+            return channel.last_frame
+    online = [c for c in channels.values() if c.source is not None and c.last_frame]
+    return online[0].last_frame if len(online) == 1 else None
 
 
 async def reject(websocket: WebSocket, reason: str):
@@ -407,6 +455,9 @@ async def panel_auth(websocket: WebSocket) -> dict | None:
     #Antes un mensaje sin "token" lanzaba AttributeError fuera del except y tumbaba la conexion
     except (asyncio.TimeoutError, ValueError, KeyError, JWTError):
         user = None
+    if user is not None and user.get("type", "user") == "user" and user.get("name"):
+        #El rol del token puede ser viejo (dura 24 h): manda el de la base si es menor
+        user = {**user, "role": await segurity_bm.rol_efectivo_async(user)}
     if user is None or user.get("type", "user") != "user" or user.get("role") not in panel_roles \
             or not user.get("name"):
         try:
@@ -424,6 +475,12 @@ async def panel_control(panel: panel_conn, user: dict, info: dict):
     Lo que pase de max_control_hz se descarta en silencio (antes de validar: tampoco genera avisos)."""
     if not panel.allow_control():
         return
+    if time.monotonic() - panel.role_checked >= role_check_s:
+        panel.role_checked = time.monotonic()
+        if await segurity_bm.rol_efectivo_async(user) not in panel_roles:
+            panel.push_event({"tipo": "control", "action": info.get("action"),
+                              "api_response": {"message": "Role insuficiente"}})
+            return
     action = info.get("action")
     machine = info.get("machine")
     try:
@@ -463,6 +520,8 @@ async def panel_command(user: dict, info: dict, action) -> str:
     """Valida y reenvía un comando del panel. Devuelve el texto de api_response."""
     if action not in drone_actions:
         return "Unknown action"
+    if await segurity_bm.rol_efectivo_async(user) not in panel_roles:
+        return "Role insuficiente"
     machine = info.get("machine")
     #"machine" elige el dron; sin él solo las broadcast_actions van a todos
     if machine is None and action not in broadcast_actions \
@@ -476,6 +535,8 @@ async def panel_command(user: dict, info: dict, action) -> str:
     if drone is not None and action not in drone.actions:
         return f"El dron {machine} no admite {action}"
     sent = await manager.send_command(action, user.get("name"), machine, fields)
+    if sent and action == "iniciar_mision" and "mision" in fields:
+        escritor_global.encolar(misiones_bm.crear_mision, machine, fields["mision"], user.get("name"))
     return f"Enviado a {sent} dron(es)" if sent else "Ningún dron conectado"
 
 

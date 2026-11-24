@@ -1,4 +1,5 @@
-from Library.db_bm import db
+from Library.db_bm import db, siguiente_numero
+from pymongo.errors import DuplicateKeyError
 from fastapi import status,HTTPException
 from Library import base_model_bm
 from datetime import datetime, timedelta, timezone
@@ -37,8 +38,8 @@ def new_machine_rt(machine_data: base_model_bm.machine_new):
     machine = db.machine_rt.user.find_one({"name" : machine_data.name})
     if machine != None :
         raise HTTPException(status.HTTP_409_CONFLICT,detail="Machine already exists")
-    machine = db.machine_rt.user.count_documents({})
-    number = machine + 1
+    #Número que nunca se reutiliza (ver db_bm.siguiente_numero)
+    number = siguiente_numero("machine_rt", db.machine_rt.user)
     new_machine = machine_data.model_dump()
     #Import local: evita un ciclo de imports si segurity_bm vuelve a importar def_bm
     from Library import segurity_bm
@@ -46,7 +47,11 @@ def new_machine_rt(machine_data: base_model_bm.machine_new):
     new_machine["number"] = number
     new_machine["role"] = "4"
     new_machine["date_creation"] = datetime.now(timezone.utc)
-    db.machine_rt.user.insert_one(new_machine)
+    try:
+        db.machine_rt.user.insert_one(new_machine)
+    except DuplicateKeyError:
+        #Dos altas con el mismo nombre al mismo tiempo: el índice único deja pasar solo una
+        raise HTTPException(status.HTTP_409_CONFLICT,detail="Machine already exists")
     del new_machine["_id"]
     machine_bm = base_model_bm.machine_not_password(**new_machine)
     return machine_bm
@@ -75,7 +80,10 @@ def update_machine_rt(machine_data: base_model_bm.machine_update):
         raise HTTPException(status.HTTP_409_CONFLICT,detail="Machine already exists")
     changes = machine_data.model_dump(exclude={"number"})
     changes["date_updated"] = datetime.now(timezone.utc)
-    db.machine_rt.user.update_one({"number" : machine_data.number}, {"$set": changes})
+    try:
+        db.machine_rt.user.update_one({"number" : machine_data.number}, {"$set": changes})
+    except DuplicateKeyError:
+        raise HTTPException(status.HTTP_409_CONFLICT,detail="Machine already exists")
     machine.update(changes)
     del machine["_id"]
     machine_bm = base_model_bm.machine_not_password(**machine)
@@ -86,14 +94,10 @@ def delete_machine_rt(number:int):
     if machine == None :
         raise HTTPException(status.HTTP_404_NOT_FOUND,detail="Machine dont found")
     db.machine_rt.user.delete_one({"number" : number})
-    number_of_user = db.machine_rt.user.count_documents({})
+    #Ya no se renumeran las demás: el número de una máquina es fijo para siempre, así ninguna
+    #referencia guardada (telemetría, misiones, bitácora) termina apuntando a otra máquina
     list_all_machines = search_all_machine_rt_not()
-    update_number = 1
-    for machine in list_all_machines:
-        machine.number = update_number
-        db.machine_rt.user.update_one({"name": machine.name}, {"$set": {"number": update_number}})
-        update_number += 1
-    
-    return {"detail": "Machine deleted successfully", "all_machines": list_all_machines, "number_of_machines": number_of_user}
+    return {"detail": "Machine deleted successfully", "all_machines": list_all_machines,
+            "number_of_machines": len(list_all_machines)}
 
 #funtion for test of machine

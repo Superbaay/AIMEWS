@@ -1,0 +1,10 @@
+# Tabla de particiones con OTA para la ESP32-S3 N16R8 (16 MB de flash).
+# Dos ranuras de app de 4 MB: corre una mientras la OTA escribe en la otra, y
+# otadata dice cuál arranca. El firmware pesa ~1.1 MB, sobra espacio para crecer.
+# nvs queda en 0x9000 como antes: se conservan la calibración del WiFi y lo guardado.
+# Name,    Type, SubType, Offset,   Size
+nvs,       data, nvs,     0x9000,   0x6000
+otadata,   data, ota,     0xf000,   0x2000
+phy_init,  data, phy,     0x11000,  0x1000
+ota_0,     app,  ota_0,   0x20000,  4M
+ota_1,     app,  ota_1,   ,         4M

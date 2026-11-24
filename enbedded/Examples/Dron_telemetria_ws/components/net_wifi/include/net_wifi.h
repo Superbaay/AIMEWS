@@ -24,6 +24,9 @@ extern "C" {
 typedef struct {
     const char *ssid;          /*!< Nombre de la red (máx. 32 caracteres). */
     const char *password;      /*!< Contraseña (máx. 64). Cadena vacía = red abierta. */
+    const char *ssid2;         /*!< Segunda red opcional (NULL o "" = solo una). Con dos, antes de
+                                    cada intento se escanea y se usa la conocida con mejor señal. */
+    const char *password2;     /*!< Contraseña de la segunda red. */
     const char *hostname;      /*!< Nombre del equipo en la red (opcional, NULL = por defecto). */
     uint32_t backoff_max_ms;   /*!< Espera máxima entre reintentos (0 = 30000 ms). */
 } net_wifi_config_t;

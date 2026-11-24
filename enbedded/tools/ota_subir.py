@@ -3,8 +3,8 @@ ota_subir.py — compila el firmware del dron y lo instala por OTA, sin cable ni
 
 Lo usa Claude (o cualquiera en esta PC) para subir código nuevo al dron:
 
-    python enbedded/tools/ota_subir.py                      # compila, sube y despliega a kanan_01
-    python enbedded/tools/ota_subir.py --maquina kanan_02
+    python enbedded/tools/ota_subir.py                      # compila, sube y despliega a dron_main_01
+    python enbedded/tools/ota_subir.py --maquina dron_main_02
     python enbedded/tools/ota_subir.py --sin-compilar       # sube el build/*.bin que ya existe
     python enbedded/tools/ota_subir.py --solo-subir         # lo deja en la API sin mandarlo al dron
 
@@ -125,6 +125,7 @@ def seguir(api, clave, maquina, version, version_anterior):
     fin = time.monotonic() + tiempo_max_s
     ultimo = None
     visto_desconectado = False
+    visto_instalado = False
     while time.monotonic() < fin:
         estado = pedir(api, "GET", f"/ota/status?machine={maquina}", clave)
         ota = estado.get("ota") or {}
@@ -142,10 +143,15 @@ def seguir(api, clave, maquina, version, version_anterior):
         if estado["connected"] and ota.get("estado") == "confirmado" and estado.get("version") == version:
             print(f"Listo: {maquina} corre la versión {version} y está conectado a la API.")
             return
-        #Volvió con la versión vieja tras reiniciar: el bootloader hizo rollback
+        if ota.get("estado") == "instalado":
+            visto_instalado = True
+        #Volvió con la versión vieja tras reiniciar
         if visto_desconectado and estado["connected"] and estado.get("version") == version_anterior \
                 and version != version_anterior:
-            salir(f"{maquina} volvió con {version_anterior}: la versión {version} no arrancó bien y se revirtió")
+            if visto_instalado:
+                salir(f"{maquina} volvió con {version_anterior}: la versión {version} no arrancó bien y se revirtió")
+            salir(f"{maquina} se desconectó a media descarga y volvió con {version_anterior}: la OTA no se instaló "
+                  "(¿reinicio por alimentación o Wi-Fi débil?). El firmware viejo sigue intacto")
         time.sleep(2)
     salir(f"pasaron {tiempo_max_s} s sin confirmación de {maquina}")
 
@@ -153,7 +159,7 @@ def seguir(api, clave, maquina, version, version_anterior):
 def main():
     argumentos = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     argumentos.add_argument("--proyecto", default=str(raiz_repo / "enbedded" / "Examples" / "Dron_telemetria_ws"))
-    argumentos.add_argument("--maquina", default="kanan_01")
+    argumentos.add_argument("--maquina", default="dron_main_01")
     argumentos.add_argument("--api", default=os.environ.get("SAMATI_API_URL", "http://127.0.0.1:8001"))
     argumentos.add_argument("--notas", default=None, help="qué cambia en esta versión")
     argumentos.add_argument("--sin-compilar", action="store_true")

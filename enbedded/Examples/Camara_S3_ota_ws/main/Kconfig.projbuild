@@ -1,0 +1,72 @@
+menu "Camara S3 SAMATI: video + OTA"
+
+    config CAM_WIFI_SSID
+        string "Red WiFi 1 (p. ej. la de casa)"
+        default "mi_red"
+
+    config CAM_WIFI_PASSWORD
+        string "Contraseña de la red 1"
+        default "mi_clave"
+
+    config CAM_WIFI_SSID_2
+        string "Red WiFi 2 (opcional, p. ej. hotspot del teléfono)"
+        default ""
+        help
+            Si se llena, la cámara escanea antes de cada intento y entra a la red
+            conocida que vea (la de mejor señal si están las dos). Al perder una,
+            vuelve a escanear y pasa a la otra. El ESP32-S3 solo tiene radio de
+            2.4 GHz: el hotspot debe estar en 2.4 GHz.
+
+    config CAM_WIFI_PASSWORD_2
+        string "Contraseña de la red 2"
+        default ""
+
+    config CAM_API_HOST
+        string "IP o dominio de la API (FastAPI)"
+        default "api.superbaay.dev"
+        help
+            Por defecto la API publicada por el túnel de Cloudflare (sirve desde
+            cualquier red, también el hotspot del teléfono). Para una PC de la red
+            local pon su IP, desactiva TLS y usa el puerto de uvicorn.
+
+    config CAM_API_TLS
+        bool "Conectar con TLS (https:// y wss://)"
+        default y
+
+    config CAM_API_PORT
+        int "Puerto de la API"
+        default 443 if CAM_API_TLS
+        default 8001
+
+    config CAM_MACHINE_NAME
+        string "Nombre de la máquina registrada en la API"
+        default "dron_camera_01"
+
+    config CAM_MACHINE_PASSWORD
+        string "Contraseña de la máquina"
+        default ""
+
+    config CAM_MODE
+        string "Modo de la cámara al arrancar (librería esp32s3cam)"
+        default "HD30"
+        help
+            VGA60, XGA30, HD30, HD45 o FHD22. Todos verificados en la placa.
+            HD30 = 1280x720 sin pérdidas de frames con cualquier escena.
+
+    config CAM_FPS
+        int "Frames por segundo que se mandan a la API"
+        range 1 15
+        default 12
+        help
+            La API (camera_rt.py) acepta como mucho 15 fps por cámara y descarta
+            el resto. La cámara captura más rápido; se manda el frame más reciente.
+
+    config CAM_JPEG_QUALITY
+        int "Calidad JPEG inicial (4 = mejor ... 63 = más compresión)"
+        range 4 63
+        default 25
+        help
+            HD a q25 ronda 20 KB por frame: 12 fps = ~2 Mbit/s, que caben por el
+            hotspot del teléfono. Se cambia en vivo desde el panel (set quality).
+
+endmenu

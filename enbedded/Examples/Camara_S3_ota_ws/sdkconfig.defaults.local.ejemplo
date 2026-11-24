@@ -1,0 +1,10 @@
+# Copia este archivo como "sdkconfig.defaults.local" (está en .gitignore),
+# pon tus datos, borra sdkconfig y recompila.
+# Red 1: WiFi de casa.
+CONFIG_CAM_WIFI_SSID="mi_red"
+CONFIG_CAM_WIFI_PASSWORD="mi_clave"
+# Red 2: hotspot del teléfono (2.4 GHz). La cámara escanea y entra a la que vea mejor.
+CONFIG_CAM_WIFI_SSID_2=""
+CONFIG_CAM_WIFI_PASSWORD_2=""
+CONFIG_CAM_MACHINE_NAME="dron_camera_01"
+CONFIG_CAM_MACHINE_PASSWORD="clave_de_la_maquina"

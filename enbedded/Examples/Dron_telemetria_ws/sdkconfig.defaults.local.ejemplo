@@ -2,5 +2,8 @@
 # pon tus datos, borra sdkconfig y recompila.
 CONFIG_DRON_WIFI_SSID="mi_red"
 CONFIG_DRON_WIFI_PASSWORD="mi_clave"
-CONFIG_DRON_MACHINE_NAME="kanan_01"
+# Opcional: segunda red (hotspot del teléfono, 2.4 GHz)
+CONFIG_DRON_WIFI_SSID_2=""
+CONFIG_DRON_WIFI_PASSWORD_2=""
+CONFIG_DRON_MACHINE_NAME="dron_main_01"
 CONFIG_DRON_MACHINE_PASSWORD="clave_de_la_maquina"

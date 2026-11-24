@@ -67,7 +67,7 @@ function iniciar_maquinas() {
   bloque_eliminar_maquina.hidden = !es_administrador;
 
   // ===== Utilidades =====
-  // El número se renumera al borrar, así que solo se usa para mostrar y para la petición del momento
+  // El número es fijo: no se reutiliza ni se renumera al borrar (db_bm.siguiente_numero en la API)
   function formatear_numero(numero) {
     return `#${String(numero).padStart(2, '0')}`;
   }
@@ -266,7 +266,7 @@ function iniciar_maquinas() {
   boton_eliminar_maquina.addEventListener('click', async () => {
     const maquina = maquina_seleccionada;
     if (!es_administrador) return;
-    if (!window.confirm(`¿Eliminar ${maquina.name}? Las máquinas con número mayor se renumerarán.`)) return;
+    if (!window.confirm(`¿Eliminar ${maquina.name}? Su número no se volverá a usar.`)) return;
 
     await con_boton_ocupado(boton_eliminar_maquina, async () => {
       try {

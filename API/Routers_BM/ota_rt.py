@@ -22,6 +22,7 @@ deploy y status aceptan también la cabecera X-OTA-Key con la clave de API/ota_d
 Ese archivo se genera solo, está en .gitignore y nunca sale de la PC: el script lo lee del
 disco, así nadie tiene que escribir (ni ver) una contraseña.
 """
+import asyncio
 import hashlib
 import os
 import re
@@ -35,9 +36,8 @@ import aiofiles
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from pymongo import ReturnDocument
 
-from Library import segurity_bm, ws_bm
+from Library import db_bm, segurity_bm, ws_bm
 from Library.db_bm import db
 from Routers_BM.drone_ws_rt import manager
 
@@ -149,9 +149,8 @@ async def upload_firmware(file: UploadFile = File(...), notes: str | None = Form
         raise
     #El número no se reutiliza al borrar (ni siquiera el último): un contador aparte que solo sube.
     #Así una orden de OTA vieja nunca apunta a otro archivo
-    contador = db.counters.find_one_and_update({"_id": "ota_firmware"}, {"$inc": {"value": 1}},
-                                               upsert=True, return_document=ReturnDocument.AFTER)
-    number = contador["value"]
+    #async por los await del archivo: Mongo va en otro hilo para no frenar los WebSockets
+    number = await asyncio.to_thread(db_bm.siguiente_numero, "ota_firmware")
     documento = {
         "number": number,
         **descripcion,
@@ -163,7 +162,7 @@ async def upload_firmware(file: UploadFile = File(...), notes: str | None = Form
         "onwer": token.get("name"),
         "date": datetime.now(timezone.utc),
     }
-    ota_collection.insert_one(documento)
+    await asyncio.to_thread(ota_collection.insert_one, documento)
     documento.pop("_id", None)
     documento.pop("disk_name")
     return documento
@@ -190,7 +189,7 @@ def delete_firmware(number: int, token: dict = Depends(segurity_bm.verify_role_D
 
 @router.post("/deploy")
 async def deploy_firmware(body: deploy_request, token: dict = Depends(verify_O5_or_ota_key)):
-    firmware = ota_collection.find_one({"number": body.number}, {"_id": 0})
+    firmware = await asyncio.to_thread(ota_collection.find_one, {"number": body.number}, {"_id": 0})
     if not firmware:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Firmware not found")
     drone = manager.drones.get(body.machine)
@@ -216,8 +215,9 @@ async def deploy_firmware(body: deploy_request, token: dict = Depends(verify_O5_
     return {"message": "OTA sent", "machine": body.machine, "version": firmware["version"]}
 
 
+#def (no async): solo consulta Mongo y disco, FastAPI la corre en un hilo aparte
 @router.get("/firmware/{number}")
-async def download_firmware(number: int, token: dict = Depends(verify_machine_or_O5)):
+def download_firmware(number: int, token: dict = Depends(verify_machine_or_O5)):
     #Igual que en el WebSocket: una máquina borrada no puede seguir bajando firmware con un token viejo
     if token.get("type") == "machine" and not ws_bm.machine_exists(token.get("name")):
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Machine not found")

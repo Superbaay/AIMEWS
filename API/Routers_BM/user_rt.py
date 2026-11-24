@@ -22,13 +22,15 @@ def check_can_manage(target:base_model_bm.user_not_password, token:dict):
 def is_own_account(target:base_model_bm.user_not_password, token:dict):
     return target.name == token.get("name")
 
-@user.get("/get_user")
-async def get_user_not_password(name:str, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+#response_model: FastAPI filtra la respuesta con ese modelo, así nunca sale un password aunque
+#alguien devuelva el documento completo por error
+@user.get("/get_user", response_model=base_model_bm.user_not_password)
+def get_user_not_password(name:str, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
     return search_visible_user(name, token)
 
 #Solo cambia los datos de perfil; nombre, fecha y rol no se tocan aqui
-@user.patch("/update_user")
-async def update_user(data:base_model_bm.user_not_password, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+@user.patch("/update_user", response_model=base_model_bm.user_not_password)
+def update_user(data:base_model_bm.user_not_password, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
     target = search_visible_user(data.name, token)
     if not is_own_account(target, token):
         check_can_manage(target, token)
@@ -37,7 +39,7 @@ async def update_user(data:base_model_bm.user_not_password, token:dict = Depends
     return target.model_copy(update=changes)
 
 @user.patch("/update_user_password")
-async def update_user_password(data:base_model_bm.name_password, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+def update_user_password(data:base_model_bm.name_password, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
     target = search_visible_user(data.name, token)
     if not is_own_account(target, token):
         check_can_manage(target, token)
@@ -45,7 +47,7 @@ async def update_user_password(data:base_model_bm.name_password, token:dict = De
     return {"detail" : "Password updated"}
 
 @user.patch("/update_user_role")
-async def update_user_role(data:base_model_bm.name_role, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+def update_user_role(data:base_model_bm.name_role, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
     target = search_visible_user(data.name, token)
     if is_own_account(target, token):
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="No puedes cambiar tu propio rol")
@@ -56,7 +58,7 @@ async def update_user_role(data:base_model_bm.name_role, token:dict = Depends(se
     return {"detail" : "Role updated"}
 
 @user.delete("/delete_user")
-async def delete_user(data:base_model_bm.name, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+def delete_user(data:base_model_bm.name, token:dict = Depends(segurity_bm.verify_role_Depends_2)):
     target = search_visible_user(data.name, token)
     if is_own_account(target, token):
         raise HTTPException(status.HTTP_403_FORBIDDEN,detail="No puedes eliminar tu propia cuenta")
@@ -65,8 +67,8 @@ async def delete_user(data:base_model_bm.name, token:dict = Depends(segurity_bm.
     return {"detail" : "User deleted"}
 
 #Solo devuelve usuarios del mismo nivel o inferior al de quien consulta
-@user.get("/get_user_all")
-async def get_user_all(token:dict = Depends(segurity_bm.verify_role_Depends_2)):
+@user.get("/get_user_all", response_model=list[base_model_bm.user_not_password])
+def get_user_all(token:dict = Depends(segurity_bm.verify_role_Depends_2)):
     users = db.user.find()
     user_list = []
     for user in users:

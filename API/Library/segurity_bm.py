@@ -1,3 +1,4 @@
+import asyncio
 import os
 import secrets
 from pathlib import Path
@@ -78,15 +79,37 @@ top_rank = role_rank["O5-1"]
 def rank_of(role):
     return role_rank.get(role, 0)
 
+#El rol viaja dentro del token, que dura 24 h. Si bajas de rol a alguien (o lo borras), con solo
+#el token seguiría teniendo el rol viejo hasta que expire. Por eso cada ruta con rol vuelve a leer
+#el rol en la base y usa el MENOR de los dos: bajar de rol tiene efecto inmediato, y subir de rol
+#pide volver a iniciar sesión (el token nuevo trae el rol nuevo). Es una consulta pequeña por petición.
+def rol_efectivo(token: dict) -> str | None:
+    """Rol con el que se atiende esta petición, o None si el usuario ya no existe. Bloquea (pymongo):
+    desde código async se llama con asyncio.to_thread."""
+    from Library.db_bm import db    # import local: db_bm no depende de este archivo, pero así se ve de dónde sale
+    guardado = db.user.find_one({"name": token.get("name")}, {"role": 1})
+    if guardado is None:
+        return None
+    rol_token, rol_base = token.get("role"), guardado.get("role")
+    return rol_token if rank_of(rol_token) <= rank_of(rol_base) else rol_base
+
+async def rol_efectivo_async(token: dict) -> str | None:
+    return await asyncio.to_thread(rol_efectivo, token)
+
 #Fabrica de dependencias por rol minimo: deja pasar al rol pedido y a todos los superiores.
 #Va encima de verify_user_Depends, asi los tokens de maquina siguen bloqueados.
 #Un rol desconocido vale 0 y nunca llega al minimo, igual que antes con las cadenas de "or"
 def requiere_rol(rol_minimo: str):
     rango_minimo = role_rank[rol_minimo]
     async def verificar_rol(token:dict = Depends(verify_user_Depends)):
-        if rank_of(token.get("role")) < rango_minimo:
+        rol = await rol_efectivo_async(token)
+        if rol is None:
+            #401: el panel lo toma como sesión terminada y vuelve al login, que es lo correcto
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED,detail="User not found")
+        if rank_of(rol) < rango_minimo:
             raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Role insuficiente")
-        return token
+        #Las rutas deciden con token["role"] (can_see_user, can_manage_user...): va el rol vigente
+        return {**token, "role": rol}
     return verificar_rol
 
 #Alias con los nombres de siempre: los routers los importan por nombre
@@ -98,11 +121,22 @@ verify_role_Depends_1 = requiere_rol("1")
 
 #Rutas que usan tanto el dron como los ingenieros desde el panel (telemetria, misiones)
 async def verify_machine_or_role_4(token:dict = Depends(verify_token_Depends)):
-    if (token.get("type") == "machine" and token.get("role") == "4") or token.get("role") == "O5-1" \
-    or (token.get("role") == "4" and token.get("type") == "user"):
+    if token.get("type") == "machine":
+        if token.get("role") != "4":
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Role insuficiente")
+        #Igual que en el WebSocket: una máquina borrada no sigue usando su token de 24 h
+        from Library import ws_bm
+        if not await asyncio.to_thread(ws_bm.machine_exists, token.get("name")):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Machine not found")
         return token
-    else:
+    if token.get("type", "user") != "user":
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Role insuficiente")
+    rol = await rol_efectivo_async(token)
+    if rol is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if rol not in ("4", "O5-1"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Role insuficiente")
+    return {**token, "role": rol}
 
 #Un usuario solo ve a los de su nivel o inferior
 def can_see_user(token:dict, target_role):

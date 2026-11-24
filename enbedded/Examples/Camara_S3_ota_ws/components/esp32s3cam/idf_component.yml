@@ -1,0 +1,4 @@
+# Driver oficial de cámaras OV2640/OV3660/OV5640... (en el S3 usa el periférico LCD_CAM + GDMA).
+dependencies:
+  idf: ">=6.0"
+  espressif/esp32-camera: "^2.1.9"

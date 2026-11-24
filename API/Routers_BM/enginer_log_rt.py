@@ -3,7 +3,9 @@ from fastapi.responses import FileResponse
 from Library import base_model_bm,def_bm,segurity_bm
 from datetime import datetime, timezone
 from Library.base_model_bm import db
+from Library.db_bm import siguiente_numero
 from pathlib import Path
+import asyncio
 import re
 import uuid
 import aiofiles
@@ -27,7 +29,8 @@ engineer = APIRouter(
 
 @engineer.post("/new", status_code=status.HTTP_201_CREATED)
 def read_engineer_log(body:base_model_bm.engineer_log , token: dict = Depends(segurity_bm.verify_role_Depends_4)):
-    number = engineer_log_collection.count_documents({}) + 1
+    #Número que nunca se reutiliza (ver db_bm.siguiente_numero)
+    number = siguiente_numero("engineer_log", engineer_log_collection)
     body.onwer = token.get("name")
     body.number = number
     body.date_creation = datetime.now(timezone.utc)
@@ -53,12 +56,7 @@ def delete_engineer_log(number: int, token: dict = Depends(segurity_bm.verify_ro
     deleted_log = engineer_log_collection.find_one_and_delete({"number": number})
     if not deleted_log:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Engineer log not found")
-    logs = list(engineer_log_collection.find({}).sort("number", 1))
-    number: int = 1
-    for log in logs:
-        log["number"] = number
-        engineer_log_collection.update_one({"_id": log["_id"]}, {"$set": {"number": number}})
-        number += 1
+    #Ya no se renumeran los demás logs: el número es fijo (una referencia a log 5 sigue siendo el log 5)
     #Solo se borran nombres generados por upload_evidence: un url_path manipulado no puede apuntar fuera de upload_dir
     files_deleted = 0
     for media in deleted_log.get("evidence") or []:
@@ -76,7 +74,9 @@ def delete_engineer_log(number: int, token: dict = Depends(segurity_bm.verify_ro
 #multipart/form-data: el archivo llega en el campo "file" y el numero del log en la query (?number=1)
 @engineer.post("/evidence", status_code=status.HTTP_201_CREATED)
 async def upload_evidence(number: int, file: UploadFile = File(...), token: dict = Depends(segurity_bm.verify_role_Depends_4)):
-    log = engineer_log_collection.find_one({"number": number}, {"evidence": 1})
+    #Esta ruta es async (lee el archivo con await): Mongo va en un hilo aparte con to_thread
+    #para no detener el event loop, que es el mismo que atiende los WebSockets del dron
+    log = await asyncio.to_thread(engineer_log_collection.find_one, {"number": number}, {"evidence": 1})
     if not log:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Engineer log not found")
     #El tipo se lee de los primeros bytes; file.content_type y file.filename los envia el cliente y no son fiables
@@ -112,7 +112,7 @@ async def upload_evidence(number: int, file: UploadFile = File(...), token: dict
     else:
         change = {"$push": {"evidence": media.model_dump()}}
     change.setdefault("$set", {})["date_update"] = datetime.now(timezone.utc)
-    engineer_log_collection.update_one({"number": number}, change)
+    await asyncio.to_thread(engineer_log_collection.update_one, {"number": number}, change)
     return media
 
 #Protegido con token: la web lo pide con fetch (un <img src> no puede enviar Authorization)

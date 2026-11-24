@@ -8,6 +8,18 @@ menu "Dron SAMATI: telemetría por WebSocket"
         string "Contraseña de la red WiFi"
         default "mi_clave"
 
+    config DRON_WIFI_SSID_2
+        string "Segunda red WiFi (opcional, p. ej. hotspot del teléfono)"
+        default ""
+        help
+            Si se llena, el dron escanea antes de cada intento y se conecta a la
+            red conocida que encuentre (la de mejor señal si están las dos).
+            El ESP32-S3 solo tiene radio de 2.4 GHz: el hotspot debe estar en 2.4 GHz.
+
+    config DRON_WIFI_PASSWORD_2
+        string "Contraseña de la segunda red"
+        default ""
+
     config DRON_API_HOST
         string "IP o dominio de la API (FastAPI)"
         default "api.superbaay.dev"
@@ -27,7 +39,7 @@ menu "Dron SAMATI: telemetría por WebSocket"
 
     config DRON_MACHINE_NAME
         string "Nombre de la máquina registrada en la API"
-        default "kanan_01"
+        default "dron_main_01"
 
     config DRON_MACHINE_PASSWORD
         string "Contraseña de la máquina"

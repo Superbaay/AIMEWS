@@ -1,0 +1,74 @@
+menu "esp32s3cam: cámara OV3660 en ESP32-S3"
+
+    config ESP32S3CAM_XCLK_KHZ
+        int "Reloj XCLK del sensor (kHz)"
+        range 6000 24000
+        default 20000
+        help
+            Reloj que la ESP32-S3 entrega al sensor (LEDC). El PLL del OV3660 lo
+            multiplica: más XCLK = más SYSCLK = más fps con el mismo PLL.
+            En la AI-Thinker 20 MHz degradaba el WiFi; mídelo también en esta placa.
+
+    config ESP32S3CAM_VFLIP
+        bool "Voltear la imagen en vertical"
+        default y
+        help
+            El OV3660 sale invertido respecto al OV2640 en la mayoría de placas.
+            Compruébalo con una foto.
+
+    config ESP32S3CAM_HMIRROR
+        bool "Espejo horizontal"
+        default n
+
+    menu "Patillaje (por defecto: Freenove ESP32-S3-WROOM CAM / ESP32-S3-EYE)"
+        config ESP32S3CAM_PIN_PWDN
+            int "PWDN (-1 = no conectado)"
+            default -1
+        config ESP32S3CAM_PIN_RESET
+            int "RESET (-1 = no conectado)"
+            default -1
+        config ESP32S3CAM_PIN_XCLK
+            int "XCLK"
+            default 15
+        config ESP32S3CAM_PIN_SIOD
+            int "SIOD (SDA del SCCB)"
+            default 4
+        config ESP32S3CAM_PIN_SIOC
+            int "SIOC (SCL del SCCB)"
+            default 5
+        config ESP32S3CAM_PIN_D7
+            int "D7 (Y9)"
+            default 16
+        config ESP32S3CAM_PIN_D6
+            int "D6 (Y8)"
+            default 17
+        config ESP32S3CAM_PIN_D5
+            int "D5 (Y7)"
+            default 18
+        config ESP32S3CAM_PIN_D4
+            int "D4 (Y6)"
+            default 12
+        config ESP32S3CAM_PIN_D3
+            int "D3 (Y5)"
+            default 10
+        config ESP32S3CAM_PIN_D2
+            int "D2 (Y4)"
+            default 8
+        config ESP32S3CAM_PIN_D1
+            int "D1 (Y3)"
+            default 9
+        config ESP32S3CAM_PIN_D0
+            int "D0 (Y2)"
+            default 11
+        config ESP32S3CAM_PIN_VSYNC
+            int "VSYNC"
+            default 6
+        config ESP32S3CAM_PIN_HREF
+            int "HREF"
+            default 7
+        config ESP32S3CAM_PIN_PCLK
+            int "PCLK"
+            default 13
+    endmenu
+
+endmenu

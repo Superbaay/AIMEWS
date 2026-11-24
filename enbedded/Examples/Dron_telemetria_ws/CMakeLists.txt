@@ -11,7 +11,7 @@ endif()
 # Versión del firmware: viaja dentro del .bin (esp_app_desc_t). La API la lee al
 # subir el archivo para OTA y el dron la reporta en estado_dron. Súbela en cada
 # OTA (la API rechaza nada, pero así sabes qué corre cada dron).
-set(PROJECT_VER "0.3.1")
+set(PROJECT_VER "0.3.3")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(Dron_telemetria_ws)
