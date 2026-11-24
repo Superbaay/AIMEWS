@@ -6,7 +6,11 @@
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
+#include "esp_transport_ssl.h"
+#include "esp_transport_tcp.h"
+#include "esp_transport_ws.h"
 #include "esp_websocket_client.h"
+#include "lwip/sockets.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -44,6 +48,46 @@ static char token[512];
 // La tarea de vídeo envía por ws_video mientras el vigilante puede destruirlo:
 // los dos pasan por este candado (si no, el envío usaría un cliente ya liberado).
 static SemaphoreHandle_t candado_video;
+
+/* Transporte propio del canal de vídeo (TLS o TCP + WebSocket) para poder quitar
+ * Nagle al socket: el cliente WebSocket no expone el suyo. Medido: con Nagle cada
+ * frame esperaba el ACK del anterior (~1 RTT, ~160-250 ms por WiFi + Cloudflare) y
+ * el vídeo se quedaba en 4-7 fps fuera cual fuera su tamaño (QVGA igual que HD). */
+static esp_transport_handle_t video_base, video_ws;
+
+static esp_transport_handle_t crear_transporte_video(const char *ruta)
+{
+#if CONFIG_CAM_API_TLS
+    video_base = esp_transport_ssl_init();
+    esp_transport_ssl_crt_bundle_attach(video_base, esp_crt_bundle_attach);
+    esp_transport_set_default_port(video_base, 443);
+#else
+    video_base = esp_transport_tcp_init();
+    esp_transport_set_default_port(video_base, 80);
+#endif
+    video_ws = esp_transport_ws_init(video_base);
+    // Con transporte externo el cliente no configura la ruta: igual que hace él por dentro.
+    const esp_transport_ws_config_t ws_cfg = { .ws_path = ruta, .propagate_control_frames = true };
+    esp_transport_ws_set_config(video_ws, &ws_cfg);
+    return video_ws;
+}
+
+static void destruir_transporte_video(void)
+{
+    // esp_transport_ws no destruye a su transporte padre: van los dos.
+    if (video_ws) esp_transport_destroy(video_ws);
+    if (video_base) esp_transport_destroy(video_base);
+    video_ws = video_base = NULL;
+}
+
+static void quitar_nagle_video(void)
+{
+    int fd = video_ws ? esp_transport_get_socket(video_ws) : -1;
+    int uno = 1;
+    if (fd < 0 || setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &uno, sizeof(uno)) != 0) {
+        ESP_LOGW(TAG, "vídeo: no se pudo quitar Nagle (fd %d)", fd);
+    }
+}
 
 bool enlace_api_video_listo(void)
 {
@@ -196,6 +240,23 @@ static void enviar_estado_camara(void)
     enviar_texto(ws_video, j, n);
 }
 
+void enlace_api_enviar_estado(void)
+{
+    // Se llama desde la tarea de vídeo: mismo candado que los frames (el vigilante
+    // puede estar destruyendo ws_video). Si está ocupado, el panel lo verá en el próximo.
+    if (candado_video && xSemaphoreTake(candado_video, 0) == pdTRUE) {
+        enviar_estado_camara();
+        xSemaphoreGive(candado_video);
+    }
+}
+
+static volatile bool ajuste_manual;
+
+bool enlace_api_ajuste_manual(void)
+{
+    return ajuste_manual;
+}
+
 /* Lo que la cámara entiende por el canal de control: solo "ota". La API solo le
  * reenvía las acciones declaradas (drone_ws_rt.py) y solo le ofrece OTA así. */
 static void enviar_estado_dron(void)
@@ -226,6 +287,9 @@ static void atender_video(const char *json)
         // camera_rt.py ya filtró el nombre; la librería vuelve a validar el valor.
         esp_err_t err = esp32s3cam_set(nombre, valor);
         ESP_LOGI(TAG, "panel: %s = %d -> %s", nombre, valor, esp_err_to_name(err));
+        if (err == ESP_OK && (strcmp(nombre, "framesize") == 0 || strcmp(nombre, "quality") == 0)) {
+            ajuste_manual = true;   // la adaptación automática no lo pisa
+        }
         enviar_estado_camara();
     } else if (strcmp(tipo, "flash") == 0) {
         ESP_LOGI(TAG, "panel: flash ignorado (esta placa no tiene LED de flash)");
@@ -266,6 +330,9 @@ static void al_evento_ws(void *arg, esp_event_base_t base, int32_t id, void *dat
     esp_websocket_event_data_t *d = datos;
     switch (id) {
     case WEBSOCKET_EVENT_CONNECTED: {
+        if (es_video) {
+            quitar_nagle_video();   // cada reconexión trae un socket nuevo
+        }
         // El token tiene que ser el PRIMER mensaje (la API espera 5 s).
         char primero[sizeof(token) + 16];
         int n = snprintf(primero, sizeof(primero), "{\"token\":\"%s\"}", token);
@@ -308,6 +375,7 @@ static esp_websocket_client_handle_t abrir_ws(const char *ruta, bool es_video)
         .reconnect_timeout_ms = 3000,  // se reconecta solo y vuelve a mandar el token
         .network_timeout_ms = 10000,
         .ping_interval_sec = 10,
+        .ext_transport = es_video ? crear_transporte_video(ruta) : NULL,
     };
     esp_websocket_client_handle_t ws = esp_websocket_client_init(&cfg);
     esp_websocket_register_events(ws, WEBSOCKET_EVENT_ANY, al_evento_ws, (void *)(es_video ? 1 : 0));
@@ -371,6 +439,7 @@ static void tarea_enlace(void *arg)
             xSemaphoreTake(candado_video, portMAX_DELAY);   // espera a que termine un envío en curso
             esp_websocket_client_destroy(ws_video);
             ws_video = NULL;
+            destruir_transporte_video();   // el cliente no libera un transporte externo
             xSemaphoreGive(candado_video);
             esp_websocket_client_destroy(ws_control);
             ws_control = NULL;

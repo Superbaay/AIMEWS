@@ -69,15 +69,30 @@ drones**, solo con la acción OTA.
 Ajustes que llegan del panel (`set`): los de `camera_rt.camera_settings` (quality,
 brightness, framesize, vflip...). `flash` se ignora: esta placa no tiene LED de flash.
 
-## Medido en la placa (2026-11-23)
+## Imagen adaptativa (CONFIG_CAM_FPS_ADAPTATIVO)
 
-- Arranque: firmware en `ota_0`, OV3660 en HD30, escaneo de las dos redes y conexión a la de
-  casa (−59 dBm) en ~7 s.
+La red decide cuántos bytes caben, no la cámara. Cada segundo se miden los fps enviados:
+2 s por debajo del 80 % de `CAM_FPS` → baja un escalón; 5 s a tope y con menos del 45 % del
+tiempo enviando → sube uno. Escalones: **HD30 q25 → SVGA q30 → VGA q35 → QVGA q25**. Una
+subida que hay que deshacer en menos de 10 s no se reintenta en 60 s. Un `set framesize` o
+`set quality` desde el panel la apaga (manda el ajuste manual). El log de cada 10 s dice fps,
+kbit/s, KB/frame, tiempo de envío medio y máximo, y el escalón.
+
+## Medido en la placa (2026-11-23/24, WiFi de casa −61 a −66 dBm + túnel de Cloudflare)
+
+| Versión | Qué cambió | Resultado |
+|---|---|---|
+| 1.0.0 | HD fijo, búfer de envío TCP 64 KB, con Nagle | 4–5 fps; envío ~220 ms por frame; QVGA daba **los mismos** fps (coste fijo por mensaje) |
+| 1.1.0 | sin Nagle (`TCP_NODELAY` con transporte propio) | envío medio 65–90 ms, pero con 64 KB de búfer se encolaban 2–4 s: el canal de control no autenticaba a tiempo ("Unauthorized") |
+| 1.1.4 | búfer de envío 23 KB + escalera simple | **12,0 fps estables**: QVGA y en cuanto hay margen VGA a 11,9–12 fps (~730 kbit/s), envío medio 5–13 ms, 0 fallos |
+
+- OTA real por `ota_subir.py` (1.1.1 → 1.1.4): descarga, instalación, reinicio y confirmación
+  sin cable en ~1 min cada una.
+- Primera OTA colgada en 0 %: `CONFIG_LWIP_TCP_WND_DEFAULT=65534` sin buffers de RX (el WiFi
+  tiraba lo que no cabía). Vuelto a 5760 y límite de 180 s en `ota_camara.c`.
 - Con la API apagada, Cloudflare responde HTTP 530 (error 1033) y la cámara reintenta cada
-  ~8 s sin bloquear nada; la tarea de vídeo sigue capturando.
-- Vídeo hacia la API, OTA real y cambio de red: **pendientes** (la API estaba apagada).
+  ~8 s sin bloquear nada.
 
-Notas de la cámara (de `esp32s3-cam-ov3660`): con PCLK 10 MHz los modos con binning (VGA60,
-XGA30) pierden frames en escenas con mucho detalle; HD30 no. El WiFi de casa medido de noche
-daba 0,5–1,4 Mbit/s: suficiente para HD q25 a ~5 fps, no para 12; el hotspot del teléfono o
-bajar la calidad (`set quality 35`) ayudan.
+Para HD a 12 fps hace falta un enlace mejor (~2 Mbit/s): el hotspot del teléfono cerca de la
+placa o un canal WiFi menos saturado. Notas de la cámara (de `esp32s3-cam-ov3660`): con PCLK
+10 MHz los modos con binning (VGA60, XGA30) pierden frames en escenas con mucho detalle.

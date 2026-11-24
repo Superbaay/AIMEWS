@@ -22,6 +22,7 @@ static const char *TAG = "ota";
 #define OTA_TIEMPO_VERIFICAR_S 120   // sin auth_ok en este tiempo -> rollback
 #define OTA_AVISO_CADA_PCT     10    // avance al panel cada 10 %
 #define OTA_PILA               8192  // TLS + cliente HTTP
+#define OTA_TIEMPO_MAX_S       180   // descarga completa; 1 MB a 50 KB/s tarda ~20 s
 
 #if CONFIG_CAM_API_TLS
 #define CRT_BUNDLE esp_crt_bundle_attach
@@ -154,7 +155,15 @@ static void tarea_ota(void *arg)
 
     int siguiente_aviso = OTA_AVISO_CADA_PCT;
     esp_err_t err;
+    const int64_t limite = esp_timer_get_time() + (int64_t)OTA_TIEMPO_MAX_S * 1000000;
     while ((err = esp_https_ota_perform(ota)) == ESP_ERR_HTTPS_OTA_IN_PROGRESS) {
+        // Medido: con una descarga que avanza a cuentagotas el timeout de lectura
+        // (15 s sin datos) nunca salta y la OTA quedaba "en curso" para siempre, con el
+        // vídeo pausado. Pasado el límite se aborta y la cámara sigue como estaba.
+        if (esp_timer_get_time() > limite) {
+            error = "descarga demasiado lenta (límite de tiempo)";
+            goto fin;
+        }
         int total = esp_https_ota_get_image_size(ota);
         if (total <= 0) total = pedido.tam;
         int pct = total > 0 ? (int)(100LL * esp_https_ota_get_image_len_read(ota) / total) : 0;

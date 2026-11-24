@@ -61,6 +61,15 @@ menu "Camara S3 SAMATI: video + OTA"
             La API (camera_rt.py) acepta como mucho 15 fps por cámara y descarta
             el resto. La cámara captura más rápido; se manda el frame más reciente.
 
+    config CAM_FPS_ADAPTATIVO
+        bool "Bajar/subir la resolución sola para mantener los fps"
+        default y
+        help
+            Cada segundo mide los fps enviados: si no llega al 80 % de CAM_FPS baja
+            un escalón (HD30 -> SVGA q30 -> VGA q35 -> QVGA); si sobra margen 5 s
+            seguidos, sube uno. Un ajuste de framesize o quality desde el panel la
+            desactiva hasta reiniciar.
+
     config CAM_JPEG_QUALITY
         int "Calidad JPEG inicial (4 = mejor ... 63 = más compresión)"
         range 4 63

@@ -38,6 +38,13 @@ bool enlace_api_control_listo(void);
 /* Manda un JPEG por el WebSocket de vídeo. ESP_ERR_INVALID_STATE si no está listo. */
 esp_err_t enlace_api_enviar_frame(const uint8_t *jpeg, size_t largo);
 
+/* Manda el estado de la cámara (framesize, calidad...) a los visores del panel. */
+void enlace_api_enviar_estado(void);
+
+/* true si alguien cambió framesize o calidad desde el panel: main.c deja de
+ * adaptar la imagen solo (manda el ajuste manual). */
+bool enlace_api_ajuste_manual(void);
+
 /* Manda un texto por el WebSocket de control (avisos de OTA). */
 void enlace_api_enviar_control(const char *texto, int largo);
 

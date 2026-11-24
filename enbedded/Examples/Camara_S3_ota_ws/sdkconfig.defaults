@@ -59,9 +59,14 @@ CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
 # anterior. Cambia el bootloader: el PRIMER flasheo de este ejemplo va por USB.
 CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 
-# Envío sostenido de vídeo: más buffers de WiFi y ventanas TCP grandes.
+# Búferes TCP medidos en la placa (WiFi de casa + Cloudflare, ~150-300 kbit/s):
+# - Envío 23040 (16 segmentos). Con 65534 se encolaban 2-4 s de vídeo: el token del
+#   canal de control llegaba tarde (la API cierra con "Unauthorized" a los 5 s), los
+#   pings caducaban y el vídeo iba con segundos de retraso. Con 11520 la cola era
+#   corta pero el caudal caía a la mitad (~20 KB/s: RTT efectivo de hasta 0,5 s).
+# - Recepción (CONFIG_LWIP_TCP_WND_DEFAULT) por defecto (5760, como el dron): con 65534
+#   y los buffers de RX por defecto, la descarga de la OTA se quedó en 0 %.
 CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=64
 CONFIG_ESP_WIFI_AMPDU_TX_ENABLED=y
 CONFIG_ESP_WIFI_TX_BA_WIN=32
-CONFIG_LWIP_TCP_SND_BUF_DEFAULT=65534
-CONFIG_LWIP_TCP_WND_DEFAULT=65534
+CONFIG_LWIP_TCP_SND_BUF_DEFAULT=23040

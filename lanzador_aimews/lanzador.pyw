@@ -350,8 +350,12 @@ class lanzador(tk.Tk):
         self.servicios = [
             servicio_mongo(),
             servicio_proceso("api", "API", "FastAPI · uvicorn · 127.0.0.1:8001",
+                             #--ws websockets-sansio: con la implementación "legacy" (la de por defecto)
+                             #cada máquina que se desconecta de golpe (placa reiniciada, WiFi caído)
+                             #dejaba en el log un ERROR "keepalive ping timeout" con traceback
                              [python_consola, "-m", "uvicorn", "main:app", "--host", "127.0.0.1",
-                              "--port", "8001", "--log-config", str(carpeta_lanzador / "uvicorn_log.json")],
+                              "--port", "8001", "--ws", "websockets-sansio",
+                              "--log-config", str(carpeta_lanzador / "uvicorn_log.json")],
                              cwd=api, puerto=8001, url="http://127.0.0.1:8001/docs"),
             servicio_proceso("sitio", "Sitio web", "servidor_sitio.py · sitio_web · 127.0.0.1:5500",
                              [python_consola, "-u", str(raiz / "servidor_sitio.py"), str(raiz / "sitio_web"), "5500"],
