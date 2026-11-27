@@ -19,3 +19,20 @@ API/secret_key.txt
 
 # Clave para subir y desplegar firmware OTA desde esta PC sin usuario (enbedded/tools/ota_subir.py)
 API/ota_deploy_key.txt
+
+# --- Credenciales y salidas locales en TODO el repo (red de seguridad global) ---
+# Cada ejemplo ESP-IDF tiene su .gitignore, pero un ejemplo nuevo puede no traerlo:
+# estas reglas valen para cualquier carpeta.
+**/sdkconfig.defaults.local
+**/sdkconfig.defaults.local.*
+!**/sdkconfig.defaults.local.ejemplo
+*.bak
+*.bak_*
+*.log
+*.pid
+.env
+.env.*
+!.env.ejemplo
+*.pem
+*.key
+*.bundle
